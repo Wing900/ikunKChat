@@ -74,7 +74,7 @@ Since this project is built with modern web technologies and uses CDN-based depe
     ```sh
     npm install
     ```
- 3.  Start the development server:
+3. Start the development server:
     ```sh
     npm run dev
     ```
