@@ -50,12 +50,12 @@ function getChat(apiKey: string, history: Message[], model: string, settings: Se
     toolsForApi.push({ codeExecution: {} });
     // URL Context is disabled if Code Execution is active
     if (useUrlContext) {
-      systemInstruction += ' Note: Code Execution is active, so URL context processing is disabled for this query.';
+      systemInstruction += '';
     }
   } else if (useUrlContext) {
     // If URL context is enabled, it needs Google Search to function.
     isSearchEnabled = true; 
-    systemInstruction += ' The user has enabled URL Context. If their prompt contains a URL, you MUST use Google Search to retrieve the content of that URL and use it as the primary basis for your response.';
+    systemInstruction += '';
   }
 
   // Add Google Search tool if it's enabled by any means.
