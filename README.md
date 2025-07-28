@@ -76,7 +76,7 @@ Since this project is built with modern web technologies and uses CDN-based depe
     ```
  3.  Start the development server:
     ```sh
-   npm run dev
+    npm run dev
     ```
 
 Then navigate to the local address provided in your terminal (e.g., `http://localhost:5173`) in your browser.
