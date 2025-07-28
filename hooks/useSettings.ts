@@ -13,13 +13,7 @@ const defaultSettings: Settings = {
   suggestionModel: 'gemini-2.5-flash',
   autoTitleGeneration: true,
   titleGenerationModel: 'gemini-2.5-flash',
-  useCustomSystemPrompt: false,
-  customSystemPrompt: {
-    nickname: '',
-    persona: '',
-    behavior: '',
-    rules: '',
-  },
+  personaBuilderModel: 'gemini-2.5-flash',
   defaultSearch: true,
   showThoughts: true,
 };
@@ -59,6 +53,7 @@ export const useSettings = () => {
           if (!models.includes(current.defaultModel)) newDefaults.defaultModel = models[0];
           if (!models.includes(current.suggestionModel)) newDefaults.suggestionModel = models[0];
           if (!models.includes(current.titleGenerationModel)) newDefaults.titleGenerationModel = models[0];
+          if (!models.includes(current.personaBuilderModel)) newDefaults.personaBuilderModel = models[0];
           return Object.keys(newDefaults).length > 0 ? { ...current, ...newDefaults } : current;
         });
       });

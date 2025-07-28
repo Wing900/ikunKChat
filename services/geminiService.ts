@@ -1,5 +1,8 @@
+
+
+
 import { GoogleGenAI, Chat, GenerateContentResponse, Type } from "@google/genai";
-import { Message, MessageRole, FileAttachment, Settings, CustomSystemPrompt } from '../types';
+import { Message, MessageRole, FileAttachment, Settings, Persona } from '../types';
 
 const aiInstances = new Map<string, GoogleGenAI>();
 
@@ -20,16 +23,7 @@ interface Part {
   };
 }
 
-function constructSystemPrompt(promptData: CustomSystemPrompt): string {
-    const parts = [];
-    if (promptData.nickname) parts.push(`You are ${promptData.nickname}.`);
-    if (promptData.persona) parts.push(`Your persona is: ${promptData.persona}.`);
-    if (promptData.behavior) parts.push(`Your behavior should be: ${promptData.behavior}.`);
-    if (promptData.rules) parts.push(`Follow these rules: ${promptData.rules}.`);
-    return parts.join(' ').trim();
-}
-
-function getChat(apiKey: string, history: Message[], model: string, settings: Settings, toolConfig: any): Chat {
+function getChat(apiKey: string, history: Message[], model: string, settings: Settings, toolConfig: any, persona?: Persona | null): Chat {
   const ai = getAi(apiKey);
   const formattedHistory = history.map(msg => {
     const parts: Part[] = [];
@@ -42,27 +36,41 @@ function getChat(apiKey: string, history: Message[], model: string, settings: Se
     return { role: msg.role, parts: parts };
   });
 
-  let systemInstruction = 'You are KChat, a helpful and friendly AI assistant. Keep your responses concise and informative.';
-  if (settings.useCustomSystemPrompt) {
-      const customPrompt = constructSystemPrompt(settings.customSystemPrompt);
-      if (customPrompt) {
-          systemInstruction = customPrompt;
-      }
+  let systemInstruction = persona?.systemPrompt || 'You are KChat, a helpful and friendly AI assistant. Keep your responses concise and informative.';
+  
+  const useGoogleSearch = persona?.tools.googleSearch || settings.defaultSearch;
+  const useCodeExecution = toolConfig.codeExecution || persona?.tools.codeExecution;
+  const useUrlContext = toolConfig.urlContext || persona?.tools.urlContext;
+  
+  const toolsForApi: any[] = [];
+  let isSearchEnabled = toolConfig.googleSearch || useGoogleSearch;
+
+  // Handle mutual exclusivity and tool configuration
+  if (useCodeExecution) {
+    toolsForApi.push({ codeExecution: {} });
+    // URL Context is disabled if Code Execution is active
+    if (useUrlContext) {
+      systemInstruction += ' Note: Code Execution is active, so URL context processing is disabled for this query.';
+    }
+  } else if (useUrlContext) {
+    // If URL context is enabled, it needs Google Search to function.
+    isSearchEnabled = true; 
+    systemInstruction += ' The user has enabled URL Context. If their prompt contains a URL, you MUST use Google Search to retrieve the content of that URL and use it as the primary basis for your response.';
   }
 
-  const isSearchForced = toolConfig.googleSearch;
-  if (isSearchForced) {
-    systemInstruction += ' The user has explicitly enabled Google Search for this query, so you MUST use it to answer the request and provide citations.';
-  } else if (settings.defaultSearch) {
+  // Add Google Search tool if it's enabled by any means.
+  if (isSearchEnabled) {
+    toolsForApi.push({ googleSearch: {} });
+  }
+
+  // Add specific instructions for search if it was explicitly toggled for this query
+  if (toolConfig.googleSearch) {
+    systemInstruction += ' The user has explicitly enabled Google Search for this query, so you should prioritize its use to answer the request and provide citations.';
+  } else if (useGoogleSearch && !useUrlContext) { // Avoid duplicating search instructions
     systemInstruction += ' By default, Google Search is available; use it only for queries that require recent information, real-time data, or specific facts. Use it judiciously.';
   }
-
-  const toolsForApi: any[] = [];
-  if (toolConfig.codeExecution) toolsForApi.push({ codeExecution: {} });
-  if (toolConfig.urlContext.enabled) toolsForApi.push({ urlContext: {} });
-  if (isSearchForced || settings.defaultSearch) toolsForApi.push({ googleSearch: {} });
   
-  const configForApi: any = { systemInstruction, tools: toolsForApi };
+  const configForApi: any = { systemInstruction, tools: toolsForApi.length > 0 ? toolsForApi : undefined };
   if (toolConfig.showThoughts) {
     configForApi.thinkingConfig = { includeThoughts: true };
   }
@@ -74,9 +82,9 @@ function getChat(apiKey: string, history: Message[], model: string, settings: Se
   });
 }
 
-export async function* sendMessageStream(apiKey: string, messages: Message[], newMessage: string, attachments: FileAttachment[], model: string, settings: Settings, toolConfig: any): AsyncGenerator<GenerateContentResponse> {
+export async function* sendMessageStream(apiKey: string, messages: Message[], newMessage: string, attachments: FileAttachment[], model: string, settings: Settings, toolConfig: any, persona?: Persona | null): AsyncGenerator<GenerateContentResponse> {
   try {
-    const chat = getChat(apiKey, messages, model, settings, toolConfig);
+    const chat = getChat(apiKey, messages, model, settings, toolConfig, persona);
     const messageParts: Part[] = attachments.map(att => ({
         inlineData: { mimeType: att.mimeType, data: att.data! }
     }));
@@ -142,5 +150,54 @@ export async function generateSuggestedReplies(apiKey: string, history: Message[
   } catch (error) {
     console.error("Error generating suggested replies:", error);
     return [];
+  }
+}
+
+export async function generatePersonaUpdate(apiKey: string, model: string, currentPersona: Partial<Persona>, request: string): Promise<{ personaUpdate: Partial<Persona>, explanation: string }> {
+  try {
+    const ai = getAi(apiKey);
+    const systemInstruction = `You are an AI assistant that helps build another AI's persona. The user will give you instructions. You MUST respond with only a valid JSON object. This object must contain two keys: "personaUpdate" and "explanation".
+The "personaUpdate" key holds an object with the fields to be updated in the Persona object: {name: string, bio: string, systemPrompt: string, avatar: {type: 'emoji' | 'url', value: string}, tools: {googleSearch: boolean, codeExecution: boolean, urlContext: boolean}}.
+Only include fields that need changing in "personaUpdate".
+If the user's request is creative (e.g., "make it a pirate") and the current persona state has empty fields like "bio" or "avatar", you MUST creatively generate appropriate content for them.
+The "explanation" key holds a short, conversational string explaining what changes you made.
+Example Response:
+{"personaUpdate": {"name": "Salty Dog", "bio": "A swashbuckling pirate captain, smells of rum.", "systemPrompt": "You are a pirate AI...", "avatar": {"type": "emoji", "value": "🏴‍☠️"}}, "explanation": "Aye, I've updated the persona to be a swashbuckling pirate captain for ye, complete with a new bio and a proper flag!"}`;
+    
+    const prompt = `Current Persona State: ${JSON.stringify(currentPersona)}\n\nUser Request: "${request}"\n\nGenerate the JSON update object:`;
+    
+    const response = await ai.models.generateContent({
+      model: model,
+      contents: prompt,
+      config: {
+        systemInstruction,
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            personaUpdate: {
+              type: Type.OBJECT,
+              properties: {
+                name: { type: Type.STRING, nullable: true },
+                bio: { type: Type.STRING, nullable: true },
+                systemPrompt: { type: Type.STRING, nullable: true },
+                avatar: { type: Type.OBJECT, nullable: true, properties: { type: { type: Type.STRING, enum: ['emoji', 'url'] }, value: { type: Type.STRING } } },
+                tools: { type: Type.OBJECT, nullable: true, properties: { googleSearch: { type: Type.BOOLEAN }, codeExecution: { type: Type.BOOLEAN }, urlContext: { type: Type.BOOLEAN } } }
+              }
+            },
+            explanation: {
+                type: Type.STRING,
+                description: "A short, conversational explanation of the changes made."
+            }
+          },
+          required: ['personaUpdate', 'explanation']
+        }
+      }
+    });
+    
+    return JSON.parse(response.text.trim());
+  } catch (error) {
+    console.error("Error generating persona update:", error);
+    throw error;
   }
 }

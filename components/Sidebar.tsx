@@ -23,10 +23,11 @@ interface SidebarProps {
   onDeleteFolder: (id: string) => void;
   onMoveChatToFolder: (chatId: string, folderId: string | null) => void;
   onOpenSettings: () => void;
+  onOpenPersonas: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = (props) => {
-  const { chats, folders, activeChatId, onSelectChat, onNewChat, onDeleteChat, onEditChat, isCollapsed, onToggleCollapse, isMobileSidebarOpen, onToggleMobileSidebar, searchQuery, onSetSearchQuery, onNewFolder, onEditFolder, onDeleteFolder, onMoveChatToFolder, onOpenSettings } = props;
+  const { chats, folders, activeChatId, onSelectChat, onNewChat, onDeleteChat, onEditChat, isCollapsed, onToggleCollapse, isMobileSidebarOpen, onToggleMobileSidebar, searchQuery, onSetSearchQuery, onNewFolder, onEditFolder, onDeleteFolder, onMoveChatToFolder, onOpenSettings, onOpenPersonas } = props;
   const { t } = useLocalization();
   
   const [deletingFolderId, setDeletingFolderId] = useState<string | null>(null);
@@ -140,6 +141,10 @@ export const Sidebar: React.FC<SidebarProps> = (props) => {
         </div>
         
         <div className="mt-auto pt-2">
+            <button onClick={onOpenPersonas} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-[var(--radius-2xl)] text-[var(--text-color)] hover:bg-black/10 dark:hover:bg-white/10" data-tooltip={t('personas')} data-tooltip-placement="right">
+                <Icon icon="users" className="w-5 h-5" />
+                <span className="font-semibold">{t('personas')}</span>
+            </button>
             <button onClick={onOpenSettings} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-[var(--radius-2xl)] text-[var(--text-color)] hover:bg-black/10 dark:hover:bg-white/10" data-tooltip={t('settings')} data-tooltip-placement="right">
                 <Icon icon="settings" className="w-5 h-5" />
                 <span className="font-semibold">{t('settings')}</span>

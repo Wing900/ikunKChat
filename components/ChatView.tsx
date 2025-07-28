@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { ChatSession, Message, MessageRole, Settings } from '../types';
+import { ChatSession, Message, MessageRole, Settings, Persona } from '../types';
 import { Icon } from './Icon';
 import { ModelSelector } from './ModelSelector';
 import { WelcomeView } from './WelcomeView';
@@ -10,6 +10,7 @@ import { useLocalization } from '../contexts/LocalizationContext';
 
 interface ChatViewProps {
   chatSession: ChatSession | null;
+  personas: Persona[];
   onSendMessage: (message: string, files: File[], toolConfig: any) => void;
   isLoading: boolean;
   onCancelGeneration: () => void;
@@ -32,17 +33,19 @@ interface ChatViewProps {
 }
 
 export const ChatView: React.FC<ChatViewProps> = (props) => {
-  const { chatSession, onSendMessage, isLoading, onCancelGeneration, currentModel, onSetCurrentModel, onSetModelForActiveChat, availableModels, isSidebarCollapsed, onToggleSidebar, onToggleMobileSidebar, onNewChat, onImageClick, suggestedReplies, settings, onDeleteMessage, onUpdateMessageContent, onRegenerate, onEditAndResubmit, onShowCitations } = props;
+  const { chatSession, personas, onSendMessage, isLoading, onCancelGeneration, currentModel, onSetCurrentModel, onSetModelForActiveChat, availableModels, isSidebarCollapsed, onToggleSidebar, onToggleMobileSidebar, onNewChat, onImageClick, suggestedReplies, settings, onDeleteMessage, onUpdateMessageContent, onRegenerate, onEditAndResubmit, onShowCitations } = props;
   const { t } = useLocalization();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [messagesToDisplay, setMessagesToDisplay] = useState<Message[] | null>([]);
   const prevChatIdRef = useRef<string | null | undefined>(undefined);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
 
+  const activePersona = chatSession?.personaId ? personas.find(p => p.id === chatSession.personaId) : null;
+
   const getDefaultToolConfig = useCallback(() => ({
     codeExecution: false,
     googleSearch: false, // The UI switch should start OFF by default.
-    urlContext: { enabled: false, url: '' },
+    urlContext: false,
   }), []);
   
   const [toolConfig, setToolConfig] = useState(getDefaultToolConfig());
@@ -78,7 +81,7 @@ export const ChatView: React.FC<ChatViewProps> = (props) => {
     const suggestionToolConfig = {
         codeExecution: false,
         googleSearch: settings.defaultSearch,
-        urlContext: { enabled: false, url: '' },
+        urlContext: false,
     };
     onSendMessage(suggestion, [], suggestionToolConfig);
   };
@@ -128,7 +131,7 @@ export const ChatView: React.FC<ChatViewProps> = (props) => {
             {messagesToDisplay === null ? (
               <div className="flex justify-center items-center h-full"><div className="w-8 h-8 border-4 border-[var(--glass-border)] border-t-[var(--accent-color)] rounded-full animate-spin"></div></div>
             ) : (
-              messagesToDisplay.map((msg, index) => (<MessageBubble key={msg.id} message={msg} index={index} onImageClick={onImageClick} settings={settings} isLastMessageLoading={isLoading && index === messagesToDisplay.length - 1} isEditing={editingMessageId === msg.id} onEditRequest={() => setEditingMessageId(msg.id)} onCancelEdit={() => setEditingMessageId(null)} onSaveEdit={handleSaveEdit} onDelete={onDeleteMessage} onRegenerate={onRegenerate} onCopy={handleCopy} onShowCitations={onShowCitations} />))
+              messagesToDisplay.map((msg, index) => (<MessageBubble key={msg.id} message={msg} index={index} onImageClick={onImageClick} settings={settings} persona={activePersona} isLastMessageLoading={isLoading && index === messagesToDisplay.length - 1} isEditing={editingMessageId === msg.id} onEditRequest={() => setEditingMessageId(msg.id)} onCancelEdit={() => setEditingMessageId(null)} onSaveEdit={handleSaveEdit} onDelete={onDeleteMessage} onRegenerate={onRegenerate} onCopy={handleCopy} onShowCitations={onShowCitations} />))
             )}
             <div ref={messagesEndRef} />
         </div>

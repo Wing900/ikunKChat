@@ -1,5 +1,7 @@
 
 
+
+
 export enum MessageRole {
   USER = 'user',
   MODEL = 'model',
@@ -28,6 +30,24 @@ export interface Folder {
   createdAt: number;
 }
 
+export interface Persona {
+  id: string;
+  isDefault?: boolean;
+  name: string;
+  avatar: {
+    type: 'emoji' | 'url' | 'base64';
+    value: string;
+  };
+  bio: string;
+  systemPrompt: string;
+  tools: {
+    googleSearch: boolean;
+    codeExecution: boolean;
+    urlContext: boolean;
+  };
+  isNew?: boolean;
+}
+
 export interface ChatSession {
   id:string;
   title: string;
@@ -36,13 +56,7 @@ export interface ChatSession {
   messages: Message[];
   createdAt: number;
   folderId: string | null;
-}
-
-export interface CustomSystemPrompt {
-  nickname: string;
-  persona: string;
-  behavior: string;
-  rules: string;
+  personaId?: string | null;
 }
 
 export interface Settings {
@@ -54,8 +68,7 @@ export interface Settings {
   suggestionModel: string;
   autoTitleGeneration: boolean;
   titleGenerationModel: string;
-  useCustomSystemPrompt: boolean;
-  customSystemPrompt: CustomSystemPrompt;
+  personaBuilderModel: string;
   defaultSearch: boolean;
   showThoughts: boolean;
 }

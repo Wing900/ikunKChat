@@ -67,17 +67,19 @@ Since this project is built with modern web technologies and uses CDN-based depe
 
 1.  Clone the repo
     ```sh
-    git clone https://github.com/your-username/kchat.git
+    git clone https://github.com/KuekHaoYang/KChat
     cd kchat
     ```
-2.  Serve the project
-    *   You can use a simple local web server. If you have Node.js installed, you can use `serve`:
+2. Install NPM packages
     ```sh
-    npx serve
+    npm install
     ```
-    *   Alternatively, you can use a browser extension like "Live Server" for VS Code.
+ 3.  Start the development server:
+    ```sh
+   npm run dev
+    ```
 
-3.  Open the application in your browser (e.g., `http://localhost:3000`).
+Then navigate to the local address provided in your terminal (e.g., `http://localhost:5173`) in your browser.
 
 ## Usage
 
@@ -107,7 +109,3 @@ Please refer to the project's issue tracker for ways to contribute. If you have 
 ## License
 
 Distributed under the MIT License. See `LICENSE` for more information.
-
-## Contact
-
-Project Link: [https://github.com/your-username/kchat](https://github.com/your-username/kchat)

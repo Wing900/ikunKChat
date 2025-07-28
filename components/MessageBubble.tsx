@@ -1,15 +1,24 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Message, MessageRole, Settings } from '../types';
+import { Message, MessageRole, Settings, Persona } from '../types';
 import { Icon } from './Icon';
 import { CitationPanel } from './CitationPanel';
 import { MarkdownRenderer } from './MarkdownRenderer';
 import { useLocalization } from '../contexts/LocalizationContext';
+
+const PersonaAvatar: React.FC<{ avatar: Persona['avatar'] }> = ({ avatar }) => {
+  if (avatar.type === 'emoji') {
+    return <span className="text-xl flex items-center justify-center w-full h-full">{avatar.value}</span>;
+  }
+  return <img src={avatar.value} alt="persona avatar" className="w-full h-full object-cover" />;
+};
+
 
 interface MessageBubbleProps {
     message: Message;
     index: number;
     onImageClick: (src: string) => void;
     settings: Settings;
+    persona: Persona | null;
     isLastMessageLoading?: boolean;
     isEditing: boolean;
     onEditRequest: () => void;
@@ -65,7 +74,7 @@ const MessageActions: React.FC<{
 };
 
 export const MessageBubble: React.FC<MessageBubbleProps> = (props) => {
-  const { message, index, onImageClick, settings, isLastMessageLoading, isEditing, onEditRequest, onCancelEdit, onSaveEdit, onDelete, onRegenerate, onCopy, onShowCitations } = props;
+  const { message, index, onImageClick, settings, persona, isLastMessageLoading, isEditing, onEditRequest, onCancelEdit, onSaveEdit, onDelete, onRegenerate, onCopy, onShowCitations } = props;
   const { t } = useLocalization();
   const isUser = message.role === MessageRole.USER;
   const hasContent = message.content && message.content !== '...';
@@ -116,7 +125,11 @@ export const MessageBubble: React.FC<MessageBubbleProps> = (props) => {
       className={`message-row group flex items-start gap-3 mt-4 relative ${isUser ? 'justify-end' : 'justify-start'} ${isBeingDeleted ? 'deleting' : ''}`}
       style={{ animationDelay: `${Math.min(index * 100, 500)}ms` }}
     >
-      {!isUser && <div className="w-8 h-8 flex-shrink-0 rounded-full bg-[var(--accent-color)] flex items-center justify-center text-white"><Icon icon="kchat" className="w-5 h-5"/></div>}
+      {!isUser && (
+        <div className="w-8 h-8 flex-shrink-0 rounded-full bg-[var(--accent-color)] flex items-center justify-center text-white overflow-hidden">
+          {persona ? <PersonaAvatar avatar={persona.avatar} /> : <Icon icon="kchat" className="w-5 h-5"/>}
+        </div>
+      )}
       
       <div className={`flex flex-col ${isUser ? 'items-end' : 'items-start'}`}>
         <div

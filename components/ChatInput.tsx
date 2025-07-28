@@ -1,3 +1,5 @@
+
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Icon } from './Icon';
 import { useLocalization } from '../contexts/LocalizationContext';
@@ -118,13 +120,14 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isLoading, 
     }
   }
   
-  const handleToolChange = (tool: string, value: boolean) => {
-      const newConfig = {...toolConfig};
-      if (tool === 'codeExecution' && value) newConfig.urlContext.enabled = false;
-      if (tool === 'urlContext' && value) newConfig.codeExecution = false;
-
-      if(tool === 'urlContext') newConfig.urlContext.enabled = value;
-      else newConfig[tool] = value;
+  const handleToolChange = (tool: string, value: any) => {
+      const newConfig = {...toolConfig, [tool]: value};
+      
+      if(tool === 'urlContext' && value) {
+        newConfig.codeExecution = false;
+      } else if (tool === 'codeExecution' && value) {
+        newConfig.urlContext = false;
+      }
       
       onToolConfigChange(newConfig);
   }
@@ -132,9 +135,9 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isLoading, 
   return (
     <form onSubmit={handleSubmit} className="p-2 pt-0 flex flex-col relative">
         <div ref={toolsWrapperRef} className={`tool-selector-options glass-pane ${isToolsOpen ? 'visible' : ''}`}>
-            <ToolItem icon="code" label={t('codeExecution')} checked={toolConfig.codeExecution} onChange={e => handleToolChange('codeExecution', e.target.checked)} disabled={toolConfig.urlContext.enabled} />
+            <ToolItem icon="code" label={t('codeExecution')} checked={toolConfig.codeExecution} onChange={e => handleToolChange('codeExecution', e.target.checked)} disabled={toolConfig.urlContext} />
             <ToolItem icon="search" label={t('googleSearch')} checked={toolConfig.googleSearch} onChange={e => handleToolChange('googleSearch', e.target.checked)} />
-            <ToolItem icon="link" label={t('urlContext')} checked={toolConfig.urlContext.enabled} onChange={e => handleToolChange('urlContext', e.target.checked)} disabled={toolConfig.codeExecution} />
+            <ToolItem icon="link" label={t('urlContext')} checked={toolConfig.urlContext} onChange={e => handleToolChange('urlContext', e.target.checked)} disabled={toolConfig.codeExecution} />
         </div>
 
         <div className="glass-pane rounded-[var(--radius-2xl)] flex flex-col transition-all duration-300 focus-within:border-[var(--accent-color)] focus-within:ring-2 ring-[var(--accent-color)]">

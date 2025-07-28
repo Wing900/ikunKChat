@@ -438,6 +438,29 @@ body.drawer-open .drawer {
     color: var(--text-color-secondary);
 }
 
+/* --- View Transition --- */
+.view-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+.view-container {
+  position: absolute;
+  inset: 0;
+  transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+}
+.view-container:not(.active) {
+  opacity: 0;
+  transform: scale(0.98);
+  pointer-events: none;
+}
+.view-container.exiting {
+  opacity: 0;
+  transform: scale(1.02);
+  pointer-events: none;
+}
+
+
 /* Animation Keyframes */
 @keyframes message-in {
   from { opacity: 0; transform: translateY(15px) scale(0.95); }
@@ -1001,6 +1024,188 @@ body.drawer-open .drawer {
 .message-row.deleting {
   transform-origin: center;
   animation: message-out 0.35s ease-out forwards;
+}
+
+/* --- Personas / Roles View --- */
+.personas-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+@keyframes card-in {
+  from { opacity: 0; transform: translateY(20px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0px) scale(1); }
+}
+.persona-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: var(--glass-bg);
+  border-radius: var(--radius-2xl);
+  border: 1px solid var(--glass-border);
+  padding: 1.5rem;
+  transition: all 0.3s ease-out;
+  opacity: 0;
+  animation: card-in 0.4s var(--transition-fluid) forwards;
+}
+.persona-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px var(--shadow-color);
+  border-color: var(--accent-color);
+}
+.persona-card-actions {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  display: flex;
+  gap: 0.25rem;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  background-color: color-mix(in srgb, var(--glass-bg) 70%, transparent);
+  border-radius: var(--radius-full);
+  padding: 0.25rem;
+}
+.persona-card:hover .persona-card-actions {
+  opacity: 1;
+}
+.persona-card-new {
+  border-style: dashed;
+  cursor: pointer;
+  background: transparent;
+}
+.persona-card-new:hover {
+  border-color: var(--accent-color);
+  color: var(--accent-color);
+}
+
+@keyframes card-out {
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to { opacity: 0; transform: translateY(20px) scale(0.95); }
+}
+.persona-card.deleting {
+  animation: card-out 0.4s ease-out forwards;
+  pointer-events: none;
+}
+
+/* --- Persona Editor --- */
+.persona-editor-container {
+    display: flex;
+    height: 100%;
+    background: var(--glass-bg);
+    border-radius: var(--radius-2xl);
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+}
+.persona-editor-form-pane {
+    flex: 60%;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    padding: 1.5rem;
+    border-right: 1px solid var(--glass-border);
+}
+.persona-editor-builder-pane {
+    flex: 40%;
+    min-width: 0;
+}
+.persona-editor-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    flex-shrink: 0;
+}
+.persona-editor-header h2 {
+    font-size: 1.75rem;
+    font-weight: 700;
+}
+.persona-editor-scroll-area {
+    flex-grow: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem; /* Increased gap for better spacing */
+    padding-right: 1rem;
+    margin-right: -1rem;
+}
+.persona-editor-scroll-area .form-group label {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+.persona-editor-scroll-area textarea {
+    min-height: 120px;
+    resize: vertical;
+}
+
+/* --- AI Builder --- */
+.persona-editor-builder {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 1.5rem;
+}
+.builder-chat-area {
+  flex-grow: 1;
+  overflow-y: auto;
+  margin-bottom: 1rem;
+}
+.builder-message {
+  padding: 0.65rem 1rem;
+  border-radius: var(--radius-2xl);
+  max-width: 85%;
+  margin-bottom: 0.75rem;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  animation: message-in 0.4s var(--transition-fluid) backwards;
+}
+.builder-message.user {
+  background-color: var(--accent-color);
+  color: white;
+  margin-left: auto;
+  border-bottom-right-radius: 0.5rem;
+}
+.builder-message.model {
+  background-color: var(--model-bubble-bg);
+  margin-right: auto;
+  border-bottom-left-radius: 0.5rem;
+}
+.applying-changes {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-style: italic;
+  color: var(--text-color-secondary);
+}
+.applying-changes .spinner-sm {
+  width: 1rem; height: 1rem;
+  border: 2px solid var(--glass-border);
+  border-top-color: var(--accent-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+@keyframes spin { 100% { transform: rotate(360deg); } }
+.builder-welcome {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    height: 100%;
+    color: var(--text-color-secondary);
+    padding: 2rem;
+}
+.builder-welcome .w-12 {
+    width: 3rem;
+    height: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+.builder-welcome h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-color);
+    margin-bottom: 0.5rem;
 }
 
 /* --- Markdown Content Styling --- */

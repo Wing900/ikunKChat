@@ -67,29 +67,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = (props) => {
                 <button onClick={() => onSettingsChange({ theme: 'dark' })} className={`p-2 rounded-full transition-colors ${settings.theme === 'dark' ? 'bg-[var(--accent-color)] text-white' : 'hover:bg-black/20'}`}><Icon icon="moon" className="w-5 h-5" /></button>
             </div>
           </SettingsItem>
-
-          <h3 className="settings-section-title">{t('systemPrompt')}</h3>
-          <SettingsItem label={t('enableCustomPrompt')} description={t('enableCustomPromptDesc')}>
-            <SwitchControl checked={settings.useCustomSystemPrompt} onChange={e => onSettingsChange({ useCustomSystemPrompt: e.target.checked })} />
-          </SettingsItem>
-          <div className={`collapsible-section ${settings.useCustomSystemPrompt ? 'expanded' : ''}`}>
-            <div>
-              <div className="pl-4 border-l-2 border-[var(--accent-color)]/30 mt-2 flex flex-col gap-4">
-                <SettingsItem label={t('promptNickname')} description={t('promptNicknameDesc')}>
-                    <input type="text" value={settings.customSystemPrompt.nickname} onChange={e => onSettingsChange({ customSystemPrompt: { ...settings.customSystemPrompt, nickname: e.target.value }})} className="input-glass max-w-60" placeholder={t('promptNicknamePlaceholder')} />
-                </SettingsItem>
-                <SettingsItem label={t('promptPersona')} description={t('promptPersonaDesc')}>
-                    <textarea value={settings.customSystemPrompt.persona} onChange={e => onSettingsChange({ customSystemPrompt: { ...settings.customSystemPrompt, persona: e.target.value }})} className="input-glass max-w-60" rows={2} placeholder={t('promptPersonaPlaceholder')} />
-                </SettingsItem>
-                <SettingsItem label={t('promptBehavior')} description={t('promptBehaviorDesc')}>
-                    <textarea value={settings.customSystemPrompt.behavior} onChange={e => onSettingsChange({ customSystemPrompt: { ...settings.customSystemPrompt, behavior: e.target.value }})} className="input-glass max-w-60" rows={2} placeholder={t('promptBehaviorPlaceholder')} />
-                </SettingsItem>
-                <SettingsItem label={t('promptRules')} description={t('promptRulesDesc')}>
-                    <textarea value={settings.customSystemPrompt.rules} onChange={e => onSettingsChange({ customSystemPrompt: { ...settings.customSystemPrompt, rules: e.target.value }})} className="input-glass max-w-60" rows={2} placeholder={t('promptRulesPlaceholder')} />
-                </SettingsItem>
-              </div>
-            </div>
-          </div>
           
           <h3 className="settings-section-title">{t('model')}</h3>
           <SettingsItem label={t('apiKey')} description={t('apiKeyDesc')}>
@@ -112,6 +89,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = (props) => {
           </SettingsItem>
           <SettingsItem label={t('suggestionModel')} description={t('suggestionModelDesc')} isDisabled={!settings.showSuggestions}>
             <CustomSelect options={modelOptions} selectedValue={settings.suggestionModel} onSelect={(value) => onSettingsChange({ suggestionModel: value })} className="w-48" disabled={!settings.showSuggestions} />
+          </SettingsItem>
+          <SettingsItem label={t('personaBuilderModel')} description={t('personaBuilderModelDesc')}>
+            <CustomSelect options={modelOptions} selectedValue={settings.personaBuilderModel} onSelect={(value) => onSettingsChange({ personaBuilderModel: value })} className="w-48" />
           </SettingsItem>
           
           <h3 className="settings-section-title">{t('dataManagement')}</h3>

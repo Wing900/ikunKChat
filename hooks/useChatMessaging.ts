@@ -1,19 +1,20 @@
 
 
 import { useState, useCallback, useRef } from 'react';
-import { ChatSession, Message, MessageRole, Settings, FileAttachment } from '../types';
+import { ChatSession, Message, MessageRole, Settings, Persona, FileAttachment } from '../types';
 import { sendMessageStream, generateChatDetails, generateSuggestedReplies } from '../services/geminiService';
 import { fileToData } from '../utils/fileUtils';
 
 interface UseChatMessagingProps {
   settings: Settings;
   activeChat: ChatSession | null;
+  personas: Persona[];
   setChats: React.Dispatch<React.SetStateAction<ChatSession[]>>;
   setSuggestedReplies: React.Dispatch<React.SetStateAction<string[]>>;
   setActiveChatId: React.Dispatch<React.SetStateAction<string | null>>;
 }
 
-export const useChatMessaging = ({ settings, activeChat, setChats, setSuggestedReplies, setActiveChatId }: UseChatMessagingProps) => {
+export const useChatMessaging = ({ settings, activeChat, personas, setChats, setSuggestedReplies, setActiveChatId }: UseChatMessagingProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const isCancelledRef = useRef(false);
 
@@ -22,13 +23,19 @@ export const useChatMessaging = ({ settings, activeChat, setChats, setSuggestedR
     setIsLoading(false); 
   }, []);
 
-  const _initiateStream = useCallback(async (chatId: string, historyForAPI: Message[], toolConfig: any) => {
+  const _initiateStream = useCallback(async (chatId: string, historyForAPI: Message[], toolConfig: any, personaId: string | null | undefined) => {
     const apiKey = settings.apiKey || process.env.API_KEY;
     if (!apiKey) { alert("Please set your Gemini API key in Settings."); return; }
 
     isCancelledRef.current = false;
     setIsLoading(true);
     setSuggestedReplies([]);
+
+    const chatSession = activeChat && activeChat.id === chatId 
+        ? activeChat 
+        : { id: chatId, messages: historyForAPI, model: settings.defaultModel, personaId, title: "New Chat", createdAt: Date.now(), folderId: null };
+
+    const activePersona = chatSession.personaId ? personas.find(p => p.id === chatSession.personaId) : null;
 
     const lastUserMessage = [...historyForAPI].reverse().find(m => m.role === MessageRole.USER);
     const promptContent = lastUserMessage?.content || '';
@@ -41,9 +48,9 @@ export const useChatMessaging = ({ settings, activeChat, setChats, setSuggestedR
     let accumulatedThoughts = "";
     let finalGroundingMetadata: any = null;
     try {
-      const currentModel = activeChat?.model || settings.defaultModel;
+      const currentModel = chatSession.model;
       const effectiveToolConfig = { ...toolConfig, showThoughts: settings.showThoughts };
-      const stream = sendMessageStream(apiKey, historyForAPI.slice(0, -1), promptContent, promptAttachments, currentModel, settings, effectiveToolConfig);
+      const stream = sendMessageStream(apiKey, historyForAPI.slice(0, -1), promptContent, promptAttachments, currentModel, settings, effectiveToolConfig, activePersona);
       
       for await (const chunk of stream) {
         if(isCancelledRef.current) break;
@@ -80,17 +87,20 @@ export const useChatMessaging = ({ settings, activeChat, setChats, setSuggestedR
         }
       }
     }
-  }, [settings, setChats, activeChat?.model, setSuggestedReplies]);
+  }, [settings, setChats, activeChat, personas, setSuggestedReplies]);
 
   const handleSendMessage = useCallback(async (content: string, files: File[] = [], toolConfig: any) => {
     const attachments = await Promise.all(files.map(fileToData));
+      
     const userMessage: Message = { id: crypto.randomUUID(), role: MessageRole.USER, content: content, timestamp: Date.now(), attachments };
     
     let currentChatId = activeChat?.id;
-    let history: Message[] = [];
+    let history: Message[];
+    let currentPersonaId = activeChat?.personaId;
 
     if (!currentChatId) {
-      const newChat: ChatSession = { id: crypto.randomUUID(), title: content.substring(0, 40) || "New Chat", icon: "💬", messages: [userMessage], createdAt: Date.now(), model: settings.defaultModel, folderId: null };
+      currentPersonaId = null;
+      const newChat: ChatSession = { id: crypto.randomUUID(), title: content.substring(0, 40) || "New Chat", icon: "💬", messages: [userMessage], createdAt: Date.now(), model: settings.defaultModel, folderId: null, personaId: null };
       currentChatId = newChat.id;
       history = newChat.messages;
       setChats(prev => [newChat, ...prev]);
@@ -105,7 +115,7 @@ export const useChatMessaging = ({ settings, activeChat, setChats, setSuggestedR
       history = [...(activeChat?.messages || []), userMessage];
       setChats(prev => prev.map(c => c.id === currentChatId ? { ...c, messages: [...c.messages, userMessage] } : c));
     }
-    await _initiateStream(currentChatId, history, toolConfig);
+    await _initiateStream(currentChatId, history, toolConfig, currentPersonaId);
   }, [activeChat, settings, setChats, setActiveChatId, _initiateStream]);
 
   const handleDeleteMessage = useCallback((messageId: string) => {
@@ -155,8 +165,8 @@ export const useChatMessaging = ({ settings, activeChat, setChats, setSuggestedR
 
     if (historyForResubmit.length > 0) {
         setChats(prev => prev.map(c => c.id === chatId ? { ...c, messages: historyForResubmit } : c));
-        const toolConfig = { codeExecution: false, googleSearch: settings.defaultSearch, urlContext: { enabled: false, url: '' } };
-        _initiateStream(chatId, historyForResubmit, toolConfig);
+        const toolConfig = { codeExecution: false, googleSearch: settings.defaultSearch, urlContext: false };
+        _initiateStream(chatId, historyForResubmit, toolConfig, activeChat.personaId);
     }
   }, [activeChat, isLoading, settings.defaultSearch, setChats, _initiateStream]);
 
@@ -175,8 +185,8 @@ export const useChatMessaging = ({ settings, activeChat, setChats, setSuggestedR
 
     if (historyForResubmit.length > 0) {
         setChats(prev => prev.map(c => c.id === chatId ? { ...c, messages: historyForResubmit } : c));
-        const toolConfig = { codeExecution: false, googleSearch: settings.defaultSearch, urlContext: { enabled: false, url: '' } };
-        _initiateStream(chatId, historyForResubmit, toolConfig);
+        const toolConfig = { codeExecution: false, googleSearch: settings.defaultSearch, urlContext: false };
+        _initiateStream(chatId, historyForResubmit, toolConfig, activeChat.personaId);
     }
   }, [activeChat, isLoading, settings.defaultSearch, setChats, _initiateStream]);
 
