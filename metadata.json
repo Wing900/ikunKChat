@@ -1,0 +1,6 @@
+{
+  "name": "KChat",
+  "description": "An AI-powered chat application featuring a fluid, glass-morphism interface and persistent conversation history, built with React and Gemini.",
+  "requestFramePermissions": [],
+  "prompt": ""
+}

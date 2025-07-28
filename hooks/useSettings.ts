@@ -1,0 +1,69 @@
+import { useState, useEffect } from 'react';
+import { Settings } from '../types';
+import { useLocalization } from '../contexts/LocalizationContext';
+import { getAvailableModels } from '../services/modelService';
+import { loadSettings, saveSettings } from '../services/storageService';
+
+const defaultSettings: Settings = {
+  theme: 'light',
+  language: 'en',
+  apiKey: null,
+  showSuggestions: true,
+  defaultModel: 'gemini-2.5-flash',
+  suggestionModel: 'gemini-2.5-flash',
+  autoTitleGeneration: true,
+  titleGenerationModel: 'gemini-2.5-flash',
+  useCustomSystemPrompt: false,
+  customSystemPrompt: {
+    nickname: '',
+    persona: '',
+    behavior: '',
+    rules: '',
+  },
+  defaultSearch: true,
+  showThoughts: true,
+};
+
+export const useSettings = () => {
+  const [settings, setSettings] = useState<Settings>(defaultSettings);
+  const [availableModels, setAvailableModels] = useState<string[]>(['gemini-2.5-flash', 'gemini-2.5-flash-lite']);
+  const [isStorageLoaded, setIsStorageLoaded] = useState(false);
+  const { setLanguage } = useLocalization();
+
+  useEffect(() => {
+    const loadedSettings = loadSettings();
+    const initialSettings = { ...defaultSettings, ...loadedSettings };
+    if (!loadedSettings && window.matchMedia?.('(prefers-color-scheme: dark)').matches) {
+      initialSettings.theme = 'dark';
+    }
+    setSettings(initialSettings);
+    setLanguage(initialSettings.language);
+    setIsStorageLoaded(true);
+  }, [setLanguage]);
+
+  useEffect(() => {
+    if (!isStorageLoaded) return;
+    saveSettings(settings);
+    document.body.classList.toggle('dark-mode', settings.theme === 'dark');
+    setLanguage(settings.language);
+  }, [settings, isStorageLoaded, setLanguage]);
+
+  useEffect(() => {
+    const apiKey = settings.apiKey || process.env.API_KEY;
+    if (isStorageLoaded && apiKey) {
+      getAvailableModels(apiKey).then(models => {
+        if (!models || models.length === 0) return;
+        setAvailableModels(models);
+        setSettings(current => {
+          const newDefaults: Partial<Settings> = {};
+          if (!models.includes(current.defaultModel)) newDefaults.defaultModel = models[0];
+          if (!models.includes(current.suggestionModel)) newDefaults.suggestionModel = models[0];
+          if (!models.includes(current.titleGenerationModel)) newDefaults.titleGenerationModel = models[0];
+          return Object.keys(newDefaults).length > 0 ? { ...current, ...newDefaults } : current;
+        });
+      });
+    }
+  }, [isStorageLoaded, settings.apiKey]);
+
+  return { settings, setSettings, availableModels, isStorageLoaded };
+};
