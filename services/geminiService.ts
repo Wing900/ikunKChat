@@ -36,7 +36,7 @@ function getChat(apiKey: string, history: Message[], model: string, settings: Se
     return { role: msg.role, parts: parts };
   });
 
-  let systemInstruction = persona?.systemPrompt || 'You are KChat, a helpful and friendly AI assistant. Keep your responses concise and informative.';
+  let systemInstruction = persona?.systemPrompt || '';
   
   const useGoogleSearch = persona?.tools.googleSearch || settings.defaultSearch;
   const useCodeExecution = toolConfig.codeExecution || persona?.tools.codeExecution;
