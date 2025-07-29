@@ -1,8 +1,10 @@
 
 
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Icon } from './Icon';
 import { useLocalization } from '../contexts/LocalizationContext';
+import { Switch } from './Switch';
 
 interface ChatInputProps {
   onSendMessage: (message: string, files: File[]) => void;
@@ -23,7 +25,7 @@ const ToolItem: React.FC<{icon: any, label: string, checked: boolean, onChange: 
             <Icon icon={icon} className="w-5 h-5" />
             <span className="font-semibold">{label}</span>
         </div>
-        <label className="switch"><input type="checkbox" checked={checked} onChange={onChange} disabled={disabled} /><span className="switch-slider"></span></label>
+        <Switch checked={checked} onChange={onChange} disabled={disabled} />
     </div>
 );
 

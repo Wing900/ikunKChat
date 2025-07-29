@@ -5,6 +5,7 @@ import { CustomSelect, SelectOption } from './CustomSelect';
 import { useLocalization } from '../contexts/LocalizationContext';
 import { formatModelName } from '../utils/textUtils';
 import { SettingsItem } from './SettingsItem';
+import { Switch } from './Switch';
 
 interface SettingsModalProps {
   settings: Settings;
@@ -41,9 +42,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = (props) => {
   const handleFileImport = (e: React.ChangeEvent<HTMLInputElement>) => { if (e.target.files?.[0]) onImport(e.target.files[0]); };
   const handleClear = () => { if (window.confirm(t('clearHistoryConfirm'))) { onClearAll(); } };
   
-  const SwitchControl: React.FC<{checked: boolean, onChange: (e: React.ChangeEvent<HTMLInputElement>) => void}> = ({ checked, onChange}) => (
-    <label className="switch"><input type="checkbox" checked={checked} onChange={onChange} /><span className="switch-slider"></span></label>
-  );
 
   return (
     <>
@@ -73,19 +71,19 @@ export const SettingsModal: React.FC<SettingsModalProps> = (props) => {
             <input type="password" value={settings.apiKey || ''} onChange={e => onSettingsChange({ apiKey: e.target.value })} disabled={isApiKeySetByEnv} placeholder={isApiKeySetByEnv ? t('apiKeyEnvVar') : t('apiKeyPlaceholder')} className="input-glass max-w-60"/>
           </SettingsItem>
           <SettingsItem label={t('showThoughts')} description={t('showThoughtsDesc')}>
-            <SwitchControl checked={settings.showThoughts} onChange={e => onSettingsChange({ showThoughts: e.target.checked })} />
+            <Switch size="sm" checked={settings.showThoughts} onChange={e => onSettingsChange({ showThoughts: e.target.checked })} />
           </SettingsItem>
           <SettingsItem label={t('defaultSearch')} description={t('defaultSearchDesc')}>
-            <SwitchControl checked={settings.defaultSearch} onChange={e => onSettingsChange({ defaultSearch: e.target.checked })} />
+            <Switch size="sm" checked={settings.defaultSearch} onChange={e => onSettingsChange({ defaultSearch: e.target.checked })} />
           </SettingsItem>
           <SettingsItem label={t('autoTitleGeneration')} description={t('autoTitleGenerationDesc')}>
-            <SwitchControl checked={settings.autoTitleGeneration} onChange={e => onSettingsChange({ autoTitleGeneration: e.target.checked })} />
+            <Switch size="sm" checked={settings.autoTitleGeneration} onChange={e => onSettingsChange({ autoTitleGeneration: e.target.checked })} />
           </SettingsItem>
           <SettingsItem label={t('titleGenModel')} description={t('titleGenModelDesc')} isDisabled={!settings.autoTitleGeneration}>
             <CustomSelect options={modelOptions} selectedValue={settings.titleGenerationModel} onSelect={(value) => onSettingsChange({ titleGenerationModel: value })} className="w-48" disabled={!settings.autoTitleGeneration}/>
           </SettingsItem>
           <SettingsItem label={t('suggestions')} description={t('suggestionsDesc')}>
-            <SwitchControl checked={settings.showSuggestions} onChange={e => onSettingsChange({ showSuggestions: e.target.checked })} />
+            <Switch size="sm" checked={settings.showSuggestions} onChange={e => onSettingsChange({ showSuggestions: e.target.checked })} />
           </SettingsItem>
           <SettingsItem label={t('suggestionModel')} description={t('suggestionModelDesc')} isDisabled={!settings.showSuggestions}>
             <CustomSelect options={modelOptions} selectedValue={settings.suggestionModel} onSelect={(value) => onSettingsChange({ suggestionModel: value })} className="w-48" disabled={!settings.showSuggestions} />

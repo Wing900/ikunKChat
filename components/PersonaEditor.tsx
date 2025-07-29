@@ -1,12 +1,15 @@
 
 
 
+
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Persona, Settings } from '../types';
 import { Icon } from './Icon';
 import { useLocalization } from '../contexts/LocalizationContext';
 import { generatePersonaUpdate } from '../services/geminiService';
 import { fileToData } from '../utils/fileUtils';
+import { Switch } from './Switch';
 
 const newPersonaTemplate: Persona = {
   id: '',
@@ -204,15 +207,15 @@ export const PersonaEditor: React.FC<PersonaEditorProps> = ({ personaToEdit, onS
                     <div className="p-3 rounded-[var(--radius-2xl)] glass-pane flex flex-col gap-2">
                         <div className="flex justify-between items-center">
                             <label className="font-medium">{t('googleSearch')}</label>
-                            <label className="switch"><input type="checkbox" checked={persona.tools.googleSearch} onChange={e => handleUpdate({tools: {...persona.tools, googleSearch: e.target.checked}})} /><span className="switch-slider"></span></label>
+                            <Switch size="sm" checked={persona.tools.googleSearch} onChange={e => handleUpdate({tools: {...persona.tools, googleSearch: e.target.checked}})} />
                         </div>
                         <div className="flex justify-between items-center">
                             <label className="font-medium">{t('codeExecution')}</label>
-                            <label className="switch"><input type="checkbox" checked={persona.tools.codeExecution} onChange={e => handleUpdate({tools: { ...persona.tools, codeExecution: e.target.checked }})} /><span className="switch-slider"></span></label>
+                            <Switch size="sm" checked={persona.tools.codeExecution} onChange={e => handleUpdate({tools: { ...persona.tools, codeExecution: e.target.checked }})} />
                         </div>
                         <div className="flex justify-between items-center">
                             <label className="font-medium">{t('urlContext')}</label>
-                            <label className="switch"><input type="checkbox" checked={persona.tools.urlContext} onChange={e => handleUpdate({tools: { ...persona.tools, urlContext: e.target.checked }})} /><span className="switch-slider"></span></label>
+                            <Switch size="sm" checked={persona.tools.urlContext} onChange={e => handleUpdate({tools: { ...persona.tools, urlContext: e.target.checked }})} />
                         </div>
                     </div>
                 </div>
