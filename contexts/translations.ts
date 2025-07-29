@@ -48,6 +48,7 @@ export const translations = {
     title: 'Title',
     cancel: 'Cancel',
     save: 'Save',
+    delete: 'Delete',
     newFolderName: 'New Folder',
     editFolderName: 'Edit Folder',
     folderName: 'Folder Name',
@@ -96,6 +97,11 @@ export const translations = {
     clearHistory: 'Clear All Data',
     clearHistoryDesc: 'Deletes all chats, folders, and settings permanently.',
     clearHistoryConfirm: 'Are you sure you want to delete all data? This action cannot be undone.',
+    // Archive
+    archive: 'Archive',
+    unarchive: 'Unarchive',
+    archivedChats: 'Archived Chats',
+    archiveDesc: 'View and manage archived conversations.',
   },
   zh: {
     // Sidebar
@@ -146,6 +152,7 @@ export const translations = {
     title: '标题',
     cancel: '取消',
     save: '保存',
+    delete: '删除',
     newFolderName: '新文件夹',
     editFolderName: '编辑文件夹',
     folderName: '文件夹名称',
@@ -194,5 +201,10 @@ export const translations = {
     clearHistory: '清除所有数据',
     clearHistoryDesc: '永久删除所有对话、文件夹和设置。',
     clearHistoryConfirm: '您确定要删除所有数据吗？此操作无法撤销。',
+    // Archive
+    archive: '归档',
+    unarchive: '取消归档',
+    archivedChats: '已归档对话',
+    archiveDesc: '查看和管理已归档的对话。',
   },
 };

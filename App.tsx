@@ -8,6 +8,7 @@ import { SettingsModal } from './components/SettingsModal';
 import { CitationDrawer } from './components/CitationDrawer';
 import { RolesView } from './components/RolesView';
 import { PersonaEditor } from './components/PersonaEditor';
+import { ArchiveView } from './components/ArchiveView';
 import { ChatSession, Folder, Settings, Persona } from './types';
 import { LocalizationProvider } from './contexts/LocalizationContext';
 import { useSettings } from './hooks/useSettings';
@@ -16,7 +17,7 @@ import { useChatMessaging } from './hooks/useChatMessaging';
 import { exportData, importData, clearAllData, saveRoles, loadRoles } from './services/storageService';
 import { defaultPersonas } from './data/defaultRoles';
 
-type View = 'chat' | 'personas' | 'editor';
+type View = 'chat' | 'personas' | 'editor' | 'archive';
 
 const ViewContainer: React.FC<{ view: View; activeView: View; children: React.ReactNode }> = ({ view, activeView, children }) => {
     const isActive = view === activeView;
@@ -102,6 +103,7 @@ const AppContainer = () => {
   const handleSelectChat = useCallback((id: string) => { setActiveChatId(id); chatDataHandlers.setSuggestedReplies([]); setIsMobileSidebarOpen(false); setCurrentView('chat'); }, [setActiveChatId, chatDataHandlers.setSuggestedReplies]);
   
   const handleOpenPersonas = () => { setIsMobileSidebarOpen(false); setCurrentView('personas'); }
+  const handleOpenArchive = () => { setIsMobileSidebarOpen(false); setCurrentView('archive'); }
   const handleOpenEditor = (persona: Persona | null) => { setEditingPersona(persona); setCurrentView('editor'); }
 
   const handleSavePersona = (personaToSave: Persona) => {
@@ -137,7 +139,7 @@ const AppContainer = () => {
   return (
     <div className="h-screen w-screen flex bg-[var(--bg-image)] text-[var(--text-color)] overflow-hidden">
         {isMobileSidebarOpen && <div className="fixed inset-0 bg-black/30 z-30 md:hidden" onClick={() => setIsMobileSidebarOpen(false)} aria-hidden="true"/>}
-        <Sidebar chats={chats} folders={folders} activeChatId={activeChatId} onNewChat={() => handleNewChat(null)} onSelectChat={handleSelectChat} onDeleteChat={chatDataHandlers.handleDeleteChat} onEditChat={setEditingChat} onNewFolder={() => setEditingFolder('new')} onEditFolder={setEditingFolder} onDeleteFolder={chatDataHandlers.handleDeleteFolder} onMoveChatToFolder={chatDataHandlers.handleMoveChatToFolder} isCollapsed={isSidebarCollapsed} onToggleCollapse={() => setIsSidebarCollapsed(p => !p)} isMobileSidebarOpen={isMobileSidebarOpen} onToggleMobileSidebar={() => setIsMobileSidebarOpen(false)} searchQuery={searchQuery} onSetSearchQuery={setSearchQuery} onOpenSettings={() => setIsSettingsOpen(true)} onOpenPersonas={handleOpenPersonas} />
+        <Sidebar chats={chats} folders={folders} activeChatId={activeChatId} onNewChat={() => handleNewChat(null)} onSelectChat={handleSelectChat} onDeleteChat={chatDataHandlers.handleDeleteChat} onEditChat={setEditingChat} onArchiveChat={(id) => chatDataHandlers.handleArchiveChat(id, true)} onNewFolder={() => setEditingFolder('new')} onEditFolder={setEditingFolder} onDeleteFolder={chatDataHandlers.handleDeleteFolder} onMoveChatToFolder={chatDataHandlers.handleMoveChatToFolder} isCollapsed={isSidebarCollapsed} onToggleCollapse={() => setIsSidebarCollapsed(p => !p)} isMobileSidebarOpen={isMobileSidebarOpen} onToggleMobileSidebar={() => setIsMobileSidebarOpen(false)} searchQuery={searchQuery} onSetSearchQuery={setSearchQuery} onOpenSettings={() => setIsSettingsOpen(true)} onOpenPersonas={handleOpenPersonas} onOpenArchive={handleOpenArchive} />
         <div className={`flex-1 flex flex-col h-full transition-all duration-300 ${isSidebarCollapsed ? 'p-3 pb-2' : 'p-3 pb-2 md:pl-0'}`}>
           <div className="view-wrapper">
               <ViewContainer view="chat" activeView={currentView}>
@@ -145,6 +147,9 @@ const AppContainer = () => {
               </ViewContainer>
               <ViewContainer view="personas" activeView={currentView}>
                 <RolesView personas={personas} onStartChat={handleNewChat} onEditPersona={handleOpenEditor} onCreatePersona={() => handleOpenEditor(null)} onDeletePersona={handleDeletePersona} onClose={() => setCurrentView('chat')} />
+              </ViewContainer>
+              <ViewContainer view="archive" activeView={currentView}>
+                <ArchiveView chats={chats} onSelectChat={handleSelectChat} onUnarchiveChat={(id) => chatDataHandlers.handleArchiveChat(id, false)} onDeleteChat={chatDataHandlers.handleDeleteChat} onEditChat={setEditingChat} onClose={() => setCurrentView('chat')} />
               </ViewContainer>
               <ViewContainer view="editor" activeView={currentView}>
                 <PersonaEditor personaToEdit={editingPersona} settings={settings} onSave={handleSavePersona} onClose={() => setCurrentView('personas')} />

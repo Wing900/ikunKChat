@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ChatSession } from '../types';
 import { Icon } from './Icon';
+import { useLocalization } from '../contexts/LocalizationContext';
 
 interface ChatHistoryItemProps {
     chat: ChatSession;
@@ -9,14 +10,17 @@ interface ChatHistoryItemProps {
     onSelect: () => void;
     onEdit: () => void;
     onDelete: () => void;
+    onArchive: () => void;
     onDragStart: (e: React.DragEvent) => void;
     onDragEnd: (e: React.DragEvent) => void;
 }
 
 export const ChatHistoryItem: React.FC<ChatHistoryItemProps> = (
-    { chat, isActive, isNew, onSelect, onEdit, onDelete, onDragStart, onDragEnd }
+    { chat, isActive, isNew, onSelect, onEdit, onDelete, onArchive, onDragStart, onDragEnd }
 ) => {
+    const { t } = useLocalization();
     const [isBeingDeleted, setIsBeingDeleted] = useState(false);
+    const [isBeingArchived, setIsBeingArchived] = useState(false);
 
     const handleDelete = (e: React.MouseEvent) => {
         e.preventDefault();
@@ -27,6 +31,15 @@ export const ChatHistoryItem: React.FC<ChatHistoryItemProps> = (
         }, 350);
     };
 
+    const handleArchive = (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsBeingArchived(true);
+        setTimeout(() => {
+            onArchive();
+        }, 400); // Animation duration
+    };
+
     return (
         <a
             href="#"
@@ -35,11 +48,12 @@ export const ChatHistoryItem: React.FC<ChatHistoryItemProps> = (
             onDragEnd={onDragEnd}
             onClick={(e) => { e.preventDefault(); onSelect(); }}
             className={`history-item group flex items-center gap-3 px-3 py-2.5 rounded-[var(--radius-2xl)] transition-colors text-left relative ${isActive ? 'bg-[var(--accent-color)] text-white' : 'text-[var(--text-color)] hover:bg-black/10 dark:hover:bg-white/10'
-                } ${isBeingDeleted ? 'deleting' : ''} ${isNew ? 'history-item-enter' : ''}`}
+                } ${isBeingDeleted ? 'deleting' : ''} ${isBeingArchived ? 'archiving' : ''} ${isNew ? 'history-item-enter' : ''}`}
         >
             <span className="text-xl">{chat.icon || <Icon icon="chat" className="w-5 h-5" />}</span>
             <span className="truncate flex-grow">{chat.title}</span>
             <div className="history-item-actions ml-auto flex-shrink-0">
+                <button onClick={handleArchive} data-tooltip={t('archive')} data-tooltip-placement="top" aria-label="Archive chat"><Icon icon="archive" className="w-4 h-4" /></button>
                 <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); onEdit(); }} aria-label="Edit chat title"><Icon icon="edit" className="w-4 h-4" /></button>
                 <button onClick={handleDelete} aria-label="Delete chat"><Icon icon="delete" className="w-4 h-4 text-red-500" /></button>
             </div>

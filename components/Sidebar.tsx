@@ -12,6 +12,7 @@ interface SidebarProps {
   onNewChat: () => void;
   onDeleteChat: (id: string) => void;
   onEditChat: (chat: ChatSession) => void;
+  onArchiveChat: (id: string) => void;
   isCollapsed: boolean;
   onToggleCollapse: () => void;
   isMobileSidebarOpen: boolean;
@@ -24,22 +25,25 @@ interface SidebarProps {
   onMoveChatToFolder: (chatId: string, folderId: string | null) => void;
   onOpenSettings: () => void;
   onOpenPersonas: () => void;
+  onOpenArchive: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = (props) => {
-  const { chats, folders, activeChatId, onSelectChat, onNewChat, onDeleteChat, onEditChat, isCollapsed, onToggleCollapse, isMobileSidebarOpen, onToggleMobileSidebar, searchQuery, onSetSearchQuery, onNewFolder, onEditFolder, onDeleteFolder, onMoveChatToFolder, onOpenSettings, onOpenPersonas } = props;
+  const { chats, folders, activeChatId, onSelectChat, onNewChat, onDeleteChat, onEditChat, onArchiveChat, isCollapsed, onToggleCollapse, isMobileSidebarOpen, onToggleMobileSidebar, searchQuery, onSetSearchQuery, onNewFolder, onEditFolder, onDeleteFolder, onMoveChatToFolder, onOpenSettings, onOpenPersonas, onOpenArchive } = props;
   const { t } = useLocalization();
   
   const [deletingFolderId, setDeletingFolderId] = useState<string | null>(null);
   const [openFolderIds, setOpenFolderIds] = useState<Set<string>>(new Set());
   const [dragOverTarget, setDragOverTarget] = useState<string | null>(null);
-  const prevChatIdsRef = useRef<Set<string>>(new Set(chats.map(c => c.id)));
+  
+  const nonArchivedChats = useMemo(() => chats.filter(c => !c.isArchived), [chats]);
+  const prevChatIdsRef = useRef<Set<string>>(new Set(nonArchivedChats.map(c => c.id)));
   const prevFolderIdsRef = useRef<Set<string>>(new Set(folders.map(f => f.id)));
   
-  useEffect(() => { prevChatIdsRef.current = new Set(chats.map(c => c.id)); }, [chats]);
+  useEffect(() => { prevChatIdsRef.current = new Set(nonArchivedChats.map(c => c.id)); }, [nonArchivedChats]);
   useEffect(() => { prevFolderIdsRef.current = new Set(folders.map(f => f.id)); }, [folders]);
 
-  const sortedChats = useMemo(() => [...chats].sort((a, b) => b.createdAt - a.createdAt), [chats]);
+  const sortedChats = useMemo(() => [...nonArchivedChats].sort((a, b) => b.createdAt - a.createdAt), [nonArchivedChats]);
 
   const { visibleFolders, visibleRootChats } = useMemo(() => {
     const lowerQuery = searchQuery.toLowerCase();
@@ -97,7 +101,7 @@ export const Sidebar: React.FC<SidebarProps> = (props) => {
       key={chat.id} chat={chat} isActive={activeChatId === chat.id} 
       isNew={!prevChatIdsRef.current.has(chat.id)} 
       onSelect={() => onSelectChat(chat.id)} onEdit={() => onEditChat(chat)} 
-      onDelete={() => onDeleteChat(chat.id)} 
+      onDelete={() => onDeleteChat(chat.id)} onArchive={() => onArchiveChat(chat.id)}
       onDragStart={(e) => { e.dataTransfer.setData('text/plain', chat.id); e.currentTarget.classList.add('dragging'); }} 
       onDragEnd={(e) => e.currentTarget.classList.remove('dragging')} />
   );
@@ -144,6 +148,10 @@ export const Sidebar: React.FC<SidebarProps> = (props) => {
             <button onClick={onOpenPersonas} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-[var(--radius-2xl)] text-[var(--text-color)] hover:bg-black/10 dark:hover:bg-white/10" data-tooltip={t('personas')} data-tooltip-placement="right">
                 <Icon icon="users" className="w-5 h-5" />
                 <span className="font-semibold">{t('personas')}</span>
+            </button>
+            <button onClick={onOpenArchive} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-[var(--radius-2xl)] text-[var(--text-color)] hover:bg-black/10 dark:hover:bg-white/10" data-tooltip={t('archiveDesc')} data-tooltip-placement="right">
+                <Icon icon="archive" className="w-5 h-5" />
+                <span className="font-semibold">{t('archive')}</span>
             </button>
             <button onClick={onOpenSettings} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-[var(--radius-2xl)] text-[var(--text-color)] hover:bg-black/10 dark:hover:bg-white/10" data-tooltip={t('settings')} data-tooltip-placement="right">
                 <Icon icon="settings" className="w-5 h-5" />

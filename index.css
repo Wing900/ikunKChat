@@ -492,6 +492,15 @@ body.drawer-open .drawer {
   transform-origin: top;
   animation: history-item-out 0.35s ease-out forwards;
 }
+
+@keyframes history-item-archive {
+  from { opacity: 1; transform: translateX(0); max-height: 60px; }
+  to { opacity: 0; transform: translateX(-100%); max-height: 0; padding-top: 0; padding-bottom: 0; margin-top: 0; margin-bottom: 0; overflow: hidden; }
+}
+.history-item.archiving {
+    animation: history-item-archive 0.4s ease-in-out forwards;
+}
+
 .history-item.hiding {
   animation: history-item-out 0.35s ease-out forwards;
   pointer-events: none;
@@ -1206,6 +1215,41 @@ body.drawer-open .drawer {
     font-weight: 600;
     color: var(--text-color);
     margin-bottom: 0.5rem;
+}
+
+/* --- Archive View --- */
+.archived-chats-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.archived-chat-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border-radius: var(--radius-2xl);
+  background-color: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  transition: all 0.3s ease-out;
+  cursor: pointer;
+  animation: history-item-in 0.4s ease-out backwards;
+}
+.archived-chat-item:hover {
+  background-color: color-mix(in srgb, var(--accent-color) 10%, transparent);
+}
+.archived-chat-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-left: auto;
+}
+@keyframes archive-item-out {
+  from { opacity: 1; transform: scaleY(1); max-height: 60px; }
+  to { opacity: 0; transform: scaleY(0.8); max-height: 0; padding-top: 0; padding-bottom: 0; margin-top: 0; margin-bottom: 0; overflow: hidden; }
+}
+.archived-chat-item.leaving {
+  animation: archive-item-out 0.35s ease-out forwards;
 }
 
 /* --- Markdown Content Styling --- */

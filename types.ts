@@ -2,6 +2,7 @@
 
 
 
+
 export enum MessageRole {
   USER = 'user',
   MODEL = 'model',
@@ -57,6 +58,7 @@ export interface ChatSession {
   createdAt: number;
   folderId: string | null;
   personaId?: string | null;
+  isArchived?: boolean;
 }
 
 export interface Settings {

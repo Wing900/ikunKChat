@@ -3,6 +3,8 @@
 
 
 
+
+
 import { GoogleGenAI, Chat, GenerateContentResponse, Type } from "@google/genai";
 import { Message, MessageRole, FileAttachment, Settings, Persona } from '../types';
 
@@ -153,7 +155,7 @@ function getChat(apiKey: string, history: Message[], model: string, settings: Se
   if (toolConfig.googleSearch) {
     systemInstruction += '\n\nThe user has explicitly enabled Google Search for this query, so you should prioritize its use to answer the request and provide citations.';
   } else if (useGoogleSearch && !useUrlContext) { // Avoid duplicating search instructions
-    systemInstruction += '\n\nBy default, Google Search is available; use it only for queries that require recent information, real-time data, or specific facts. Use it judiciously.';
+    systemInstruction += '\n\nBy default, Google Search is available; however, you should use it with strict discretion. ONLY activate search for queries that clearly require real-time information (e.g., "what\'s the weather today", "latest stock prices") or very recent events. For general knowledge, creative tasks, or conversational responses, rely on your internal training data. Do not use search for questions like "who are you?" or simple explanations.';
   }
   
   const configForApi: any = { systemInstruction, tools: toolsForApi.length > 0 ? toolsForApi : undefined };
