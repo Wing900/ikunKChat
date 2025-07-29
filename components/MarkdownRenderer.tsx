@@ -1,5 +1,6 @@
 
-import React, { useEffect, useRef } from 'react';
+
+import React, { useEffect, useRef, useCallback } from 'react';
 import { marked } from 'marked';
 import mermaid from 'mermaid';
 
@@ -8,11 +9,55 @@ declare const DOMPurify: any;
 declare const hljs: any;
 declare const renderMathInElement: any;
 
-// --- One-time configurations ---
+const renderer = new marked.Renderer();
 
-// Configure DOMPurify to allow attributes needed for rich content
+// Override for code blocks
+renderer.code = ({ text: code, lang }: { text: string; lang?: string; }): string => {
+    // Defensive check: ensure code is a string.
+    const codeString = String(code || '');
+    const language = lang && hljs.getLanguage(lang) ? lang : 'plaintext';
+
+    if (language === 'mermaid') {
+        return `<div class="mermaid">${codeString}</div>`;
+    }
+    
+    const highlightedCode = hljs.highlight(codeString, { language }).value;
+
+    return `
+        <div class="code-block-wrapper">
+            <div class="code-block-header">
+                <span class="code-block-lang">${language}</span>
+                <button class="code-block-copy-btn" data-tooltip="Copy code" data-tooltip-placement="top">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    <span class="copy-text">Copy</span>
+                </button>
+            </div>
+            <pre><code class="hljs language-${language}">${highlightedCode}</code></pre>
+        </div>
+    `;
+};
+
+// Override for task lists to provide custom styling.
+renderer.listitem = ({ text, task, checked }: { text: string; task: boolean; checked?: boolean; }) => {
+    if (task) {
+        // `marked` has identified this as a GFM task list item.
+        // The `text` is already parsed HTML content of the item.
+        const checkboxHtml = `<input type="checkbox" ${checked ? 'checked' : ''} disabled />`;
+        return `<li class="task-list-item">${checkboxHtml}<div>${text}</div></li>`;
+    }
+    // For all other list items, manually construct the standard list item HTML to avoid fallback issues.
+    return `<li>${text}</li>`;
+};
+
+
+marked.setOptions({
+    gfm: true,
+    breaks: false,
+    renderer: renderer,
+});
+
+
 if (typeof DOMPurify !== 'undefined') {
-    // This hook ensures that links open in a new tab.
     DOMPurify.addHook('afterSanitizeAttributes', (node: Element) => {
         if (node.tagName === 'A') {
             node.setAttribute('target', '_blank');
@@ -21,30 +66,6 @@ if (typeof DOMPurify !== 'undefined') {
     });
 }
 
-// Configure the 'marked' library for parsing Markdown.
-// This is done only once for performance.
-let markedInitialized = false;
-const initializeMarked = () => {
-    if (markedInitialized || typeof hljs === 'undefined') return;
-    marked.setOptions({
-        gfm: true, // Use GitHub Flavored Markdown
-        breaks: false, // FIX: Set to false to prevent single-line breaks from becoming <br>, which interferes with LaTeX block rendering.
-        highlight: (code, lang) => {
-            // Special handling for Mermaid diagrams
-            if (lang === 'mermaid') {
-                // Return a placeholder that Mermaid can find later.
-                return `<pre class="mermaid">${code}</pre>`;
-            }
-            // Use highlight.js for all other code blocks
-            const language = hljs.getLanguage(lang) ? lang : 'plaintext';
-            return hljs.highlight(code, { language }).value;
-        },
-    });
-    markedInitialized = true;
-};
-
-// --- Component ---
-
 interface MarkdownRendererProps {
   content: string;
   theme: 'light' | 'dark';
@@ -52,62 +73,78 @@ interface MarkdownRendererProps {
 
 export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, theme }) => {
   const contentRef = useRef<HTMLDivElement>(null);
+
+  const handleCopyClick = useCallback((e: MouseEvent) => {
+    const button = (e.target as HTMLElement).closest('.code-block-copy-btn');
+    if (button) {
+        const wrapper = button.closest('.code-block-wrapper');
+        const code = wrapper?.querySelector('code')?.innerText;
+        if (code) {
+            navigator.clipboard.writeText(code);
+            const copyTextSpan = button.querySelector('.copy-text');
+            if (copyTextSpan) {
+                const originalText = copyTextSpan.textContent;
+                copyTextSpan.textContent = 'Copied!';
+                button.setAttribute('data-tooltip', 'Copied!');
+                setTimeout(() => {
+                    copyTextSpan.textContent = originalText;
+                    button.setAttribute('data-tooltip', 'Copy code');
+                }, 2000);
+            }
+        }
+    }
+  }, []);
   
-  // This effect re-renders the content whenever the markdown text or theme changes.
   useEffect(() => {
-    // Ensure one-time initializations are done.
-    initializeMarked();
-
     if (!contentRef.current) return;
+    const currentRef = contentRef.current;
 
-    // 1. Parse the raw Markdown content into HTML.
-    const dirtyHtml = marked.parse(content) as string;
-    
-    // 2. Sanitize the HTML to prevent XSS attacks. Allow SVG for Mermaid diagrams.
+    const dirtyHtml = marked.parse(content || '') as string;
     const cleanHtml = typeof DOMPurify !== 'undefined'
       ? DOMPurify.sanitize(dirtyHtml, { USE_PROFILES: { html: true, svg: true, svgFilters: true }})
       : dirtyHtml;
       
-    // 3. Set the sanitized HTML to the component's content.
-    contentRef.current.innerHTML = cleanHtml;
+    currentRef.innerHTML = cleanHtml;
 
-    // 4. Find and render LaTeX equations using KaTeX.
     if (typeof renderMathInElement !== 'undefined') {
         try {
-            renderMathInElement(contentRef.current, {
+            renderMathInElement(currentRef, {
                 delimiters: [
                     {left: '$$', right: '$$', display: true},
                     {left: '$', right: '$', display: false},
                     {left: '\\(', right: '\\)', display: false},
                     {left: '\\[', right: '\\]', display: true}
                 ],
-                throwOnError: false // Prevents errors from stopping the whole render.
+                throwOnError: false
             });
         } catch (error) {
             console.error('KaTeX rendering error:', error);
         }
     }
     
-    // 5. Find and render Mermaid diagrams.
     try {
         mermaid.initialize({
             startOnLoad: false,
-            theme: theme, // Use the current app theme (light/dark)
-            securityLevel: 'loose', // Required for dynamic rendering
+            theme: theme === 'dark' ? 'dark' : 'default',
+            securityLevel: 'loose',
             flowchart: { useMaxWidth: true },
             sequence: { useMaxWidth: true },
             gantt: { useMaxWidth: true },
         });
-        const mermaidElements = contentRef.current.querySelectorAll<HTMLElement>('.mermaid');
+        const mermaidElements = currentRef.querySelectorAll<HTMLElement>('.mermaid');
         if (mermaidElements.length > 0) {
-            // Tell Mermaid to render the diagrams found in the placeholders.
             mermaid.run({ nodes: mermaidElements });
         }
     } catch (error) {
         console.error('Mermaid rendering error:', error);
     }
+    
+    currentRef.addEventListener('click', handleCopyClick);
+    return () => {
+        currentRef.removeEventListener('click', handleCopyClick);
+    }
 
-  }, [content, theme]);
+  }, [content, theme, handleCopyClick]);
 
   return <div ref={contentRef} className="markdown-content" />;
 };
