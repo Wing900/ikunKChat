@@ -71,4 +71,8 @@ export interface Settings {
   personaBuilderModel: string;
   defaultSearch: boolean;
   showThoughts: boolean;
+  enableGlobalSystemPrompt: boolean;
+  globalSystemPrompt: string;
+  optimizeFormatting: boolean;
+  thinkDeeper: boolean;
 }

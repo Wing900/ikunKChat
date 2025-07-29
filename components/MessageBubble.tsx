@@ -90,12 +90,6 @@ export const MessageBubble: React.FC<MessageBubbleProps> = (props) => {
   useEffect(() => {
     setEditedContent(message.content);
   }, [message.content, isEditing]);
-
-  useEffect(() => {
-    if (isLastMessageLoading && hasThoughts && !isThoughtsOpen) {
-      setIsThoughtsOpen(true);
-    }
-  }, [isLastMessageLoading, hasThoughts, isThoughtsOpen]);
   
   const handleDelete = () => {
     setIsBeingDeleted(true);

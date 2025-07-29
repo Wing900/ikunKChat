@@ -16,6 +16,10 @@ const defaultSettings: Settings = {
   personaBuilderModel: 'gemini-2.5-flash',
   defaultSearch: true,
   showThoughts: true,
+  enableGlobalSystemPrompt: false,
+  globalSystemPrompt: '',
+  optimizeFormatting: true,
+  thinkDeeper: true,
 };
 
 export const useSettings = () => {

@@ -70,9 +70,31 @@ export const SettingsModal: React.FC<SettingsModalProps> = (props) => {
           <SettingsItem label={t('apiKey')} description={t('apiKeyDesc')}>
             <input type="password" value={settings.apiKey || ''} onChange={e => onSettingsChange({ apiKey: e.target.value })} disabled={isApiKeySetByEnv} placeholder={isApiKeySetByEnv ? t('apiKeyEnvVar') : t('apiKeyPlaceholder')} className="input-glass max-w-60"/>
           </SettingsItem>
+          <SettingsItem label={t('optimizeFormatting')} description={t('optimizeFormattingDesc')}>
+            <Switch size="sm" checked={settings.optimizeFormatting} onChange={e => onSettingsChange({ optimizeFormatting: e.target.checked })} />
+          </SettingsItem>
+          <SettingsItem label={t('thinkDeeper')} description={t('thinkDeeperDesc')}>
+            <Switch size="sm" checked={settings.thinkDeeper} onChange={e => onSettingsChange({ thinkDeeper: e.target.checked })} />
+          </SettingsItem>
           <SettingsItem label={t('showThoughts')} description={t('showThoughtsDesc')}>
             <Switch size="sm" checked={settings.showThoughts} onChange={e => onSettingsChange({ showThoughts: e.target.checked })} />
           </SettingsItem>
+           <div className="flex flex-col">
+              <SettingsItem label={t('globalSystemPrompt')} description={t('globalSystemPromptDesc')}>
+                <Switch size="sm" checked={settings.enableGlobalSystemPrompt} onChange={e => onSettingsChange({ enableGlobalSystemPrompt: e.target.checked })} />
+              </SettingsItem>
+              <div className={`collapsible-section ${settings.enableGlobalSystemPrompt ? 'expanded' : ''}`}>
+                  <div className="pb-2">
+                    <textarea 
+                      value={settings.globalSystemPrompt}
+                      onChange={e => onSettingsChange({ globalSystemPrompt: e.target.value })}
+                      className="input-glass w-full"
+                      placeholder="Enter a system prompt..."
+                      rows={3}
+                    />
+                  </div>
+              </div>
+            </div>
           <SettingsItem label={t('defaultSearch')} description={t('defaultSearchDesc')}>
             <Switch size="sm" checked={settings.defaultSearch} onChange={e => onSettingsChange({ defaultSearch: e.target.checked })} />
           </SettingsItem>
