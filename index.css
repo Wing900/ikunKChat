@@ -1035,6 +1035,25 @@ body.drawer-open .drawer {
   animation: message-out 0.35s ease-out forwards;
 }
 
+/* Raw Text View */
+.raw-text-view {
+    white-space: pre-wrap;
+    word-break: break-all;
+    font-family: 'SF Mono', 'Fira Code', 'Menlo', 'Consolas', monospace;
+    font-size: 0.9em;
+    line-height: 1.6;
+    background: color-mix(in srgb, var(--text-color) 3%, transparent);
+    border: 1px solid var(--glass-border);
+    padding: 1rem;
+    border-radius: var(--radius-2xl);
+    color: var(--text-color);
+}
+.message-row.justify-end .raw-text-view {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+
 /* --- Personas / Roles View --- */
 .personas-grid {
   display: grid;

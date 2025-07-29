@@ -37,7 +37,9 @@ const MessageActions: React.FC<{
   onCopy: () => void;
   onRegenerate: () => void;
   onDelete: () => void;
-}> = ({ message, isModelResponse, onEdit, onCopy, onRegenerate, onDelete }) => {
+  onToggleRawView: () => void;
+  isRawView: boolean;
+}> = ({ message, isModelResponse, onEdit, onCopy, onRegenerate, onDelete, onToggleRawView, isRawView }) => {
     const [copied, setCopied] = useState(false);
 
     const handleCopy = () => {
@@ -63,6 +65,9 @@ const MessageActions: React.FC<{
                     <Icon icon="edit" className="w-4 h-4"/>
                 </button>
             )}
+            <button className="action-btn" onClick={onToggleRawView} data-tooltip={isRawView ? "Show Rendered" : "Show Raw Text"} data-tooltip-placement="top">
+                <Icon icon="eye" className="w-4 h-4"/>
+            </button>
             <button className="action-btn" onClick={handleCopy} data-tooltip={copied ? "Copied!" : "Copy"} data-tooltip-placement="top">
                 <Icon icon="copy" className="w-4 h-4"/>
             </button>
@@ -86,9 +91,12 @@ export const MessageBubble: React.FC<MessageBubbleProps> = (props) => {
   
   const [editedContent, setEditedContent] = useState(message.content);
   const [isBeingDeleted, setIsBeingDeleted] = useState(false);
+  const [isRawView, setIsRawView] = useState(false);
 
   useEffect(() => {
     setEditedContent(message.content);
+    // Reset raw view when edit mode is toggled
+    setIsRawView(false);
   }, [message.content, isEditing]);
   
   const handleDelete = () => {
@@ -127,7 +135,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = (props) => {
       
       <div className={`flex flex-col ${isUser ? 'items-end' : 'items-start'}`}>
         <div
-          className={`max-w-xl text-base flex flex-col relative ${
+          className={`max-w-xl text-base flex flex-col relative transition-all duration-300 ${
             isUser
               ? 'bg-[var(--accent-color)] text-white rounded-[var(--radius-2xl)] rounded-br-lg'
               : 'model-bubble rounded-[var(--radius-2xl)] rounded-bl-lg'
@@ -169,7 +177,20 @@ export const MessageBubble: React.FC<MessageBubbleProps> = (props) => {
                       ))}
                     </div>
                   )}
-                  {hasContent && <MarkdownRenderer content={message.content} theme={settings.theme} />}
+                  {hasContent && (
+                    <>
+                      <div className={`grid transition-all duration-300 ease-in-out ${isRawView ? 'grid-rows-[0fr] opacity-0' : 'grid-rows-[1fr] opacity-100'}`}>
+                          <div className="overflow-hidden">
+                              <MarkdownRenderer content={message.content} theme={settings.theme} />
+                          </div>
+                      </div>
+                      <div className={`grid transition-all duration-300 ease-in-out ${isRawView ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
+                          <div className="overflow-hidden">
+                              <pre className="raw-text-view"><code>{message.content}</code></pre>
+                          </div>
+                      </div>
+                    </>
+                  )}
                   {isPulsing && <div className="whitespace-pre-wrap">{message.content}</div>}
               </div>
               
@@ -199,7 +220,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = (props) => {
           </div>
         </div>
         
-        <MessageActions message={message} isModelResponse={!isUser} onCopy={() => onCopy(message.content)} onEdit={onEditRequest} onDelete={handleDelete} onRegenerate={onRegenerate} />
+        <MessageActions message={message} isModelResponse={!isUser} onCopy={() => onCopy(message.content)} onEdit={onEditRequest} onDelete={handleDelete} onRegenerate={onRegenerate} onToggleRawView={() => setIsRawView(p => !p)} isRawView={isRawView} />
       </div>
 
        {isUser && <div className="w-8 h-8 flex-shrink-0 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center text-[var(--text-color-secondary)]"><Icon icon="user" className="w-5 h-5"/></div>}

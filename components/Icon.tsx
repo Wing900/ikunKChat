@@ -3,7 +3,7 @@ import { iconSet1 } from './icons/iconSet1';
 import { iconSet2 } from './icons/iconSet2';
 import { iconSet3 } from './icons/iconSet3';
 
-export type IconName = 'send' | 'plus' | 'chat' | 'user' | 'kchat' | 'sun' | 'moon' | 'chip' | 'chevron-down' | 'edit' | 'delete' | 'search' | 'menu' | 'panel-left-close' | 'folder' | 'folder-plus' | 'paperclip' | 'close' | 'file' | 'settings' | 'download' | 'upload' | 'language' | 'tools' | 'code' | 'link' | 'stop' | 'brain' | 'copy' | 'regenerate' | 'users' | 'archive' | 'unarchive';
+export type IconName = 'send' | 'plus' | 'chat' | 'user' | 'kchat' | 'sun' | 'moon' | 'chip' | 'chevron-down' | 'edit' | 'delete' | 'search' | 'menu' | 'panel-left-close' | 'folder' | 'folder-plus' | 'paperclip' | 'close' | 'file' | 'settings' | 'download' | 'upload' | 'language' | 'tools' | 'code' | 'link' | 'stop' | 'brain' | 'copy' | 'regenerate' | 'users' | 'archive' | 'unarchive' | 'eye';
 
 interface IconProps extends React.SVGProps<SVGSVGElement> {
   icon: IconName;
