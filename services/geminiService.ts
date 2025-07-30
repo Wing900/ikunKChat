@@ -1,4 +1,5 @@
-import { Message, FileAttachment, Settings, Persona } from '../types';
+import { GoogleGenAI, GenerateContentResponse, Type } from "@google/genai";
+import { Message, MessageRole, FileAttachment, Settings, Persona } from '../types';
 import { KeyManager } from './keyManager';
 
 const OPTIMIZE_FORMATTING_PROMPT = `Your provide responses that are both **impeccably structured** and **profoundly human-like**. Your communication style should be inspired by the clarity, warmth.
@@ -75,37 +76,29 @@ interface Part {
   };
 }
 
-interface FetchResponse {
-    text: string;
-    candidates?: any[];
-    groundingMetadata?: any;
-}
-
-
-async function fetchWithKeyRotation(apiKeys: string[], baseUrl: string, endpoint: string, payload: object): Promise<FetchResponse> {
+/**
+ * Executes a non-streaming API call with key rotation and retry logic.
+ */
+async function executeWithKeyRotation<T>(
+    apiKeys: string[],
+    operation: (ai: GoogleGenAI) => Promise<T>
+): Promise<T> {
     const keyManager = new KeyManager(apiKeys);
-    if (keyManager.getTotalKeys() === 0) throw new Error("No API keys provided.");
+    if (keyManager.getTotalKeys() === 0) {
+        throw new Error("No API keys provided.");
+    }
 
     for (let i = 0; i < keyManager.getTotalKeys(); i++) {
         const { key } = keyManager.getNextKey();
         if (!key) continue;
 
         try {
-            const response = await fetch(`${baseUrl}${endpoint}?key=${key}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload),
-            });
-            if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error?.error?.message || `API Error: ${response.status}`);
-            }
-            const data = await response.json();
-            const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+            const ai = new GoogleGenAI({ apiKey: key });
+            const result = await operation(ai);
             keyManager.saveSuccessIndex();
-            return { text };
+            return result;
         } catch (error) {
-            console.warn(`API call failed for key ending in ...${key.slice(-4)}. Trying next key. Error:`, error);
+            console.warn(`API call failed with key ending in ...${key.slice(-4)}. Trying next key. Error:`, error);
             if (i === keyManager.getTotalKeys() - 1) {
                 console.error("All API keys failed.");
                 throw error;
@@ -116,10 +109,16 @@ async function fetchWithKeyRotation(apiKeys: string[], baseUrl: string, endpoint
 }
 
 
-async function* fetchStreamWithKeyRotation(apiKeys: string[], baseUrl: string, model: string, payload: any): AsyncGenerator<FetchResponse> {
+/**
+ * Executes a streaming API call with key rotation and retry logic.
+ */
+async function* executeStreamWithKeyRotation<T extends GenerateContentResponse>(
+    apiKeys: string[],
+    operation: (ai: GoogleGenAI) => Promise<AsyncGenerator<T>>
+): AsyncGenerator<T> {
     const keyManager = new KeyManager(apiKeys);
     if (keyManager.getTotalKeys() === 0) {
-        yield { text: "Error: No API keys provided." };
+        yield { text: "Error: No API keys provided." } as T;
         return;
     }
 
@@ -129,58 +128,21 @@ async function* fetchStreamWithKeyRotation(apiKeys: string[], baseUrl: string, m
         if (!key) continue;
 
         try {
-            const response = await fetch(`${baseUrl}/v1beta/models/${model}:streamGenerateContent?key=${key}&alt=sse`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-
-            if (!response.ok || !response.body) {
-                const errorText = await response.text();
-                throw new Error(`API Error: ${response.status} ${errorText}`);
-            }
-            
+            const ai = new GoogleGenAI({ apiKey: key });
+            const stream = await operation(ai);
             keyManager.saveSuccessIndex();
-
-            const reader = response.body.getReader();
-            const decoder = new TextDecoder();
-            
-            while (true) {
-                const { done, value } = await reader.read();
-                if (done) break;
-
-                const chunkText = decoder.decode(value);
-                const lines = chunkText.split('\n').filter(line => line.startsWith('data: '));
-                
-                for (const line of lines) {
-                    const jsonStr = line.replace('data: ', '');
-                    try {
-                        const chunk = JSON.parse(jsonStr);
-                        let text = '';
-                        if (chunk.candidates && chunk.candidates[0].content && chunk.candidates[0].content.parts) {
-                            text = chunk.candidates[0].content.parts.map((p: any) => p.text).join('');
-                        }
-                        
-                        yield {
-                            text,
-                            candidates: chunk.candidates,
-                            groundingMetadata: chunk.candidates?.[0]?.groundingMetadata
-                        };
-                    } catch (e) {
-                        console.warn("Could not parse stream chunk JSON:", jsonStr);
-                    }
-                }
-            }
-            return; // Success, exit generator
+            yield* stream; // Yield all chunks from the successful stream
+            return; // Success, exit the generator
         } catch (error) {
             lastError = error;
             console.warn(`API stream failed for key ending in ...${key.slice(-4)}. Trying next key. Error:`, error);
         }
     }
-    
+
     console.error("All API keys failed for streaming operation.");
-    yield { text: "Error: All API keys failed. " + (lastError?.message || "") };
+    yield { text: "Error: All API keys failed. " + (lastError?.message || "") } as T;
 }
+
 
 function prepareChatPayload(history: Message[], settings: Settings, toolConfig: any, persona?: Persona | null) {
   const formattedHistory = history.map(msg => {
@@ -191,7 +153,7 @@ function prepareChatPayload(history: Message[], settings: Settings, toolConfig: 
     if(msg.content) {
         parts.push({ text: msg.content });
     }
-    return { role: msg.role === 'model' ? 'model' : 'user', parts: parts };
+    return { role: msg.role, parts: parts };
   });
 
   let systemInstructionParts: string[] = [];
@@ -211,12 +173,12 @@ function prepareChatPayload(history: Message[], settings: Settings, toolConfig: 
   let isSearchEnabled = toolConfig.googleSearch || useGoogleSearch;
 
   if (useCodeExecution) {
-    // Code execution tool is not directly available in this simplified fetch implementation
+    toolsForApi.push({ codeExecution: {} });
   } else if (useUrlContext) {
     isSearchEnabled = true; 
   }
 
-  if (isSearchEnabled) toolsForApi.push({ google_search_retrieval: {} });
+  if (isSearchEnabled) toolsForApi.push({ googleSearch: {} });
 
   if (toolConfig.googleSearch) {
     systemInstruction += '\n\nThe user has explicitly enabled Google Search for this query, so you should prioritize its use to answer the request and provide citations.';
@@ -224,47 +186,43 @@ function prepareChatPayload(history: Message[], settings: Settings, toolConfig: 
     systemInstruction += '\n\nBy default, Google Search is available; however, you should use it with strict discretion. ONLY activate search for queries that clearly require real-time information (e.g., "what\'s the weather today", "latest stock prices") or very recent events. For general knowledge, creative tasks, or conversational responses, rely on your internal training data. Do not use search for questions like "who are you?" or simple explanations.';
   }
   
-  const generationConfig: any = {};
-  if (settings.showThoughts) {
-     // thinkingConfig is not part of the public REST API in the same way, omitting for now
+  const configForApi: any = { systemInstruction, tools: toolsForApi.length > 0 ? toolsForApi : undefined };
+  if (toolConfig.showThoughts) {
+    configForApi.thinkingConfig = { includeThoughts: true };
   }
   
-  return { formattedHistory, systemInstruction, toolsForApi, generationConfig };
+  return { formattedHistory, configForApi };
 }
 
-export function sendMessageStream(apiKeys: string[], messages: Message[], newMessage: string, attachments: FileAttachment[], model: string, settings: Settings, toolConfig: any, persona?: Persona | null): AsyncGenerator<FetchResponse> {
-  const { formattedHistory, systemInstruction, toolsForApi, generationConfig } = prepareChatPayload(messages, settings, toolConfig, persona);
+export function sendMessageStream(apiKeys: string[], messages: Message[], newMessage: string, attachments: FileAttachment[], model: string, settings: Settings, toolConfig: any, persona?: Persona | null): AsyncGenerator<GenerateContentResponse> {
+  const { formattedHistory, configForApi } = prepareChatPayload(messages, settings, toolConfig, persona);
   const messageParts: Part[] = attachments.map(att => ({
       inlineData: { mimeType: att.mimeType, data: att.data! }
   }));
   if (newMessage) messageParts.push({ text: newMessage });
-  
-  const finalContents = [...formattedHistory, { role: 'user', parts: messageParts }];
 
-  const payload: any = {
-      contents: finalContents,
-      system_instruction: { parts: [{ text: systemInstruction }] },
-  };
-
-  if (toolsForApi.length > 0) payload.tools = toolsForApi;
-  if (Object.keys(generationConfig).length > 0) payload.generation_config = generationConfig;
-
-  const baseUrl = settings.apiBaseUrl || 'https://generativelanguage.googleapis.com';
-
-  return fetchStreamWithKeyRotation(apiKeys, baseUrl, model, payload);
+  return executeStreamWithKeyRotation(apiKeys, async (ai) => {
+    const chat = ai.chats.create({
+      model,
+      history: formattedHistory,
+      config: configForApi,
+    });
+    return chat.sendMessageStream({ message: messageParts });
+  });
 }
 
-export async function generateChatDetails(apiKeys: string[], prompt: string, model: string, settings: Settings): Promise<{ title: string; icon: string }> {
+export async function generateChatDetails(apiKeys: string[], prompt: string, model: string): Promise<{ title: string; icon: string }> {
   try {
-    const payload = {
-        contents: [{ parts: [{ text: `Generate a short, concise title (max 5 words) and a single, relevant emoji for a conversation starting with this user prompt: "${prompt}"` }] }],
-        generation_config: { 
-          response_mime_type: "application/json",
-          response_schema: { type: 'OBJECT', properties: { title: { type: 'STRING' }, icon: { type: 'STRING' } } }
+    const response = await executeWithKeyRotation(apiKeys, (ai) => 
+      ai.models.generateContent({
+        model: model,
+        contents: `Generate a short, concise title (max 5 words) and a single, relevant emoji for a conversation starting with this user prompt: "${prompt}"`,
+        config: { 
+          responseMimeType: "application/json",
+          responseSchema: { type: Type.OBJECT, properties: { title: { type: Type.STRING }, icon: { type: Type.STRING } } }
         },
-    };
-    const baseUrl = settings.apiBaseUrl || 'https://generativelanguage.googleapis.com';
-    const response = await fetchWithKeyRotation(apiKeys, baseUrl, `/v1beta/models/${model}:generateContent`, payload);
+      })
+    );
     const details = JSON.parse(response.text.trim());
     if (typeof details.title === 'string' && typeof details.icon === 'string') {
        return { title: details.title.replace(/["']/g, "").trim(), icon: details.icon };
@@ -276,19 +234,20 @@ export async function generateChatDetails(apiKeys: string[], prompt: string, mod
   }
 }
 
-export async function generateSuggestedReplies(apiKeys: string[], history: Message[], model: string, settings: Settings): Promise<string[]> {
+export async function generateSuggestedReplies(apiKeys: string[], history: Message[], model: string): Promise<string[]> {
   if (history.length === 0) return [];
   try {
     const lastMessageContent = history[history.length - 1].content;
-    const payload = {
-        contents: [{ parts: [{ text: `The AI just said: "${lastMessageContent}". Generate 4 very short, distinct, and relevant one-tap replies for the user. Return ONLY a JSON array of 4 strings.` }] }],
-        generation_config: {
-          response_mime_type: "application/json",
-          response_schema: { type: 'ARRAY', items: { type: 'STRING' } }
+    const response = await executeWithKeyRotation(apiKeys, (ai) => 
+      ai.models.generateContent({
+        model: model,
+        contents: `The AI just said: "${lastMessageContent}". Generate 4 very short, distinct, and relevant one-tap replies for the user. Return ONLY a JSON array of 4 strings.`,
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: { type: Type.ARRAY, items: { type: Type.STRING } }
         }
-    };
-    const baseUrl = settings.apiBaseUrl || 'https://generativelanguage.googleapis.com';
-    const response = await fetchWithKeyRotation(apiKeys, baseUrl, `/v1beta/models/${model}:generateContent`, payload);
+      })
+    );
     const replies = JSON.parse(response.text.trim());
     return Array.isArray(replies) ? replies.slice(0, 4) : [];
   } catch (error) {
@@ -297,7 +256,7 @@ export async function generateSuggestedReplies(apiKeys: string[], history: Messa
   }
 }
 
-export async function generatePersonaUpdate(apiKeys: string[], model: string, currentPersona: Partial<Persona>, request: string, settings: Settings): Promise<{ personaUpdate: Partial<Persona>, explanation: string }> {
+export async function generatePersonaUpdate(apiKeys: string[], model: string, currentPersona: Partial<Persona>, request: string): Promise<{ personaUpdate: Partial<Persona>, explanation: string }> {
   try {
     const systemInstruction = `You are an AI assistant that helps build another AI's persona. The user will give you instructions. You MUST respond with only a valid JSON object. This object must contain two keys: "personaUpdate" and "explanation".
 The "personaUpdate" key holds an object with the fields to be updated in the Persona object: {name: string, bio: string, systemPrompt: string, avatar: {type: 'emoji' | 'url', value: string}, tools: {googleSearch: boolean, codeExecution: boolean, urlContext: boolean}}.
@@ -309,36 +268,37 @@ Example Response:
     
     const prompt = `Current Persona State: ${JSON.stringify(currentPersona)}\n\nUser Request: "${request}"\n\nGenerate the JSON update object:`;
     
-    const payload = {
-        contents: [{ parts: [{ text: prompt }] }],
-        system_instruction: { parts: [{ text: systemInstruction }] },
-        generation_config: {
-          response_mime_type: "application/json",
-          response_schema: {
-            type: 'OBJECT',
+    const response = await executeWithKeyRotation(apiKeys, (ai) => 
+      ai.models.generateContent({
+        model: model,
+        contents: prompt,
+        config: {
+          systemInstruction,
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.OBJECT,
             properties: {
               personaUpdate: {
-                type: 'OBJECT',
+                type: Type.OBJECT,
                 properties: {
-                  name: { type: 'STRING', nullable: true },
-                  bio: { type: 'STRING', nullable: true },
-                  systemPrompt: { type: 'STRING', nullable: true },
-                  avatar: { type: 'OBJECT', nullable: true, properties: { type: { type: 'STRING', enum: ['emoji', 'url'] }, value: { type: 'STRING' } } },
-                  tools: { type: 'OBJECT', nullable: true, properties: { googleSearch: { type: 'BOOLEAN' }, codeExecution: { type: 'BOOLEAN' }, urlContext: { type: 'BOOLEAN' } } }
+                  name: { type: Type.STRING, nullable: true },
+                  bio: { type: Type.STRING, nullable: true },
+                  systemPrompt: { type: Type.STRING, nullable: true },
+                  avatar: { type: Type.OBJECT, nullable: true, properties: { type: { type: Type.STRING, enum: ['emoji', 'url'] }, value: { type: Type.STRING } } },
+                  tools: { type: Type.OBJECT, nullable: true, properties: { googleSearch: { type: Type.BOOLEAN }, codeExecution: { type: Type.BOOLEAN }, urlContext: { type: Type.BOOLEAN } } }
                 }
               },
               explanation: {
-                  type: 'STRING',
+                  type: Type.STRING,
                   description: "A short, conversational explanation of the changes made."
               }
             },
             required: ['personaUpdate', 'explanation']
           }
         }
-    };
+      })
+    );
     
-    const baseUrl = settings.apiBaseUrl || 'https://generativelanguage.googleapis.com';
-    const response = await fetchWithKeyRotation(apiKeys, baseUrl, `/v1beta/models/${model}:generateContent`, payload);
     return JSON.parse(response.text.trim());
   } catch (error) {
     console.error("Error generating persona update:", error);

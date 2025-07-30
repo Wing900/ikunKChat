@@ -8,7 +8,6 @@ const defaultSettings: Settings = {
   theme: 'light',
   language: 'en',
   apiKey: [],
-  apiBaseUrl: 'https://generativelanguage.googleapis.com',
   showSuggestions: true,
   defaultModel: 'gemini-2.5-flash',
   suggestionModel: 'gemini-2.5-flash',
@@ -50,7 +49,7 @@ export const useSettings = () => {
   useEffect(() => {
     const apiKeys = settings.apiKey || (process.env.API_KEY ? [process.env.API_KEY] : []);
     if (isStorageLoaded && apiKeys.length > 0) {
-      getAvailableModels(apiKeys, settings.apiBaseUrl).then(models => {
+      getAvailableModels(apiKeys).then(models => {
         if (!models || models.length === 0) return;
         setAvailableModels(models);
         setSettings(current => {
@@ -63,7 +62,7 @@ export const useSettings = () => {
         });
       });
     }
-  }, [isStorageLoaded, settings.apiKey, settings.apiBaseUrl]);
+  }, [isStorageLoaded, settings.apiKey]);
 
   return { settings, setSettings, availableModels, isStorageLoaded };
 };

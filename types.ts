@@ -32,7 +32,7 @@ export interface Folder {
 }
 
 export interface Persona {
-  id:string;
+  id: string;
   isDefault?: boolean;
   name: string;
   avatar: {
@@ -65,7 +65,6 @@ export interface Settings {
   theme: 'light' | 'dark';
   language: 'en' | 'zh';
   apiKey: string[] | null;
-  apiBaseUrl?: string;
   showSuggestions: boolean;
   defaultModel: string;
   suggestionModel: string;

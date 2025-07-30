@@ -1,6 +1,5 @@
-export async function getAvailableModels(apiKeys: string[], apiBaseUrl?: string): Promise<string[]> {
+export async function getAvailableModels(apiKeys: string[]): Promise<string[]> {
   const defaultModelList = ['gemini-2.5-flash'];
-  const baseUrl = apiBaseUrl || 'https://generativelanguage.googleapis.com';
 
   if (!apiKeys || apiKeys.length === 0) {
     return defaultModelList;
@@ -11,7 +10,7 @@ export async function getAvailableModels(apiKeys: string[], apiBaseUrl?: string)
     if (!sanitizedApiKey) continue;
 
     try {
-      const url = `${baseUrl}/v1beta/models`;
+      const url = 'https://generativelanguage.googleapis.com/v1beta/models';
       const response = await fetch(url, {
         method: 'GET',
         headers: {
