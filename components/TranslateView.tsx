@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Settings, TranslationHistoryItem } from '../types';
 import { Icon } from './Icon';
 import { useLocalization } from '../contexts/LocalizationContext';
+import { useToast } from '../contexts/ToastContext';
 import { ComboBox } from './ComboBox';
 import { supportedLanguages } from '../data/languages';
 import { detectLanguage, translateText } from '../services/geminiService';
@@ -18,6 +19,7 @@ interface TranslateViewProps {
 
 const TranslateView: React.FC<TranslateViewProps> = ({ settings, onClose, history, setHistory }) => {
   const { t } = useLocalization();
+  const { addToast } = useToast();
   const [sourceText, setSourceText] = useState('');
   const [translatedText, setTranslatedText] = useState('');
   const [sourceLang, setSourceLang] = useState('auto');
@@ -27,6 +29,8 @@ const TranslateView: React.FC<TranslateViewProps> = ({ settings, onClose, histor
   const [error, setError] = useState('');
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [customLanguages, setCustomLanguages] = useState<{code: string, name: string}[]>([]);
+  const [copiedSource, setCopiedSource] = useState(false);
+  const [copiedTarget, setCopiedTarget] = useState(false);
 
   useEffect(() => {
     setCustomLanguages(loadCustomLanguages());
@@ -60,6 +64,10 @@ const TranslateView: React.FC<TranslateViewProps> = ({ settings, onClose, histor
             ? settings.apiKey
             : (process.env.API_KEY ? [process.env.API_KEY] : []);
         
+        if (apiKeys.length === 0) {
+          throw new Error("API key not configured in Settings.");
+        }
+        
         let finalSourceLang = sourceLang;
         if (sourceLang === 'auto') {
             finalSourceLang = await detectLanguage(apiKeys, settings.languageDetectionModel, sourceText);
@@ -73,6 +81,7 @@ const TranslateView: React.FC<TranslateViewProps> = ({ settings, onClose, histor
 
     } catch (e: any) {
       setError(e.message || "An unknown error occurred.");
+      addToast(e.message || "An unknown error occurred during translation.", 'error');
     } finally {
       setIsLoading(false);
     }
@@ -123,20 +132,19 @@ const TranslateView: React.FC<TranslateViewProps> = ({ settings, onClose, histor
 
   const handleRead = async (text: string, langCode: string) => {
     if (!text.trim()) return;
-    let langToRead = langCode;
-    if (langCode === 'auto') {
-        try {
+    try {
+        let langToRead = langCode;
+        if (langCode === 'auto') {
             const apiKeys = settings.apiKey || [];
-             if (apiKeys.length === 0 && !process.env.API_KEY) {
+            if (apiKeys.length === 0 && !process.env.API_KEY) {
                 throw new Error("API key not set.");
             }
             langToRead = await detectLanguage(apiKeys, settings.languageDetectionModel, text);
-        } catch(e) {
-            alert(`Could not auto-detect language: ${(e as Error).message}. Please select a language manually.`);
-            return;
         }
+        await readAloud(text, langToRead);
+    } catch(e) {
+        addToast(`Could not auto-detect language: ${(e as Error).message}. Please select a language manually.`, 'error');
     }
-    readAloud(text, langToRead);
   };
 
   const handlePaste = async () => {
@@ -145,7 +153,20 @@ const TranslateView: React.FC<TranslateViewProps> = ({ settings, onClose, histor
           setSourceText(text);
       } catch (err) {
           console.error('Failed to read clipboard contents: ', err);
+          addToast("Could not paste text.", 'error');
       }
+  };
+  
+  const handleCopy = (text: string, type: 'source' | 'target') => {
+    if (!text) return;
+    navigator.clipboard.writeText(text);
+    if (type === 'source') {
+        setCopiedSource(true);
+        setTimeout(() => setCopiedSource(false), 2000);
+    } else {
+        setCopiedTarget(true);
+        setTimeout(() => setCopiedTarget(false), 2000);
+    }
   };
 
   return (
@@ -157,8 +178,7 @@ const TranslateView: React.FC<TranslateViewProps> = ({ settings, onClose, histor
             <button onClick={onClose} className="p-2 rounded-full hover:bg-black/10 dark:hover:bg-white/10"><Icon icon="close" className="w-5 h-5"/></button>
          </div>
       </header>
-      <div className="flex-grow flex flex-col md:flex-row gap-6 min-h-0">
-        <div className="w-full md:w-2/3 flex flex-col gap-4">
+      <div className="flex-grow flex flex-col gap-4 min-h-0">
           <div className='flex items-center justify-center gap-2'>
               <ComboBox options={sourceLangOptions} value={sourceLang} onSelect={(val) => handleLanguageChange(val, 'source')} allowCustom className="flex-1"/>
               <button onClick={handleSwapLanguages} disabled={sourceLang === 'auto' || targetLang === 'auto'} className="p-2 rounded-full hover:bg-black/10 dark:hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed" data-tooltip={t('swapLanguages')} data-tooltip-placement="top"><Icon icon="swap-horizontal" className="w-5 h-5"/></button>
@@ -168,21 +188,22 @@ const TranslateView: React.FC<TranslateViewProps> = ({ settings, onClose, histor
             <button onClick={() => setMode('natural')} className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-colors ${mode === 'natural' ? 'bg-[var(--accent-color)] text-white' : ''}`}>{t('natural')}</button>
             <button onClick={() => setMode('literal')} className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-colors ${mode === 'literal' ? 'bg-[var(--accent-color)] text-white' : ''}`}>{t('literal')}</button>
           </div>
-          <div className="flex flex-col gap-4 flex-grow min-h-[200px]">
+          <div className="flex flex-col md:flex-row gap-4 flex-grow min-h-[200px]">
             <div className="flex-1 flex flex-col rounded-[var(--radius-2xl)] glass-pane p-1">
                 <textarea value={sourceText} onChange={e => setSourceText(e.target.value)} placeholder={t('enterText')} className="bg-transparent w-full h-full flex-grow resize-none p-3 focus:outline-none"/>
                 <div className="flex items-center gap-2 p-2">
-                    <button onClick={handlePaste} className="action-btn" data-tooltip={t('paste')}><Icon icon="clipboard" className="w-4 h-4"/></button>
-                    <button onClick={() => handleRead(sourceText, sourceLang)} className="action-btn" data-tooltip={t('read')}><Icon icon="volume-2" className="w-4 h-4"/></button>
-                    <button onClick={() => setSourceText('')} className="action-btn ml-auto" data-tooltip={t('clear')}><Icon icon="delete" className="w-4 h-4"/></button>
+                    <button onClick={handlePaste} className="action-btn" data-tooltip={t('paste')} data-tooltip-placement="top"><Icon icon="clipboard" className="w-4 h-4"/></button>
+                    <button onClick={() => handleRead(sourceText, sourceLang)} className="action-btn" data-tooltip={t('read')} data-tooltip-placement="top"><Icon icon="volume-2" className="w-4 h-4"/></button>
+                    <button onClick={() => handleCopy(sourceText, 'source')} className="action-btn" data-tooltip={copiedSource ? "Copied!" : t('copy')} data-tooltip-placement="top"><Icon icon="copy" className="w-4 h-4"/></button>
+                    <button onClick={() => setSourceText('')} className="action-btn ml-auto" data-tooltip={t('clear')} data-tooltip-placement="top"><Icon icon="delete" className="w-4 h-4"/></button>
                 </div>
             </div>
             <div className="flex-1 flex flex-col rounded-[var(--radius-2xl)] glass-pane p-1">
-                 <textarea value={isLoading ? t('translating') : translatedText} readOnly placeholder="..." className="bg-transparent w-full h-full flex-grow resize-none p-3 focus:outline-none"/>
+                 <textarea value={isLoading ? t('translating') + '...' : translatedText} readOnly placeholder="..." className="bg-transparent w-full h-full flex-grow resize-none p-3 focus:outline-none"/>
                 <div className="flex items-center gap-2 p-2">
-                     <button onClick={() => navigator.clipboard.writeText(translatedText)} className="action-btn" data-tooltip={t('copy')}><Icon icon="copy" className="w-4 h-4"/></button>
-                    <button onClick={() => handleRead(translatedText, targetLang)} className="action-btn" data-tooltip={t('read')}><Icon icon="volume-2" className="w-4 h-4"/></button>
-                    <button onClick={() => setTranslatedText('')} className="action-btn ml-auto" data-tooltip={t('clear')}><Icon icon="delete" className="w-4 h-4"/></button>
+                     <button onClick={() => handleCopy(translatedText, 'target')} className="action-btn" data-tooltip={copiedTarget ? "Copied!" : t('copy')} data-tooltip-placement="top"><Icon icon="copy" className="w-4 h-4"/></button>
+                    <button onClick={() => handleRead(translatedText, targetLang)} className="action-btn" data-tooltip={t('read')} data-tooltip-placement="top"><Icon icon="volume-2" className="w-4 h-4"/></button>
+                    <button onClick={() => setTranslatedText('')} className="action-btn ml-auto" data-tooltip={t('clear')} data-tooltip-placement="top"><Icon icon="delete" className="w-4 h-4"/></button>
                 </div>
             </div>
           </div>
@@ -190,22 +211,6 @@ const TranslateView: React.FC<TranslateViewProps> = ({ settings, onClose, histor
             {isLoading ? <div className="w-6 h-6 border-2 border-white/50 border-t-white rounded-full animate-spin"></div> : <Icon icon="translate-logo" className="w-6 h-6"/>}
             <span>{isLoading ? t('translating') : t('translate')}</span>
           </button>
-        </div>
-        <div className="w-full md:w-1/3 flex-col min-h-0 hidden md:flex">
-          <h3 className="text-lg font-bold mb-2">{t('translationHistory')}</h3>
-           <div className="flex-grow overflow-y-auto -mr-4 pr-4">
-              {history.length > 0 ? history.map(item => (
-                  <div key={item.id} onClick={() => handleHistoryClick(item)} className="p-3 rounded-[var(--radius-2xl)] mb-2 cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 border border-transparent hover:border-[var(--glass-border)] transition-colors">
-                      <p className="font-semibold text-sm truncate">{item.sourceText}</p>
-                      <p className="text-sm text-[var(--text-color-secondary)] truncate">{item.translatedText}</p>
-                  </div>
-              )) : (
-                 <div className="flex items-center justify-center h-full text-center text-[var(--text-color-secondary)]">
-                     <p>Your recent translations will appear here.</p>
-                 </div>
-              )}
-           </div>
-        </div>
       </div>
       {isHistoryOpen && <TranslationHistoryModal history={history} onSelect={handleHistoryClick} onClear={() => setHistory([])} onClose={() => setIsHistoryOpen(false)} />}
     </main>

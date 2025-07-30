@@ -10,11 +10,14 @@ import { RolesView } from './components/RolesView';
 import { PersonaEditor } from './components/PersonaEditor';
 import { ArchiveView } from './components/ArchiveView';
 import TranslateView from './components/TranslateView';
+import { ToastContainer } from './components/ToastContainer';
+import { ConfirmationModal } from './components/ConfirmationModal';
 import { ChatSession, Folder, Settings, Persona, TranslationHistoryItem } from './types';
-import { LocalizationProvider } from './contexts/LocalizationContext';
+import { LocalizationProvider, useLocalization } from './contexts/LocalizationContext';
 import { useSettings } from './hooks/useSettings';
 import { useChatData } from './hooks/useChatData';
 import { useChatMessaging } from './hooks/useChatMessaging';
+import { useToast } from './contexts/ToastContext';
 import { exportData, importData, clearAllData, saveRoles, loadRoles, loadTranslationHistory, saveTranslationHistory } from './services/storageService';
 import { defaultPersonas } from './data/defaultRoles';
 
@@ -59,11 +62,14 @@ const ViewContainer: React.FC<{ view: View; activeView: View; children: React.Re
 const AppContainer = () => {
   const { settings, setSettings, availableModels, isStorageLoaded } = useSettings();
   const { chats, setChats, folders, setFolders, activeChatId, setActiveChatId, ...chatDataHandlers } = useChatData({ settings, isStorageLoaded });
+  const { addToast } = useToast();
+  const { t } = useLocalization();
   
   const [personas, setPersonas] = useState<Persona[]>([]);
   const [currentView, setCurrentView] = useState<View>('chat');
   const [editingPersona, setEditingPersona] = useState<Persona | null>(null);
   const [translationHistory, setTranslationHistory] = useState<TranslationHistoryItem[]>([]);
+  const [confirmation, setConfirmation] = useState<{ title: string, message: string, onConfirm: () => void } | null>(null);
 
   useEffect(() => {
     if (isStorageLoaded) {
@@ -92,7 +98,7 @@ const AppContainer = () => {
     handleUpdateMessageContent, handleRegenerate, handleEditAndResubmit 
   } = useChatMessaging({ 
     settings, activeChat, personas, setChats, 
-    setSuggestedReplies: chatDataHandlers.setSuggestedReplies, setActiveChatId 
+    setSuggestedReplies: chatDataHandlers.setSuggestedReplies, setActiveChatId, addToast 
   });
 
   const [editingChat, setEditingChat] = useState<ChatSession | null>(null);
@@ -153,17 +159,33 @@ const AppContainer = () => {
         if (chats) setChats(chats);
         if (folders) setFolders(folders);
         if (importedPersonas) setPersonas(p => [...defaultPersonas, ...importedPersonas]);
-        alert("Import successful!");
-    }).catch(err => { alert("Invalid backup file."); console.error(err); });
+        addToast("Import successful!", 'success');
+    }).catch(err => { 
+        addToast("Invalid backup file.", 'error');
+        console.error(err); 
+    });
   };
+
   const handleClearAll = () => {
-    if (window.confirm('Are you sure you want to delete all chats, folders, personas and settings? This action cannot be undone.')) {
-      clearAllData(); setChats([]); setFolders([]); setPersonas(defaultPersonas); setTranslationHistory([]); setActiveChatId(null);
-    }
+    setConfirmation({
+        title: t('clearHistory'),
+        message: t('clearHistoryConfirm'),
+        onConfirm: () => {
+            clearAllData(); 
+            setChats([]); 
+            setFolders([]); 
+            setPersonas(defaultPersonas); 
+            setTranslationHistory([]); 
+            setActiveChatId(null);
+            setConfirmation(null);
+            addToast("All data cleared.", 'success');
+        }
+    });
   };
   
   return (
     <div className="h-screen w-screen flex bg-[var(--bg-image)] text-[var(--text-color)] overflow-hidden">
+        <ToastContainer />
         {isMobileSidebarOpen && <div className="fixed inset-0 bg-black/30 z-30 md:hidden" onClick={() => setIsMobileSidebarOpen(false)} aria-hidden="true"/>}
         <Sidebar chats={chats} folders={folders} activeChatId={activeChatId} onNewChat={() => handleNewChat(null)} onSelectChat={handleSelectChat} onDeleteChat={chatDataHandlers.handleDeleteChat} onEditChat={setEditingChat} onArchiveChat={(id) => chatDataHandlers.handleArchiveChat(id, true)} onNewFolder={() => setEditingFolder('new')} onEditFolder={setEditingFolder} onDeleteFolder={chatDataHandlers.handleDeleteFolder} onMoveChatToFolder={chatDataHandlers.handleMoveChatToFolder} isCollapsed={isSidebarCollapsed} onToggleCollapse={() => setIsSidebarCollapsed(p => !p)} isMobileSidebarOpen={isMobileSidebarOpen} onToggleMobileSidebar={() => setIsMobileSidebarOpen(false)} searchQuery={searchQuery} onSetSearchQuery={setSearchQuery} onOpenSettings={() => setIsSettingsOpen(true)} onOpenPersonas={handleOpenPersonas} onOpenArchive={handleOpenArchive} onOpenTranslate={handleOpenTranslate} />
         <div className={`flex-1 flex flex-col h-full transition-all duration-300 ${isSidebarCollapsed ? 'p-3 pb-2' : 'p-3 pb-2 md:pl-0'}`}>
@@ -191,6 +213,7 @@ const AppContainer = () => {
         {editingFolder && <FolderActionModal folder={editingFolder === 'new' ? null : editingFolder} onClose={() => setEditingFolder(null)} onSave={editingFolder === 'new' ? chatDataHandlers.handleNewFolder : chatDataHandlers.handleUpdateFolder} />}
         {lightboxImage && <ImageLightbox src={lightboxImage} onClose={() => setLightboxImage(null)} />}
         {citationChunks && <CitationDrawer chunks={citationChunks} onClose={() => setCitationChunks(null)} />}
+        {confirmation && <ConfirmationModal {...confirmation} onClose={() => setConfirmation(null)} />}
     </div>
   );
 };

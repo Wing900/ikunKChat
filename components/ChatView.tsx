@@ -55,6 +55,7 @@ export const ChatView: React.FC<ChatViewProps> = (props) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [chatInput, setChatInput] = useState('');
 
   const activePersona = chatSession?.personaId ? personas.find(p => p.id === chatSession.personaId) : null;
 
@@ -72,6 +73,7 @@ export const ChatView: React.FC<ChatViewProps> = (props) => {
     if (currentChatId !== prevChatIdRef.current) {
         setToolConfig(getDefaultToolConfig());
         setEditingMessageId(null);
+        setChatInput('');
     }
     prevChatIdRef.current = currentChatId;
   }, [chatSession, getDefaultToolConfig]);
@@ -88,6 +90,7 @@ export const ChatView: React.FC<ChatViewProps> = (props) => {
 
   const handleSendMessageWithTools = (message: string, files: File[]) => {
     onSendMessage(message, files, toolConfig);
+    setChatInput('');
   };
   
   const handleSendSuggestion = (suggestion: string) => {
@@ -188,9 +191,9 @@ export const ChatView: React.FC<ChatViewProps> = (props) => {
             </InternalView>
         </div>
         
-        {!isLoading && suggestedReplies.length > 0 && !editingMessageId && <SuggestedReplies suggestions={suggestedReplies} onSendSuggestion={handleSendSuggestion} />}
+        {!isLoading && suggestedReplies.length > 0 && !editingMessageId && !chatInput && <SuggestedReplies suggestions={suggestedReplies} onSendSuggestion={handleSendSuggestion} />}
 
-        <ChatInput onSendMessage={handleSendMessageWithTools} isLoading={isLoading} onCancel={onCancelGeneration} toolConfig={toolConfig} onToolConfigChange={setToolConfig} />
+        <ChatInput onSendMessage={handleSendMessageWithTools} isLoading={isLoading} onCancel={onCancelGeneration} toolConfig={toolConfig} onToolConfigChange={setToolConfig} input={chatInput} setInput={setChatInput}/>
     </main>
   );
 };

@@ -10,9 +10,10 @@ interface UseChatMessagingProps {
   setChats: React.Dispatch<React.SetStateAction<ChatSession[]>>;
   setSuggestedReplies: React.Dispatch<React.SetStateAction<string[]>>;
   setActiveChatId: React.Dispatch<React.SetStateAction<string | null>>;
+  addToast: (message: string, type: 'success' | 'error' | 'info') => void;
 }
 
-export const useChatMessaging = ({ settings, activeChat, personas, setChats, setSuggestedReplies, setActiveChatId }: UseChatMessagingProps) => {
+export const useChatMessaging = ({ settings, activeChat, personas, setChats, setSuggestedReplies, setActiveChatId, addToast }: UseChatMessagingProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const isCancelledRef = useRef(false);
 
@@ -27,7 +28,7 @@ export const useChatMessaging = ({ settings, activeChat, personas, setChats, set
       : (process.env.API_KEY ? [process.env.API_KEY] : []);
     
     if (apiKeys.length === 0) {
-        alert("Please set your Gemini API key in Settings.");
+        addToast("Please set your Gemini API key in Settings.", 'error');
         setIsLoading(false);
         return;
     }
@@ -92,7 +93,9 @@ export const useChatMessaging = ({ settings, activeChat, personas, setChats, set
       console.error(e);
       if (!isCancelledRef.current) {
         streamHadError = true;
-        setChats(p => p.map(c => c.id === chatId ? { ...c, messages: c.messages.map(m => m.id === modelMessage.id ? { ...m, content: "Sorry, an error occurred." } : m) } : c));
+        const errorMessage = "Sorry, an error occurred during the request.";
+        addToast(errorMessage, 'error');
+        setChats(p => p.map(c => c.id === chatId ? { ...c, messages: c.messages.map(m => m.id === modelMessage.id ? { ...m, content: errorMessage } : m) } : c));
       }
     } finally {
       if (!isCancelledRef.current) {
@@ -102,7 +105,7 @@ export const useChatMessaging = ({ settings, activeChat, personas, setChats, set
         }
       }
     }
-  }, [settings, setChats, activeChat, personas, setSuggestedReplies]);
+  }, [settings, setChats, activeChat, personas, setSuggestedReplies, addToast]);
 
   const handleSendMessage = useCallback(async (content: string, files: File[] = [], toolConfig: any) => {
     const attachments = await Promise.all(files.map(fileToData));

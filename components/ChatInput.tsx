@@ -1,6 +1,3 @@
-
-
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Icon } from './Icon';
 import { useLocalization } from '../contexts/LocalizationContext';
@@ -12,6 +9,8 @@ interface ChatInputProps {
   onCancel: () => void;
   toolConfig: any;
   onToolConfigChange: (config: any) => void;
+  input: string;
+  setInput: (value: string) => void;
 }
 
 interface FileWithId {
@@ -29,9 +28,8 @@ const ToolItem: React.FC<{icon: any, label: string, checked: boolean, onChange: 
     </div>
 );
 
-export const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isLoading, onCancel, toolConfig, onToolConfigChange }) => {
+export const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isLoading, onCancel, toolConfig, onToolConfigChange, input, setInput }) => {
   const { t } = useLocalization();
-  const [input, setInput] = useState('');
   const [files, setFiles] = useState<FileWithId[]>([]);
   const [isToolsOpen, setIsToolsOpen] = useState(false);
   const [enteringFileIds, setEnteringFileIds] = useState<Set<string>>(new Set());
@@ -109,7 +107,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isLoading, 
     e.preventDefault();
     if ((input.trim() || files.length > 0) && !isLoading) {
       onSendMessage(input.trim(), files.map(f => f.file));
-      setInput('');
+      // setInput is now handled by ChatView
       setFiles([]);
       setIsToolsOpen(false);
     }

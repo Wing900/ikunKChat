@@ -213,7 +213,7 @@ export function sendMessageStream(apiKeys: string[], messages: Message[], newMes
 
 export async function generateChatDetails(apiKeys: string[], prompt: string, model: string): Promise<{ title: string; icon: string }> {
   try {
-    const response = await executeWithKeyRotation(apiKeys, (ai) => 
+    const response = await executeWithKeyRotation<GenerateContentResponse>(apiKeys, (ai) => 
       ai.models.generateContent({
         model: model,
         contents: `Generate a short, concise title (max 5 words) and a single, relevant emoji for a conversation starting with this user prompt: "${prompt}"`,
@@ -238,7 +238,7 @@ export async function generateSuggestedReplies(apiKeys: string[], history: Messa
   if (history.length === 0) return [];
   try {
     const lastMessageContent = history[history.length - 1].content;
-    const response = await executeWithKeyRotation(apiKeys, (ai) => 
+    const response = await executeWithKeyRotation<GenerateContentResponse>(apiKeys, (ai) => 
       ai.models.generateContent({
         model: model,
         contents: `The AI just said: "${lastMessageContent}". Generate 4 very short, distinct, and relevant one-tap replies for the user. Return ONLY a JSON array of 4 strings.`,
@@ -268,7 +268,7 @@ Example Response:
     
     const prompt = `Current Persona State: ${JSON.stringify(currentPersona)}\n\nUser Request: "${request}"\n\nGenerate the JSON update object:`;
     
-    const response = await executeWithKeyRotation(apiKeys, (ai) => 
+    const response = await executeWithKeyRotation<GenerateContentResponse>(apiKeys, (ai) => 
       ai.models.generateContent({
         model: model,
         contents: prompt,
@@ -308,7 +308,7 @@ Example Response:
 
 export async function detectLanguage(apiKeys: string[], model: string, text: string): Promise<string> {
   try {
-    const response = await executeWithKeyRotation(apiKeys, (ai) =>
+    const response = await executeWithKeyRotation<GenerateContentResponse>(apiKeys, (ai) =>
       ai.models.generateContent({
         model: model,
         contents: `Detect the language of the following text. Respond with only the two-letter ISO 639-1 code (e.g., "en", "es", "zh"). Text: "${text}"`,
@@ -333,7 +333,7 @@ export async function translateText(apiKeys: string[], model: string, text: stri
     .replace('{text}', text);
 
   try {
-    const response = await executeWithKeyRotation(apiKeys, (ai) =>
+    const response = await executeWithKeyRotation<GenerateContentResponse>(apiKeys, (ai) =>
       ai.models.generateContent({
         model,
         contents: prompt,

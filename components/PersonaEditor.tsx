@@ -5,6 +5,7 @@ import { useLocalization } from '../contexts/LocalizationContext';
 import { generatePersonaUpdate } from '../services/geminiService';
 import { fileToData } from '../utils/fileUtils';
 import { Switch } from './Switch';
+import { useToast } from '../contexts/ToastContext';
 
 const newPersonaTemplate: Persona = {
   id: '',
@@ -31,6 +32,7 @@ interface BuilderMessage {
 
 const AIBuilder: React.FC<{ persona: Persona, onUpdate: (update: Partial<Persona>) => void, settings: Settings }> = ({ persona, onUpdate, settings }) => {
     const { t } = useLocalization();
+    const { addToast } = useToast();
     const [messages, setMessages] = useState<BuilderMessage[]>([]);
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -74,11 +76,9 @@ const AIBuilder: React.FC<{ persona: Persona, onUpdate: (update: Partial<Persona
                 ? "API Key not set. Please add it in Settings."
                 : "Sorry, I couldn't process that. Please try again.";
             
-            setMessages(prev => prev.map(m =>
-                m.id === statusMessageId
-                ? { ...m, role: 'model', content: errorMessage }
-                : m
-            ));
+            addToast(errorMessage, 'error');
+
+            setMessages(prev => prev.filter(m => m.id !== statusMessageId));
         } finally {
             setIsLoading(false);
         }
@@ -127,6 +127,7 @@ interface PersonaEditorProps {
 
 export const PersonaEditor: React.FC<PersonaEditorProps> = ({ personaToEdit, onSave, onClose, settings }) => {
   const { t } = useLocalization();
+  const { addToast } = useToast();
   const [persona, setPersona] = useState<Persona>(personaToEdit || newPersonaTemplate);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -153,7 +154,7 @@ export const PersonaEditor: React.FC<PersonaEditorProps> = ({ personaToEdit, onS
         handleUpdate({ avatar: { type: 'base64', value: `data:${file.type};base64,${data}` } });
       } catch (error) {
         console.error("Error processing avatar file:", error);
-        alert("Could not load image.");
+        addToast("Could not load image.", 'error');
       }
     }
   };
@@ -162,7 +163,7 @@ export const PersonaEditor: React.FC<PersonaEditorProps> = ({ personaToEdit, onS
     if(persona.name.trim() && persona.bio.trim() && persona.systemPrompt.trim()) {
       onSave(persona);
     } else {
-      alert("Please fill out all fields before saving.");
+      addToast("Please fill out all fields before saving.", 'error');
     }
   };
 

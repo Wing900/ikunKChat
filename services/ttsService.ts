@@ -35,6 +35,7 @@ export const readAloud = async (text: string, lang: string): Promise<void> => {
 
   } catch (error) {
     console.error("Error in readAloud service:", error);
-    alert(`Sorry, text-to-speech is currently unavailable. Error: ${(error as Error).message}`);
+    // Re-throw the error so the calling component can handle it (e.g., show a toast)
+    throw new Error(`Text-to-speech is currently unavailable. Error: ${(error as Error).message}`);
   }
 };

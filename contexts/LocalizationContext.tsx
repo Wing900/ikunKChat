@@ -34,3 +34,6 @@ export const useLocalization = (): LocalizationContextType => {
   }
   return context;
 };
+
+// Export translations for use in other parts of the app, like settings search
+export { translations };
