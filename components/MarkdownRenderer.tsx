@@ -1,7 +1,7 @@
 
-
 import React, { useEffect, useRef, useCallback } from 'react';
 import { marked } from 'marked';
+import type { Tokens } from 'marked';
 import mermaid from 'mermaid';
 
 // Declare global variables from CDN scripts
@@ -38,15 +38,20 @@ renderer.code = ({ text: code, lang }: { text: string; lang?: string; }): string
 };
 
 // Override for task lists to provide custom styling.
-renderer.listitem = ({ text, task, checked }: { text: string; task: boolean; checked?: boolean; }) => {
-    if (task) {
-        // `marked` has identified this as a GFM task list item.
-        // The `text` is already parsed HTML content of the item.
-        const checkboxHtml = `<input type="checkbox" ${checked ? 'checked' : ''} disabled />`;
-        return `<li class="task-list-item">${checkboxHtml}<div>${text}</div></li>`;
+// In newer versions of marked, the listitem renderer receives a single token object.
+renderer.listitem = (item: Tokens.ListItem): string => {
+    // We need to manually parse the inner content of the list item.
+    // `item.text` is the raw markdown content. `marked.parseInline` will handle it.
+    const textAsHtml = marked.parseInline(item.text);
+
+    if (item.task) {
+        // Handle GFM task list items.
+        const checkboxHtml = `<input type="checkbox" ${item.checked ? 'checked' : ''} disabled />`;
+        return `<li class="task-list-item">${checkboxHtml}<div>${textAsHtml}</div></li>`;
     }
-    // For all other list items, manually construct the standard list item HTML to avoid fallback issues.
-    return `<li>${text}</li>`;
+    
+    // Handle regular list items.
+    return `<li>${textAsHtml}</li>`;
 };
 
 
