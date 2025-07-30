@@ -153,14 +153,8 @@ export const ChatView: React.FC<ChatViewProps> = (props) => {
             <ModelSelector models={availableModels} selectedModel={chatSession?.model || currentModel} onModelChange={onSetModelForActiveChat} isHeader={true}/>
           </div>
           <div className="md:hidden flex items-center gap-1 ml-auto">
-            <button onClick={handleShareChat} className="p-2 rounded-full hover:bg-black/10 dark:hover:bg-white/10" data-tooltip={t('shareChat')} data-tooltip-placement="bottom">
-              <Icon icon="upload" className="w-5 h-5" />
-            </button>
-            <button onClick={() => onEditChat(chatSession!)} className="p-2 rounded-full hover:bg-black/10 dark:hover:bg-white/10" data-tooltip={t('editChat')} data-tooltip-placement="bottom">
-              <Icon icon="edit" className="w-5 h-5" />
-            </button>
-            <button onClick={handleDeleteChat} className="p-2 rounded-full text-red-500 hover:bg-red-500/10" data-tooltip={t('delete')} data-tooltip-placement="bottom">
-              <Icon icon="delete" className="w-5 h-5" />
+            <button onClick={onNewChat} className="p-2 rounded-full hover:bg-black/10 dark:hover:bg-white/10" data-tooltip={t('newChat')} data-tooltip-placement="bottom">
+              <Icon icon="plus" className="w-6 h-6" />
             </button>
           </div>
       </header>
