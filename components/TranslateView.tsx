@@ -121,13 +121,15 @@ const TranslateView: React.FC<TranslateViewProps> = ({ settings, onClose, histor
     setTranslatedText(sourceText);
   };
   
-  const handleHistoryClick = (item: TranslationHistoryItem) => {
-      setSourceLang(item.sourceLang);
-      setTargetLang(item.targetLang);
-      setSourceText(item.sourceText);
-      setTranslatedText(item.translatedText);
-      setMode(item.mode);
+  const handleHistoryModalClose = (item: TranslationHistoryItem | null) => {
       setIsHistoryOpen(false);
+      if (item) {
+        setSourceLang(item.sourceLang);
+        setTargetLang(item.targetLang);
+        setSourceText(item.sourceText);
+        setTranslatedText(item.translatedText);
+        setMode(item.mode);
+      }
   }
 
   const handleRead = async (text: string, langCode: string) => {
@@ -212,7 +214,7 @@ const TranslateView: React.FC<TranslateViewProps> = ({ settings, onClose, histor
             <span>{isLoading ? t('translating') : t('translate')}</span>
           </button>
       </div>
-      {isHistoryOpen && <TranslationHistoryModal history={history} onSelect={handleHistoryClick} onClear={() => setHistory([])} onClose={() => setIsHistoryOpen(false)} />}
+      {isHistoryOpen && <TranslationHistoryModal history={history} onClear={() => setHistory([])} onClose={handleHistoryModalClose} />}
     </main>
   );
 };

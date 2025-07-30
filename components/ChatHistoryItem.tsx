@@ -7,6 +7,7 @@ interface ChatHistoryItemProps {
     chat: ChatSession;
     isActive: boolean;
     isNew: boolean;
+    isHiding: boolean;
     onSelect: () => void;
     onEdit: () => void;
     onDelete: () => void;
@@ -16,7 +17,7 @@ interface ChatHistoryItemProps {
 }
 
 export const ChatHistoryItem: React.FC<ChatHistoryItemProps> = (
-    { chat, isActive, isNew, onSelect, onEdit, onDelete, onArchive, onDragStart, onDragEnd }
+    { chat, isActive, isNew, isHiding, onSelect, onEdit, onDelete, onArchive, onDragStart, onDragEnd }
 ) => {
     const { t } = useLocalization();
     const [isBeingDeleted, setIsBeingDeleted] = useState(false);
@@ -48,7 +49,7 @@ export const ChatHistoryItem: React.FC<ChatHistoryItemProps> = (
             onDragEnd={onDragEnd}
             onClick={(e) => { e.preventDefault(); onSelect(); }}
             className={`history-item group flex items-center gap-3 px-3 py-2.5 rounded-[var(--radius-2xl)] transition-colors text-left relative ${isActive ? 'bg-[var(--accent-color)] text-white' : 'text-[var(--text-color)] hover:bg-black/10 dark:hover:bg-white/10'
-                } ${isBeingDeleted ? 'deleting' : ''} ${isBeingArchived ? 'archiving' : ''} ${isNew ? 'history-item-enter' : ''}`}
+                } ${isBeingDeleted ? 'deleting' : ''} ${isBeingArchived ? 'archiving' : ''} ${isNew ? 'history-item-enter' : ''} ${isHiding ? 'hiding' : ''}`}
         >
             <span className="text-xl">{chat.icon || <Icon icon="chat" className="w-5 h-5" />}</span>
             <span className="truncate flex-grow">{chat.title}</span>

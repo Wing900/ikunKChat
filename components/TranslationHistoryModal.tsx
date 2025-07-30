@@ -1,34 +1,37 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { TranslationHistoryItem } from '../types';
 import { Icon } from './Icon';
 import { useLocalization } from '../contexts/LocalizationContext';
 
 interface TranslationHistoryModalProps {
   history: TranslationHistoryItem[];
-  onClose: () => void;
-  onSelect: (item: TranslationHistoryItem) => void;
+  onClose: (item: TranslationHistoryItem | null) => void;
   onClear: () => void;
 }
 
-export const TranslationHistoryModal: React.FC<TranslationHistoryModalProps> = ({ history, onClose, onSelect, onClear }) => {
+export const TranslationHistoryModal: React.FC<TranslationHistoryModalProps> = ({ history, onClose, onClear }) => {
   const { t } = useLocalization();
   const [isVisible, setIsVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
   const filteredHistory = useMemo(() => {
-      if (!searchQuery.trim()) return history;
+      const hasQuery = !!searchQuery.trim();
+      if (!hasQuery) return history.map(item => ({...item, isHiding: false}));
+
       const lowerQuery = searchQuery.toLowerCase();
-      return history.filter(item => 
-          item.sourceText.toLowerCase().includes(lowerQuery) ||
-          item.translatedText.toLowerCase().includes(lowerQuery)
-      );
+      return history.map(item => ({
+        ...item,
+        isHiding: !(item.sourceText.toLowerCase().includes(lowerQuery) || item.translatedText.toLowerCase().includes(lowerQuery))
+      }));
   }, [history, searchQuery]);
 
-  const handleClose = () => {
-    setIsVisible(false);
-    setTimeout(onClose, 300);
-  };
+  const hasVisibleHistory = useMemo(() => filteredHistory.some(item => !item.isHiding), [filteredHistory]);
 
+  const handleClose = useCallback((item: TranslationHistoryItem | null = null) => {
+    setIsVisible(false);
+    setTimeout(() => onClose(item), 300);
+  }, [onClose]);
+  
   useEffect(() => {
     const timer = setTimeout(() => setIsVisible(true), 10);
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -39,11 +42,11 @@ export const TranslationHistoryModal: React.FC<TranslationHistoryModalProps> = (
       clearTimeout(timer);
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, []);
+  }, [handleClose]);
 
   return (
     <>
-      <div className={`modal-backdrop ${isVisible ? 'visible' : ''}`} onClick={handleClose}></div>
+      <div className={`modal-backdrop ${isVisible ? 'visible' : ''}`} onClick={() => handleClose()}></div>
       <div className={`modal-dialog modal-dialog-lg ${isVisible ? 'visible' : ''} glass-pane rounded-[var(--radius-2xl)] p-6 flex flex-col`}>
         <div className="flex items-center justify-between mb-4 flex-shrink-0 gap-4">
           <h2 className="text-xl font-bold text-[var(--text-color)]">{t('translationHistory')}</h2>
@@ -55,14 +58,14 @@ export const TranslationHistoryModal: React.FC<TranslationHistoryModalProps> = (
             {history.length > 0 && (
                 <button onClick={onClear} className="action-btn danger" data-tooltip={t('clear')}><Icon icon="delete" className="w-4 h-4"/></button>
             )}
-            <button onClick={handleClose} className="p-2 rounded-full hover:bg-black/10 dark:hover:bg-white/10 -mr-2"><Icon icon="close" className="w-5 h-5"/></button>
+            <button onClick={() => handleClose()} className="p-2 rounded-full hover:bg-black/10 dark:hover:bg-white/10 -mr-2"><Icon icon="close" className="w-5 h-5"/></button>
           </div>
         </div>
         <div className="flex-grow min-h-0 overflow-y-auto -mr-4 pr-4">
-            {filteredHistory.length > 0 ? (
+            {hasVisibleHistory ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {filteredHistory.map(item => (
-                        <div key={item.id} onClick={() => onSelect(item)} className="p-3 rounded-[var(--radius-2xl)] cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 border border-transparent hover:border-[var(--glass-border)] transition-colors">
+                        <div key={item.id} onClick={() => handleClose(item)} className={`p-3 rounded-[var(--radius-2xl)] cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 border border-transparent hover:border-[var(--glass-border)] transition-all duration-200 translation-history-item ${item.isHiding ? 'hiding' : ''}`}>
                             <p className="font-semibold text-sm truncate">{item.sourceText}</p>
                             <p className="text-sm text-[var(--text-color-secondary)] truncate">{item.translatedText}</p>
                             <div className="text-xs text-[var(--text-color-secondary)] mt-2 opacity-75">

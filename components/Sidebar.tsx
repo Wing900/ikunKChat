@@ -48,28 +48,46 @@ export const Sidebar: React.FC<SidebarProps> = (props) => {
 
   const { visibleFolders, visibleRootChats } = useMemo(() => {
     const lowerQuery = searchQuery.toLowerCase();
-    const folderMap = new Map(folders.map(f => [f.id, { ...f, chats: [] as ChatSession[] }]));
-    const rootChats: ChatSession[] = [];
+    const hasQuery = !!lowerQuery;
 
-    sortedChats.forEach(chat => {
-      if (chat.folderId && folderMap.has(chat.folderId)) {
-        folderMap.get(chat.folderId)!.chats.push(chat);
-      } else { rootChats.push(chat); }
+    const rootChats = sortedChats.filter(c => !c.folderId);
+    const chatsByFolder = sortedChats.reduce((acc, chat) => {
+        if (chat.folderId) {
+            if (!acc[chat.folderId]) acc[chat.folderId] = [];
+            acc[chat.folderId].push(chat);
+        }
+        return acc;
+    }, {} as Record<string, ChatSession[]>);
+
+    const visibleRootChats = rootChats.map(c => ({
+        ...c,
+        isHiding: hasQuery && !c.title.toLowerCase().includes(lowerQuery)
+    }));
+
+    const visibleFolders = folders.map(folder => {
+        const folderChats = chatsByFolder[folder.id] || [];
+        const chatsWithVisibility = folderChats.map(c => ({
+            ...c,
+            isHiding: hasQuery && !c.title.toLowerCase().includes(lowerQuery)
+        }));
+
+        const folderNameMatches = folder.name.toLowerCase().includes(lowerQuery);
+        const anyChildIsVisible = chatsWithVisibility.some(c => !c.isHiding);
+        
+        const isFolderHiding = hasQuery && !folderNameMatches && !anyChildIsVisible;
+        
+        return {
+            ...folder,
+            chats: chatsWithVisibility,
+            isHiding: isFolderHiding
+        };
     });
 
-    if (!searchQuery) return { visibleFolders: Array.from(folderMap.values()), visibleRootChats: rootChats };
-    
-    const filteredRoot = rootChats.filter(c => c.title.toLowerCase().includes(lowerQuery));
-    const filteredFolders = Array.from(folderMap.values()).map(folder => ({
-      ...folder,
-      chats: folder.chats.filter(c => c.title.toLowerCase().includes(lowerQuery)),
-    })).filter(folder => folder.chats.length > 0 || folder.name.toLowerCase().includes(lowerQuery));
-
-    return { visibleFolders: filteredFolders, visibleRootChats: filteredRoot };
+    return { visibleFolders, visibleRootChats };
   }, [sortedChats, folders, searchQuery]);
 
   useEffect(() => {
-    if (searchQuery) { setOpenFolderIds(new Set(visibleFolders.map(f => f.id))); }
+    if (searchQuery) { setOpenFolderIds(new Set(visibleFolders.filter(f => !f.isHiding).map(f => f.id))); }
   }, [searchQuery, visibleFolders]);
   
   const toggleFolder = (id: string) => {
@@ -97,10 +115,11 @@ export const Sidebar: React.FC<SidebarProps> = (props) => {
     setDragOverTarget(targetId);
   };
 
-  const renderChat = (chat: ChatSession) => (
+  const renderChat = (chat: ChatSession & { isHiding: boolean }) => (
     <ChatHistoryItem 
       key={chat.id} chat={chat} isActive={activeChatId === chat.id} 
       isNew={!prevChatIdsRef.current.has(chat.id)} 
+      isHiding={chat.isHiding}
       onSelect={() => onSelectChat(chat.id)} onEdit={() => onEditChat(chat)} 
       onDelete={() => onDeleteChat(chat.id)} onArchive={() => onArchiveChat(chat.id)}
       onDragStart={(e) => { e.dataTransfer.setData('text/plain', chat.id); e.currentTarget.classList.add('dragging'); }} 
@@ -123,7 +142,7 @@ export const Sidebar: React.FC<SidebarProps> = (props) => {
           
           <nav className="flex flex-col gap-1">
             {visibleFolders.map(folder => (
-              <div key={folder.id} className={`folder-wrapper ${deletingFolderId === folder.id ? 'deleting' : ''} ${!prevFolderIdsRef.current.has(folder.id) ? 'history-item-enter' : ''}`} onDrop={(e) => handleDrop(e, folder.id)} onDragOver={(e) => handleDragOver(e, folder.id)} onDragLeave={() => setDragOverTarget(null)}>
+              <div key={folder.id} className={`folder-wrapper ${deletingFolderId === folder.id ? 'deleting' : ''} ${!prevFolderIdsRef.current.has(folder.id) ? 'history-item-enter' : ''} ${folder.isHiding ? 'hiding' : ''}`} onDrop={(e) => handleDrop(e, folder.id)} onDragOver={(e) => handleDragOver(e, folder.id)} onDragLeave={() => setDragOverTarget(null)}>
                 <div className={`folder-header ${dragOverTarget === folder.id ? 'drop-target' : ''}`} onClick={() => toggleFolder(folder.id)}>
                   <Icon icon="chevron-down" className={`folder-chevron w-4 h-4 flex-shrink-0 ${openFolderIds.has(folder.id) ? 'open' : ''}`} />
                   <span className="text-xl">{folder.icon || <Icon icon="folder" className="w-5 h-5 text-[var(--accent-color)]" />}</span>
@@ -133,7 +152,7 @@ export const Sidebar: React.FC<SidebarProps> = (props) => {
                     <button onClick={(e) => { e.stopPropagation(); handleDeleteFolderClick(folder.id); }} aria-label="Delete folder"><Icon icon="delete" className="w-4 h-4 text-red-500" /></button>
                   </div>
                 </div>
-                <div className="folder-content" style={{ maxHeight: openFolderIds.has(folder.id) ? `${folder.chats.length * 52 + 8}px` : '0px' }}>
+                <div className="folder-content" style={{ maxHeight: openFolderIds.has(folder.id) ? `${folder.chats.filter(c => !c.isHiding).length * 52 + 8}px` : '0px' }}>
                   <div className="flex flex-col gap-1 py-1">{folder.chats.map(renderChat)}</div>
                 </div>
               </div>

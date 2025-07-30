@@ -5,6 +5,7 @@ import { useLocalization } from '../contexts/LocalizationContext';
 
 interface ArchivedChatItemProps {
     chat: ChatSession;
+    isHiding: boolean;
     onSelect: () => void;
     onUnarchive: () => void;
     onDelete: () => void;
@@ -12,7 +13,7 @@ interface ArchivedChatItemProps {
     index: number;
 }
 
-const ArchivedChatItem: React.FC<ArchivedChatItemProps> = ({ chat, onSelect, onUnarchive, onDelete, onEdit, index }) => {
+const ArchivedChatItem: React.FC<ArchivedChatItemProps> = ({ chat, isHiding, onSelect, onUnarchive, onDelete, onEdit, index }) => {
     const { t } = useLocalization();
     const [isLeaving, setIsLeaving] = useState(false);
 
@@ -26,7 +27,7 @@ const ArchivedChatItem: React.FC<ArchivedChatItemProps> = ({ chat, onSelect, onU
 
     return (
         <div
-            className={`archived-chat-item ${isLeaving ? 'leaving' : ''}`}
+            className={`archived-chat-item ${isLeaving ? 'leaving' : ''} ${isHiding ? 'hiding' : ''}`}
             onClick={onSelect}
             style={{ animationDelay: `${index * 50}ms` }}
         >
@@ -55,14 +56,19 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({ chats, onClose, onSele
   const { t } = useLocalization();
   const [searchQuery, setSearchQuery] = useState('');
 
-  const archivedChats = useMemo(() => {
+  const displayedChats = useMemo(() => {
     const baseArchived = chats.filter(c => c.isArchived).sort((a, b) => b.createdAt - a.createdAt);
     if (!searchQuery.trim()) {
-        return baseArchived;
+        return baseArchived.map(chat => ({ ...chat, isHiding: false }));
     }
     const lowerCaseQuery = searchQuery.toLowerCase();
-    return baseArchived.filter(chat => chat.title.toLowerCase().includes(lowerCaseQuery));
+    return baseArchived.map(chat => ({
+        ...chat,
+        isHiding: !chat.title.toLowerCase().includes(lowerCaseQuery)
+    }));
   }, [chats, searchQuery]);
+
+  const hasVisibleChats = useMemo(() => displayedChats.some(c => !c.isHiding), [displayedChats]);
 
   return (
     <main className="glass-pane rounded-[var(--radius-2xl)] flex flex-col h-full overflow-hidden relative p-6">
@@ -79,13 +85,14 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({ chats, onClose, onSele
         </div>
       </header>
       <div className="flex-grow overflow-y-auto -mr-6 -ml-2 pr-4 pl-2">
-        {archivedChats.length > 0 ? (
+        {hasVisibleChats ? (
             <div className="archived-chats-list p-2">
-              {archivedChats.map((chat, index) => (
+              {displayedChats.map((chat, index) => (
                   <ArchivedChatItem
                       key={chat.id}
                       chat={chat}
                       index={index}
+                      isHiding={chat.isHiding}
                       onSelect={() => onSelectChat(chat.id)}
                       onUnarchive={() => onUnarchiveChat(chat.id)}
                       onDelete={() => onDeleteChat(chat.id)}

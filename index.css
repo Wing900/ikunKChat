@@ -478,10 +478,10 @@ body.drawer-open .drawer {
   animation: history-item-in 0.4s ease-out backwards;
 }
 .history-item {
-  transition: max-height 0.35s ease-out, opacity 0.3s ease-out, transform 0.3s ease-out, padding 0.3s ease-out, margin 0.3s ease-out, background-color 0.2s ease, color 0.2s ease;
-  transform-origin: top;
+  transition: max-height 0.35s ease-out, opacity 0.3s ease-out, padding 0.3s ease-out, margin 0.3s ease-out, background-color 0.2s ease, color 0.2s ease;
   max-height: 60px;
   overflow: hidden;
+  opacity: 1;
 }
 
 @keyframes history-item-out {
@@ -502,14 +502,18 @@ body.drawer-open .drawer {
 }
 
 .history-item.hiding {
-  animation: history-item-out 0.35s ease-out forwards;
+  opacity: 0;
+  max-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  margin-top: 0;
+  margin-bottom: 0;
   pointer-events: none;
 }
 
 /* Folder Animation */
 .folder-wrapper {
-  transition: max-height 0.35s ease-out, opacity 0.3s ease-out, transform 0.3s ease-out, padding 0.3s ease-out, margin 0.3s ease-out;
-  transform-origin: top;
+  transition: max-height 0.35s ease-out, opacity 0.3s ease-out, padding 0.3s ease-out, margin 0.3s ease-out;
   max-height: 2000px; /* Large enough for many chats */
   overflow: hidden;
 }
@@ -519,6 +523,14 @@ body.drawer-open .drawer {
 }
 .folder-wrapper.deleting {
     animation: folder-out 0.35s ease-out forwards;
+}
+.folder-wrapper.hiding {
+  opacity: 0;
+  max-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  margin-top: 0;
+  margin-bottom: 0;
 }
 
 /* Folder and Drag/Drop Styles */
@@ -1079,9 +1091,11 @@ body.drawer-open .drawer {
   border-radius: var(--radius-2xl);
   border: 1px solid var(--glass-border);
   padding: 1.5rem;
-  transition: all 0.3s ease-out;
-  opacity: 0;
-  animation: card-in 0.4s var(--transition-fluid) forwards;
+  transition: transform 0.3s ease-out, box-shadow 0.3s ease-out, border-color 0.3s ease-out, max-height 0.35s ease-out, opacity 0.3s ease-out, padding 0.35s ease-out, margin 0.35s ease-out;
+  animation: card-in 0.4s var(--transition-fluid) backwards;
+  max-height: 300px; /* For transition */
+  opacity: 1;
+  overflow: hidden;
 }
 .persona-card:hover {
   transform: translateY(-5px);
@@ -1113,12 +1127,22 @@ body.drawer-open .drawer {
   color: var(--accent-color);
 }
 
-@keyframes card-out {
-  from { opacity: 1; transform: translateY(0) scale(1); }
-  to { opacity: 0; transform: translateY(20px) scale(0.95); }
+@keyframes card-out-delete {
+  from { opacity: 1; transform: translateY(0) scale(1); max-height: 300px; }
+  to { opacity: 0; transform: translateY(20px) scale(0.95); max-height: 0; padding: 0; border: 0; }
 }
 .persona-card.deleting {
-  animation: card-out 0.4s ease-out forwards;
+  animation: card-out-delete 0.4s ease-out forwards;
+  pointer-events: none;
+}
+.persona-card.hiding {
+  opacity: 0;
+  max-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  margin-top: 0;
+  margin-bottom: 0;
+  border-width: 0;
   pointer-events: none;
 }
 
@@ -1264,9 +1288,12 @@ body.drawer-open .drawer {
   border-radius: var(--radius-2xl);
   background-color: var(--glass-bg);
   border: 1px solid var(--glass-border);
-  transition: all 0.3s ease-out;
+  transition: background-color 0.3s ease-out, max-height 0.35s ease-out, opacity 0.35s ease-out, padding 0.35s ease-out, margin 0.35s ease-out;
   cursor: pointer;
   animation: history-item-in 0.4s ease-out backwards;
+  max-height: 60px;
+  overflow: hidden;
+  opacity: 1;
 }
 .archived-chat-item:hover {
   background-color: color-mix(in srgb, var(--accent-color) 10%, transparent);
@@ -1277,13 +1304,26 @@ body.drawer-open .drawer {
   gap: 0.25rem;
   margin-left: auto;
 }
-@keyframes archive-item-out {
+
+@keyframes archive-item-out-delete {
   from { opacity: 1; transform: scaleY(1); max-height: 60px; }
   to { opacity: 0; transform: scaleY(0.8); max-height: 0; padding-top: 0; padding-bottom: 0; margin-top: 0; margin-bottom: 0; overflow: hidden; }
 }
 .archived-chat-item.leaving {
-  animation: archive-item-out 0.35s ease-out forwards;
+  animation: archive-item-out-delete 0.35s ease-out forwards;
+  pointer-events: none;
 }
+.archived-chat-item.hiding {
+  max-height: 0;
+  opacity: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  margin-top: 0;
+  margin-bottom: 0;
+  border-width: 0;
+  pointer-events: none;
+}
+
 
 /* --- Markdown Content Styling --- */
 .markdown-content {
@@ -1573,4 +1613,23 @@ body:not(.dark-mode) .hljs-link { text-decoration: underline; }
 }
 .toast-close-btn:hover {
   opacity: 1;
+}
+
+/* --- Translation History Modal --- */
+.translation-history-item {
+  transition: background-color 0.2s ease-out, border-color 0.2s ease-out, max-height 0.35s ease-out, opacity 0.35s ease-out, padding 0.35s ease-out, margin 0.35s ease-out;
+  max-height: 100px;
+  opacity: 1;
+  overflow: hidden;
+}
+
+.translation-history-item.hiding {
+  opacity: 0;
+  max-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  margin-top: 0;
+  margin-bottom: 0;
+  border-width: 0;
+  pointer-events: none;
 }

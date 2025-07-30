@@ -10,7 +10,7 @@ const PersonaAvatar: React.FC<{ avatar: Persona['avatar'] }> = ({ avatar }) => {
   return <img src={avatar.value} alt="persona avatar" className="w-full h-full object-cover" />;
 };
 
-const PersonaCard: React.FC<{ persona: Persona, onStartChat: () => void, onEdit: () => void, onDelete: () => void, index: number }> = ({ persona, onStartChat, onEdit, onDelete, index }) => {
+const PersonaCard: React.FC<{ persona: Persona & { isHiding?: boolean }, onStartChat: () => void, onEdit: () => void, onDelete: () => void, index: number }> = ({ persona, onStartChat, onEdit, onDelete, index }) => {
     const { t } = useLocalization();
     const [isBeingDeleted, setIsBeingDeleted] = useState(false);
 
@@ -22,7 +22,7 @@ const PersonaCard: React.FC<{ persona: Persona, onStartChat: () => void, onEdit:
     };
     
     return (
-        <div className={`persona-card group ${isBeingDeleted ? 'deleting' : ''}`} style={{ animationDelay: `${index * 50}ms` }}>
+        <div className={`persona-card group ${isBeingDeleted ? 'deleting' : ''} ${persona.isHiding ? 'hiding' : ''}`} style={{ animationDelay: `${index * 50}ms` }}>
             {!persona.isDefault && (
                 <div className="persona-card-actions">
                     <button onClick={onEdit} className="action-btn" data-tooltip={t('editPersona')} data-tooltip-placement="top"><Icon icon="edit" className="w-4 h-4"/></button>
@@ -50,10 +50,10 @@ const PersonaCard: React.FC<{ persona: Persona, onStartChat: () => void, onEdit:
     );
 }
 
-const CreatePersonaCard: React.FC<{ onClick: () => void, index: number }> = ({ onClick, index }) => {
+const CreatePersonaCard: React.FC<{ onClick: () => void, index: number, isHiding: boolean }> = ({ onClick, index, isHiding }) => {
     const { t } = useLocalization();
     return (
-        <button onClick={onClick} className="persona-card persona-card-new flex flex-col items-center justify-center text-center" style={{ animationDelay: `${index * 50}ms` }}>
+        <button onClick={onClick} className={`persona-card persona-card-new flex flex-col items-center justify-center text-center ${isHiding ? 'hiding' : ''}`} style={{ animationDelay: `${index * 50}ms` }}>
             <div className="w-16 h-16 rounded-full bg-white/20 dark:bg-black/20 flex items-center justify-center mb-3 transition-colors duration-300">
                 <Icon icon="plus" className="w-8 h-8" />
             </div>
@@ -76,14 +76,18 @@ export const RolesView: React.FC<RolesViewProps> = ({ personas, onClose, onStart
   const { t } = useLocalization();
   const [searchQuery, setSearchQuery] = useState('');
 
-  const filteredPersonas = useMemo(() => {
-      if (!searchQuery.trim()) return personas;
+  const displayedPersonas = useMemo(() => {
+      const hasQuery = !!searchQuery.trim();
+      if (!hasQuery) return personas.map(p => ({ ...p, isHiding: false }));
+
       const lowerQuery = searchQuery.toLowerCase();
-      return personas.filter(p => 
-          p.name.toLowerCase().includes(lowerQuery) ||
-          p.bio.toLowerCase().includes(lowerQuery)
-      );
+      return personas.map(p => ({
+          ...p,
+          isHiding: !(p.name.toLowerCase().includes(lowerQuery) || p.bio.toLowerCase().includes(lowerQuery))
+      }));
   }, [personas, searchQuery]);
+  
+  const createCardIsHiding = useMemo(() => !!searchQuery.trim(), [searchQuery]);
 
   return (
     <main className="glass-pane rounded-[var(--radius-2xl)] flex flex-col h-full overflow-hidden relative p-4 md:p-6">
@@ -101,7 +105,7 @@ export const RolesView: React.FC<RolesViewProps> = ({ personas, onClose, onStart
       </header>
       <div className="flex-grow overflow-y-auto -mr-4 md:-mr-6 -ml-2 pr-2 md:pr-4 pl-2">
           <div className="personas-grid p-2">
-            {filteredPersonas.map((p, i) => (
+            {displayedPersonas.map((p, i) => (
                 <PersonaCard 
                     key={p.id} 
                     persona={p} 
@@ -111,7 +115,7 @@ export const RolesView: React.FC<RolesViewProps> = ({ personas, onClose, onStart
                     onDelete={() => onDeletePersona(p.id)}
                 />
             ))}
-            <CreatePersonaCard onClick={onCreatePersona} index={personas.length} />
+            <CreatePersonaCard onClick={onCreatePersona} index={personas.length} isHiding={createCardIsHiding} />
           </div>
       </div>
     </main>
