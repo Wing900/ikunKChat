@@ -1,9 +1,11 @@
-import { ChatSession, Folder, Settings, Persona } from '../types';
+import { ChatSession, Folder, Settings, Persona, TranslationHistoryItem } from '../types';
 
 const CHATS_KEY = 'kchat-sessions';
 const FOLDERS_KEY = 'kchat-folders';
 const SETTINGS_KEY = 'kchat-settings';
 const ROLES_KEY = 'kchat-roles';
+const TRANSLATION_HISTORY_KEY = 'kchat-translation-history';
+const CUSTOM_LANGUAGES_KEY = 'kchat-custom-languages';
 
 // --- Loaders ---
 export const loadChats = (): ChatSession[] => {
@@ -59,6 +61,27 @@ export const loadRoles = (): Persona[] => {
     }
 }
 
+export const loadTranslationHistory = (): TranslationHistoryItem[] => {
+    try {
+        const saved = localStorage.getItem(TRANSLATION_HISTORY_KEY);
+        return saved ? JSON.parse(saved) : [];
+    } catch (error) {
+        console.error("Failed to load translation history from localStorage", error);
+        return [];
+    }
+};
+
+export const loadCustomLanguages = (): { code: string, name: string }[] => {
+    try {
+        const saved = localStorage.getItem(CUSTOM_LANGUAGES_KEY);
+        return saved ? JSON.parse(saved) : [];
+    } catch (error) {
+        console.error("Failed to load custom languages from localStorage", error);
+        return [];
+    }
+};
+
+
 // --- Savers ---
 export const saveChats = (chats: ChatSession[]) => {
     try {
@@ -100,6 +123,21 @@ export const saveRoles = (roles: Persona[]) => {
     }
 };
 
+export const saveTranslationHistory = (history: TranslationHistoryItem[]) => {
+    try {
+        localStorage.setItem(TRANSLATION_HISTORY_KEY, JSON.stringify(history));
+    } catch (error) {
+        console.error("Failed to save translation history to localStorage", error);
+    }
+};
+
+export const saveCustomLanguages = (languages: { code: string, name: string }[]) => {
+    try {
+        localStorage.setItem(CUSTOM_LANGUAGES_KEY, JSON.stringify(languages));
+    } catch (error) {
+        console.error("Failed to save custom languages to localStorage", error);
+    }
+};
 
 // --- Data Management ---
 export const exportData = (data: { chats?: ChatSession[], folders?: Folder[], settings?: Settings, personas?: Persona[] }) => {
@@ -139,4 +177,6 @@ export const clearAllData = () => {
     localStorage.removeItem(FOLDERS_KEY);
     localStorage.removeItem(SETTINGS_KEY);
     localStorage.removeItem(ROLES_KEY);
+    localStorage.removeItem(TRANSLATION_HISTORY_KEY);
+    localStorage.removeItem(CUSTOM_LANGUAGES_KEY);
 };

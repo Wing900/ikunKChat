@@ -53,7 +53,7 @@ export const ChatHistoryItem: React.FC<ChatHistoryItemProps> = (
             <span className="text-xl">{chat.icon || <Icon icon="chat" className="w-5 h-5" />}</span>
             <span className="truncate flex-grow">{chat.title}</span>
             <div className="history-item-actions ml-auto flex-shrink-0">
-                <button onClick={handleArchive} data-tooltip={t('archive')} data-tooltip-placement="top" aria-label="Archive chat"><Icon icon="archive" className="w-4 h-4" /></button>
+                <button onClick={handleArchive} aria-label={t('archive')}><Icon icon="archive" className="w-4 h-4" /></button>
                 <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); onEdit(); }} aria-label="Edit chat title"><Icon icon="edit" className="w-4 h-4" /></button>
                 <button onClick={handleDelete} aria-label="Delete chat"><Icon icon="delete" className="w-4 h-4 text-red-500" /></button>
             </div>

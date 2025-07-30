@@ -76,14 +76,14 @@ export const RolesView: React.FC<RolesViewProps> = ({ personas, onClose, onStart
   const { t } = useLocalization();
 
   return (
-    <main className="glass-pane rounded-[var(--radius-2xl)] flex flex-col h-full overflow-hidden relative p-6">
-      <header className="flex items-center justify-between mb-6 flex-shrink-0">
+    <main className="glass-pane rounded-[var(--radius-2xl)] flex flex-col h-full overflow-hidden relative p-4 md:p-6">
+      <header className="flex items-center justify-between mb-4 md:mb-6 flex-shrink-0">
         <h2 className="text-2xl font-bold text-[var(--text-color)]">{t('selectPersona')}</h2>
         <button onClick={onClose} className="p-2 rounded-full hover:bg-black/10 dark:hover:bg-white/10 -mr-2">
             <Icon icon="close" className="w-5 h-5"/>
         </button>
       </header>
-      <div className="flex-grow overflow-y-auto -mr-6 -ml-2 pr-4 pl-2">
+      <div className="flex-grow overflow-y-auto -mr-4 md:-mr-6 -ml-2 pr-2 md:pr-4 pl-2">
           <div className="personas-grid p-2">
             {personas.map((p, i) => (
                 <PersonaCard 

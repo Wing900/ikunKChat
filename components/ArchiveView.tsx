@@ -33,9 +33,9 @@ const ArchivedChatItem: React.FC<ArchivedChatItemProps> = ({ chat, onSelect, onU
             <span className="text-xl">{chat.icon || '💬'}</span>
             <span className="truncate flex-grow font-semibold">{chat.title}</span>
             <div className="archived-chat-item-actions">
-                <button onClick={handleAction(onUnarchive)} className="action-btn" data-tooltip={t('unarchive')} data-tooltip-placement="top"><Icon icon="unarchive" className="w-4 h-4"/></button>
-                <button onClick={(e) => { e.stopPropagation(); onEdit(); }} className="action-btn" data-tooltip={t('editChat')} data-tooltip-placement="top"><Icon icon="edit" className="w-4 h-4"/></button>
-                <button onClick={handleAction(onDelete)} className="action-btn danger" data-tooltip={t('delete')} data-tooltip-placement="top"><Icon icon="delete" className="w-4 h-4"/></button>
+                <button onClick={handleAction(onUnarchive)} className="action-btn" aria-label={t('unarchive')}><Icon icon="unarchive" className="w-4 h-4"/></button>
+                <button onClick={(e) => { e.stopPropagation(); onEdit(); }} className="action-btn" aria-label={t('editChat')}><Icon icon="edit" className="w-4 h-4"/></button>
+                <button onClick={handleAction(onDelete)} className="action-btn danger" aria-label={t('delete')}><Icon icon="delete" className="w-4 h-4"/></button>
             </div>
         </div>
     );

@@ -29,7 +29,8 @@ Key features include persistent chat history stored locally, dynamic model selec
 
 *   **Intelligent AI Chat:** Powered by Google's Gemini family of models.
 *   **Rich Content Rendering:** Displays Markdown, LaTeX, Mermaid diagrams, and syntax-highlighted code blocks.
-*   **Persistent History:** Conversations are saved to your browser's local storage.
+*   **Built-in Translator:** A dedicated translation interface with language detection, multiple modes, and text-to-speech.
+*   **Persistent History:** Conversations and translations are saved to your browser's local storage.
 *   **Dynamic Model Selection:** Switch between available Gemini models for different tasks.
 *   **File Attachments:** Include images and documents in your prompts.
 *   **Advanced Chat Organization:**

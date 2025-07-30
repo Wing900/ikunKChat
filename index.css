@@ -361,6 +361,8 @@ body.dark-mode [data-tooltip]::after {
 }
 .modal-dialog-sm { max-width: 400px; }
 .modal-dialog-md { max-width: 550px; }
+.modal-dialog-lg { max-width: 700px; }
+
 
 /* Drawer Styles */
 body.drawer-open { 
@@ -448,16 +450,14 @@ body.drawer-open .drawer {
   position: absolute;
   inset: 0;
   transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
-}
-.view-container:not(.active) {
   opacity: 0;
   transform: scale(0.98);
   pointer-events: none;
 }
-.view-container.exiting {
-  opacity: 0;
-  transform: scale(1.02);
-  pointer-events: none;
+.view-container.active {
+  opacity: 1;
+  transform: scale(1);
+  pointer-events: auto;
 }
 
 
@@ -1058,8 +1058,15 @@ body.drawer-open .drawer {
 .personas-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1.5rem;
+  gap: 1rem;
 }
+@media (min-width: 640px) {
+    .personas-grid {
+        gap: 1.5rem;
+    }
+}
+
+
 @keyframes card-in {
   from { opacity: 0; transform: translateY(20px) scale(0.95); }
   to { opacity: 1; transform: translateY(0px) scale(1); }
@@ -1121,8 +1128,13 @@ body.drawer-open .drawer {
     height: 100%;
     background: var(--glass-bg);
     border-radius: var(--radius-2xl);
-    overflow: hidden;
+    overflow-y: auto; /* Allow scrolling on mobile */
     box-shadow: var(--shadow-md);
+}
+@media (min-width: 768px) { /* md breakpoint */
+    .persona-editor-container {
+        overflow-y: hidden; /* Revert to hidden overflow on desktop */
+    }
 }
 .persona-editor-form-pane {
     flex: 60%;
@@ -1142,6 +1154,8 @@ body.drawer-open .drawer {
     align-items: center;
     margin-bottom: 1.5rem;
     flex-shrink: 0;
+    flex-wrap: wrap;
+    gap: 0.5rem;
 }
 .persona-editor-header h2 {
     font-size: 1.75rem;

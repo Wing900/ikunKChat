@@ -26,10 +26,11 @@ interface SidebarProps {
   onOpenSettings: () => void;
   onOpenPersonas: () => void;
   onOpenArchive: () => void;
+  onOpenTranslate: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = (props) => {
-  const { chats, folders, activeChatId, onSelectChat, onNewChat, onDeleteChat, onEditChat, onArchiveChat, isCollapsed, onToggleCollapse, isMobileSidebarOpen, onToggleMobileSidebar, searchQuery, onSetSearchQuery, onNewFolder, onEditFolder, onDeleteFolder, onMoveChatToFolder, onOpenSettings, onOpenPersonas, onOpenArchive } = props;
+  const { chats, folders, activeChatId, onSelectChat, onNewChat, onDeleteChat, onEditChat, onArchiveChat, isCollapsed, onToggleCollapse, isMobileSidebarOpen, onToggleMobileSidebar, searchQuery, onSetSearchQuery, onNewFolder, onEditFolder, onDeleteFolder, onMoveChatToFolder, onOpenSettings, onOpenPersonas, onOpenArchive, onOpenTranslate } = props;
   const { t } = useLocalization();
   
   const [deletingFolderId, setDeletingFolderId] = useState<string | null>(null);
@@ -117,7 +118,7 @@ export const Sidebar: React.FC<SidebarProps> = (props) => {
         <button onClick={onNewChat} className="w-full flex items-center justify-center gap-2 px-4 py-3 mb-4 text-lg font-semibold bg-[var(--accent-color)] text-white rounded-[var(--radius-2xl)] transition-transform hover:scale-105 active:scale-100"><Icon icon="plus" className="w-6 h-6" />{t('newChat')}</button>
         <div className="sidebar-search-wrapper mb-2"><Icon icon="search" className="sidebar-search-icon w-5 h-5" /><input type="text" placeholder={t('searchHistory')} className="sidebar-search-input" value={searchQuery} onChange={(e) => onSetSearchQuery(e.target.value)} /></div>
 
-        <div className="flex-grow overflow-y-auto -mr-2 pr-2">
+        <div className="flex-grow overflow-y-auto -mr-2 pr-2 pt-2">
           <div className="flex items-center justify-between mt-2 mb-1 px-2"><h2 className="text-sm font-semibold text-[var(--text-color-secondary)] uppercase tracking-wider">{t('history')}</h2><button onClick={onNewFolder} className="p-1 rounded-full text-[var(--text-color-secondary)] hover:text-[var(--text-color)]" data-tooltip={t('newFolder')} data-tooltip-placement="left"><Icon icon="folder-plus" className="w-5 h-5" /></button></div>
           
           <nav className="flex flex-col gap-1">
@@ -148,6 +149,10 @@ export const Sidebar: React.FC<SidebarProps> = (props) => {
             <button onClick={onOpenPersonas} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-[var(--radius-2xl)] text-[var(--text-color)] hover:bg-black/10 dark:hover:bg-white/10" data-tooltip={t('personas')} data-tooltip-placement="right">
                 <Icon icon="users" className="w-5 h-5" />
                 <span className="font-semibold">{t('personas')}</span>
+            </button>
+            <button onClick={onOpenTranslate} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-[var(--radius-2xl)] text-[var(--text-color)] hover:bg-black/10 dark:hover:bg-white/10" data-tooltip={t('translate')} data-tooltip-placement="right">
+                <Icon icon="translate-logo" className="w-5 h-5" />
+                <span className="font-semibold">{t('translate')}</span>
             </button>
             <button onClick={onOpenArchive} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-[var(--radius-2xl)] text-[var(--text-color)] hover:bg-black/10 dark:hover:bg-white/10" data-tooltip={t('archiveDesc')} data-tooltip-placement="right">
                 <Icon icon="archive" className="w-5 h-5" />

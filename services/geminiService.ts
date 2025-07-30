@@ -305,3 +305,43 @@ Example Response:
     throw error;
   }
 }
+
+export async function detectLanguage(apiKeys: string[], model: string, text: string): Promise<string> {
+  try {
+    const response = await executeWithKeyRotation(apiKeys, (ai) =>
+      ai.models.generateContent({
+        model: model,
+        contents: `Detect the language of the following text. Respond with only the two-letter ISO 639-1 code (e.g., "en", "es", "zh"). Text: "${text}"`,
+        config: { temperature: 0 },
+      })
+    );
+    return response.text.trim().toLowerCase().replace(/["']/g, '');
+  } catch (error) {
+    console.error("Error detecting language:", error);
+    throw new Error("Could not detect language.");
+  }
+}
+
+const NATURAL_TRANSLATION_PROMPT = `Your task is to translate text. Translate the text provided below from {sourceLang} into {targetLang}.\nYour translation should be colloquial and evocative, capturing the essence of a native speaker’s speech. Avoid a mechanical, literal translation. Instead, employ idiomatic expressions and natural phrasing that resonate with a native speaker of {targetLang}.\nIMPORTANT: Your response MUST contain *only* the translated text. Do not include the original text, source language name, target language name, or any other explanatory text, preambles, or apologies.\n\nText to translate:\n{text}`;
+const LITERAL_TRANSLATION_PROMPT = `Your task is to translate text. Translate the text provided below from {sourceLang} into {targetLang}.\nProvide a standard, literal translation. Focus on conveying the direct meaning accurately.\nIMPORTANT: Your response MUST contain *only* the translated text. Do not include the original text, source language name, target language name, or any other explanatory text, preambles, or apologies.\n\nText to translate:\n{text}`;
+
+export async function translateText(apiKeys: string[], model: string, text: string, sourceLang: string, targetLang: string, mode: 'natural' | 'literal'): Promise<string> {
+  const promptTemplate = mode === 'natural' ? NATURAL_TRANSLATION_PROMPT : LITERAL_TRANSLATION_PROMPT;
+  const prompt = promptTemplate
+    .replace('{sourceLang}', sourceLang)
+    .replace('{targetLang}', targetLang)
+    .replace('{text}', text);
+
+  try {
+    const response = await executeWithKeyRotation(apiKeys, (ai) =>
+      ai.models.generateContent({
+        model,
+        contents: prompt,
+      })
+    );
+    return response.text.trim();
+  } catch (error) {
+    console.error("Error translating text:", error);
+    throw new Error("Translation failed.");
+  }
+}

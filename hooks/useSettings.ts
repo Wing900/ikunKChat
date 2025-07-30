@@ -10,10 +10,11 @@ const defaultSettings: Settings = {
   apiKey: [],
   showSuggestions: true,
   defaultModel: 'gemini-2.5-flash',
-  suggestionModel: 'gemini-2.5-flash',
+  suggestionModel: 'gemini-2.5-flash-lite',
   autoTitleGeneration: true,
-  titleGenerationModel: 'gemini-2.5-flash',
+  titleGenerationModel: 'gemini-2.5-flash-lite',
   personaBuilderModel: 'gemini-2.5-flash',
+  languageDetectionModel: 'gemini-2.5-flash-lite',
   defaultSearch: true,
   showThoughts: true,
   enableGlobalSystemPrompt: false,
@@ -24,7 +25,7 @@ const defaultSettings: Settings = {
 
 export const useSettings = () => {
   const [settings, setSettings] = useState<Settings>(defaultSettings);
-  const [availableModels, setAvailableModels] = useState<string[]>(['gemini-2.5-flash']);
+  const [availableModels, setAvailableModels] = useState<string[]>(['gemini-2.5-flash', 'gemini-2.5-flash-lite']);
   const [isStorageLoaded, setIsStorageLoaded] = useState(false);
   const { setLanguage } = useLocalization();
 
@@ -51,13 +52,15 @@ export const useSettings = () => {
     if (isStorageLoaded && apiKeys.length > 0) {
       getAvailableModels(apiKeys).then(models => {
         if (!models || models.length === 0) return;
-        setAvailableModels(models);
+        const allModels = [...new Set([...models, ...availableModels])];
+        setAvailableModels(allModels);
         setSettings(current => {
           const newDefaults: Partial<Settings> = {};
-          if (!models.includes(current.defaultModel)) newDefaults.defaultModel = models[0];
-          if (!models.includes(current.suggestionModel)) newDefaults.suggestionModel = models[0];
-          if (!models.includes(current.titleGenerationModel)) newDefaults.titleGenerationModel = models[0];
-          if (!models.includes(current.personaBuilderModel)) newDefaults.personaBuilderModel = models[0];
+          if (!allModels.includes(current.defaultModel)) newDefaults.defaultModel = allModels[0];
+          if (!allModels.includes(current.suggestionModel)) newDefaults.suggestionModel = allModels.find(m => m.includes('lite')) || allModels[0];
+          if (!allModels.includes(current.titleGenerationModel)) newDefaults.titleGenerationModel = allModels.find(m => m.includes('lite')) || allModels[0];
+          if (!allModels.includes(current.personaBuilderModel)) newDefaults.personaBuilderModel = allModels[0];
+          if (!allModels.includes(current.languageDetectionModel)) newDefaults.languageDetectionModel = allModels.find(m => m.includes('lite')) || allModels[0];
           return Object.keys(newDefaults).length > 0 ? { ...current, ...newDefaults } : current;
         });
       });

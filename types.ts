@@ -1,8 +1,4 @@
 
-
-
-
-
 export enum MessageRole {
   USER = 'user',
   MODEL = 'model',
@@ -61,6 +57,16 @@ export interface ChatSession {
   isArchived?: boolean;
 }
 
+export interface TranslationHistoryItem {
+  id: string;
+  sourceLang: string;
+  targetLang: string;
+  sourceText: string;
+  translatedText: string;
+  timestamp: number;
+  mode: 'natural' | 'literal';
+}
+
 export interface Settings {
   theme: 'light' | 'dark';
   language: 'en' | 'zh';
@@ -71,6 +77,7 @@ export interface Settings {
   autoTitleGeneration: boolean;
   titleGenerationModel: string;
   personaBuilderModel: string;
+  languageDetectionModel: string;
   defaultSearch: boolean;
   showThoughts: boolean;
   enableGlobalSystemPrompt: boolean;

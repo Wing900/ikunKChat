@@ -53,13 +53,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = (props) => {
   return (
     <>
       <div className={`modal-backdrop ${isVisible ? 'visible' : ''}`} onClick={handleClose}></div>
-      <div className={`modal-dialog modal-dialog-md ${isVisible ? 'visible' : ''} glass-pane rounded-[var(--radius-2xl)] p-6 flex flex-col overflow-y-auto`}>
+      <div className={`modal-dialog modal-dialog-md ${isVisible ? 'visible' : ''} glass-pane rounded-[var(--radius-2xl)] p-6 flex flex-col`}>
         <div className="flex items-center justify-between mb-4 flex-shrink-0">
           <h2 className="text-xl font-bold text-[var(--text-color)]">{t('settings')}</h2>
           <button onClick={handleClose} className="p-2 rounded-full hover:bg-black/10 dark:hover:bg-white/10 -mr-2"><Icon icon="close" className="w-5 h-5"/></button>
         </div>
         
-        <div className="flex-grow min-h-0">
+        <div className="flex-grow min-h-0 overflow-y-auto -mr-4 pr-4 pb-4">
           <h3 className="settings-section-title">{t('general')}</h3>
           <SettingsItem label={t('language')} description={t('languageDesc')}>
             <CustomSelect options={languageOptions} selectedValue={settings.language} onSelect={(value) => onSettingsChange({ language: value as 'en' | 'zh' })} className="w-36" />
@@ -126,6 +126,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = (props) => {
           </SettingsItem>
           <SettingsItem label={t('personaBuilderModel')} description={t('personaBuilderModelDesc')}>
             <CustomSelect options={modelOptions} selectedValue={settings.personaBuilderModel} onSelect={(value) => onSettingsChange({ personaBuilderModel: value })} className="w-48" />
+          </SettingsItem>
+           <SettingsItem label={t('langDetectModel')} description={t('langDetectModelDesc')}>
+            <CustomSelect options={modelOptions} selectedValue={settings.languageDetectionModel} onSelect={(value) => onSettingsChange({ languageDetectionModel: value })} className="w-48" />
           </SettingsItem>
           
           <h3 className="settings-section-title">{t('dataManagement')}</h3>

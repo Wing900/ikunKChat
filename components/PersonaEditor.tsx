@@ -138,13 +138,8 @@ export const PersonaEditor: React.FC<PersonaEditorProps> = ({ personaToEdit, onS
     setPersona(prev => {
         const newTools = { ...prev.tools, ...update.tools };
         
-        // Enforce mutual exclusivity
-        if (update.tools?.codeExecution === true) {
-            newTools.urlContext = false;
-        }
-        if (update.tools?.urlContext === true) {
-            newTools.codeExecution = false;
-        }
+        if (update.tools?.codeExecution === true) newTools.urlContext = false;
+        if (update.tools?.urlContext === true) newTools.codeExecution = false;
 
         return { ...prev, ...update, tools: newTools, avatar: { ...prev.avatar, ...update.avatar } };
     });
@@ -172,8 +167,8 @@ export const PersonaEditor: React.FC<PersonaEditorProps> = ({ personaToEdit, onS
   };
 
   return (
-    <main className="persona-editor-container">
-        <div className="persona-editor-form-pane">
+    <main className="persona-editor-container flex-col md:flex-row">
+        <div className="persona-editor-form-pane w-full md:w-auto border-b-2 md:border-b-0 md:border-r-2 border-[var(--glass-border)]">
             <header className="persona-editor-header">
                 <h2>{persona.isNew ? t('createPersona') : t('editPersona')}</h2>
                 <div className="flex gap-2">
@@ -226,7 +221,7 @@ export const PersonaEditor: React.FC<PersonaEditorProps> = ({ personaToEdit, onS
                 </div>
             </div>
         </div>
-        <div className="persona-editor-builder-pane">
+        <div className="persona-editor-builder-pane w-full md:w-auto h-96 md:h-auto">
           <AIBuilder persona={persona} onUpdate={handleUpdate} settings={settings} />
         </div>
     </main>
