@@ -7,7 +7,7 @@ import { loadSettings, saveSettings } from '../services/storageService';
 const defaultSettings: Settings = {
   theme: 'light',
   language: 'en',
-  apiKey: null,
+  apiKey: [],
   showSuggestions: true,
   defaultModel: 'gemini-2.5-flash',
   suggestionModel: 'gemini-2.5-flash',
@@ -24,7 +24,7 @@ const defaultSettings: Settings = {
 
 export const useSettings = () => {
   const [settings, setSettings] = useState<Settings>(defaultSettings);
-  const [availableModels, setAvailableModels] = useState<string[]>(['gemini-2.5-flash', 'gemini-2.5-flash-lite']);
+  const [availableModels, setAvailableModels] = useState<string[]>(['gemini-2.5-flash']);
   const [isStorageLoaded, setIsStorageLoaded] = useState(false);
   const { setLanguage } = useLocalization();
 
@@ -47,9 +47,9 @@ export const useSettings = () => {
   }, [settings, isStorageLoaded, setLanguage]);
 
   useEffect(() => {
-    const apiKey = settings.apiKey || process.env.API_KEY;
-    if (isStorageLoaded && apiKey) {
-      getAvailableModels(apiKey).then(models => {
+    const apiKeys = settings.apiKey || (process.env.API_KEY ? [process.env.API_KEY] : []);
+    if (isStorageLoaded && apiKeys.length > 0) {
+      getAvailableModels(apiKeys).then(models => {
         if (!models || models.length === 0) return;
         setAvailableModels(models);
         setSettings(current => {

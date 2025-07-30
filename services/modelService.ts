@@ -1,57 +1,62 @@
-export async function getAvailableModels(apiKey: string): Promise<string[]> {
-  const defaultModelList = ['gemini-2.5-flash', 'gemini-2.5-flash-lite'];
+export async function getAvailableModels(apiKeys: string[]): Promise<string[]> {
+  const defaultModelList = ['gemini-2.5-flash'];
 
-  if (!apiKey) {
+  if (!apiKeys || apiKeys.length === 0) {
     return defaultModelList;
   }
 
-  // Sanitize the API key to remove quotes and extra whitespace which can cause a 400 error.
-  const sanitizedApiKey = apiKey.trim().replace(/["']/g, '');
-  if (!sanitizedApiKey) {
-    return defaultModelList;
-  }
+  for (const key of apiKeys) {
+    const sanitizedApiKey = key.trim().replace(/["']/g, '');
+    if (!sanitizedApiKey) continue;
 
-  try {
-    const url = 'https://generativelanguage.googleapis.com/v1beta/models';
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        'x-goog-api-key': sanitizedApiKey,
-      },
-    });
-    
-    if (!response.ok) {
-      let errorDetails = `API call failed with status: ${response.status}`;
-      try {
-        const errorData = await response.json();
-        if (errorData?.error?.message) {
-          errorDetails += `: ${errorData.error.message}`;
-        }
-      } catch (e) {
-        // Response was not JSON, do nothing extra
+    try {
+      const url = 'https://generativelanguage.googleapis.com/v1beta/models';
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'x-goog-api-key': sanitizedApiKey,
+        },
+      });
+      
+      if (!response.ok) {
+        // Don't throw an error, just log and try the next key
+        let errorDetails = `API call failed with status: ${response.status}`;
+        try {
+          const errorData = await response.json();
+          if (errorData?.error?.message) {
+            errorDetails += `: ${errorData.error.message}`;
+          }
+        } catch (e) { /* Response was not JSON */ }
+        console.warn(`Failed to fetch models with key ending in ...${sanitizedApiKey.slice(-4)}: ${errorDetails}`);
+        continue;
       }
-      throw new Error(errorDetails);
-    }
-    const data = await response.json();
-    
-    if (!data.models || !Array.isArray(data.models)) {
-        throw new Error("Invalid response structure from models API");
-    }
 
-    const chatModels = data.models
-      .filter((m: any) => 
-        m.name?.startsWith('models/gemini') && 
-        m.supportedGenerationMethods?.includes('generateContent')
-      )
-      .map((m: any) => m.name.replace('models/', ''))
-      .sort((a: string, b: string) => b.localeCompare(a));
-    
-    const finalModels = [...new Set([ ...defaultModelList, ...chatModels ])];
-    
-    return finalModels.length > 0 ? finalModels : defaultModelList;
+      const data = await response.json();
+      
+      if (!data.models || !Array.isArray(data.models)) {
+          console.warn("Invalid response structure from models API with one key, trying next.");
+          continue;
+      }
 
-  } catch (error) {
-    console.error("Error fetching available models via REST:", error);
-    return defaultModelList;
+      const chatModels = data.models
+        .filter((m: any) => 
+          m.name?.startsWith('models/gemini') && 
+          m.supportedGenerationMethods?.includes('generateContent')
+        )
+        .map((m: any) => m.name.replace('models/', ''))
+        .sort((a: string, b: string) => b.localeCompare(a));
+      
+      const finalModels = [...new Set([ ...defaultModelList, ...chatModels ])];
+      
+      if (finalModels.length > 0) {
+        return finalModels; // Return on first success
+      }
+    } catch (error) {
+      console.warn(`Error fetching models with key ending in ...${sanitizedApiKey.slice(-4)}:`, error);
+      // Continue to the next key
+    }
   }
+
+  console.error("All API keys failed to fetch the model list. Using default list.");
+  return defaultModelList;
 }

@@ -42,6 +42,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = (props) => {
   const handleFileImport = (e: React.ChangeEvent<HTMLInputElement>) => { if (e.target.files?.[0]) onImport(e.target.files[0]); };
   const handleClear = () => { if (window.confirm(t('clearHistoryConfirm'))) { onClearAll(); } };
   
+  const handleApiKeyChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const keys = e.target.value
+      .split(/[\n,]+/) // Split by newlines or commas
+      .map(k => k.trim())
+      .filter(Boolean);
+    onSettingsChange({ apiKey: keys });
+  };
 
   return (
     <>
@@ -68,7 +75,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = (props) => {
           
           <h3 className="settings-section-title">{t('model')}</h3>
           <SettingsItem label={t('apiKey')} description={t('apiKeyDesc')}>
-            <input type="password" value={settings.apiKey || ''} onChange={e => onSettingsChange({ apiKey: e.target.value })} disabled={isApiKeySetByEnv} placeholder={isApiKeySetByEnv ? t('apiKeyEnvVar') : t('apiKeyPlaceholder')} className="input-glass max-w-60"/>
+             <textarea 
+                value={(settings.apiKey || []).join('\n')}
+                onChange={handleApiKeyChange}
+                disabled={isApiKeySetByEnv}
+                placeholder={isApiKeySetByEnv ? t('apiKeyEnvVar') : t('apiKeyPlaceholder')}
+                className="input-glass max-w-60 min-h-24"
+                rows={3}
+             />
           </SettingsItem>
           <SettingsItem label={t('optimizeFormatting')} description={t('optimizeFormattingDesc')}>
             <Switch size="sm" checked={settings.optimizeFormatting} onChange={e => onSettingsChange({ optimizeFormatting: e.target.checked })} />

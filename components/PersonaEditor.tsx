@@ -1,8 +1,3 @@
-
-
-
-
-
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Persona, Settings } from '../types';
 import { Icon } from './Icon';
@@ -55,9 +50,15 @@ const AIBuilder: React.FC<{ persona: Persona, onUpdate: (update: Partial<Persona
         setMessages(prev => [...prev, { id: statusMessageId, role: 'status', content: t('builderApplying') }]);
 
         try {
-            const apiKey = settings.apiKey || process.env.API_KEY;
-            if (!apiKey) throw new Error("API Key not set.");
-            const { personaUpdate, explanation } = await generatePersonaUpdate(apiKey, settings.personaBuilderModel, persona, userInput);
+            const apiKeys = settings.apiKey && settings.apiKey.length > 0
+                ? settings.apiKey
+                : (process.env.API_KEY ? [process.env.API_KEY] : []);
+
+            if (apiKeys.length === 0) {
+                throw new Error("API Key not set.");
+            }
+
+            const { personaUpdate, explanation } = await generatePersonaUpdate(apiKeys, settings.personaBuilderModel, persona, userInput);
             
             onUpdate(personaUpdate);
 
@@ -69,9 +70,13 @@ const AIBuilder: React.FC<{ persona: Persona, onUpdate: (update: Partial<Persona
 
         } catch (error) {
             console.error(error);
+            const errorMessage = (error as Error).message.includes("API Key not set") 
+                ? "API Key not set. Please add it in Settings."
+                : "Sorry, I couldn't process that. Please try again.";
+            
             setMessages(prev => prev.map(m =>
                 m.id === statusMessageId
-                ? { ...m, role: 'model', content: "Sorry, I couldn't process that. Please try again." }
+                ? { ...m, role: 'model', content: errorMessage }
                 : m
             ));
         } finally {

@@ -29,12 +29,25 @@ export const loadFolders = (): Folder[] => {
 export const loadSettings = (): Partial<Settings> | null => {
     try {
         const saved = localStorage.getItem(SETTINGS_KEY);
-        return saved ? JSON.parse(saved) : null;
+        if (!saved) return null;
+
+        const parsed = JSON.parse(saved);
+        
+        // Data migration: Handle legacy apiKey format (string or null)
+        if (parsed.apiKey && typeof parsed.apiKey === 'string') {
+            parsed.apiKey = [parsed.apiKey];
+        } else if (!Array.isArray(parsed.apiKey)) {
+            // Ensure apiKey is always an array if it exists but is not one, or is null/undefined.
+            parsed.apiKey = [];
+        }
+
+        return parsed;
     } catch (error) {
         console.error("Failed to load settings from localStorage", error);
         return null;
     }
 };
+
 
 export const loadRoles = (): Persona[] => {
     try {

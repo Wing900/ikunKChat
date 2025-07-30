@@ -1,14 +1,6 @@
-
-
-
-
-
-
-
-import { GoogleGenAI, Chat, GenerateContentResponse, Type } from "@google/genai";
+import { GoogleGenAI, GenerateContentResponse, Type } from "@google/genai";
 import { Message, MessageRole, FileAttachment, Settings, Persona } from '../types';
-
-const aiInstances = new Map<string, GoogleGenAI>();
+import { KeyManager } from './keyManager';
 
 const OPTIMIZE_FORMATTING_PROMPT = `Your provide responses that are both **impeccably structured** and **profoundly human-like**. Your communication style should be inspired by the clarity, warmth.
 
@@ -76,16 +68,6 @@ Before formulating any response, you will initiate an internal 'Deep Thought Mon
 Once your internal 'Deep Thought Monologue' is complete and you are confident in the robustness and depth of your reasoning, provide your final response to the user. This response should reflect the full breadth and depth of your internal process, but without explicitly detailing the monologue unless specifically requested by the user. Your output format will be determined by your assessment of the user's query, aiming for maximum clarity and utility.
 `;
 
-
-function getAi(apiKey: string): GoogleGenAI {
-    if (!apiKey) throw new Error("API key is not provided.");
-    if (aiInstances.has(apiKey)) return aiInstances.get(apiKey)!;
-    
-    const newAi = new GoogleGenAI({ apiKey });
-    aiInstances.set(apiKey, newAi);
-    return newAi;
-}
-
 interface Part {
   text?: string;
   inlineData?: {
@@ -94,8 +76,75 @@ interface Part {
   };
 }
 
-function getChat(apiKey: string, history: Message[], model: string, settings: Settings, toolConfig: any, persona?: Persona | null): Chat {
-  const ai = getAi(apiKey);
+/**
+ * Executes a non-streaming API call with key rotation and retry logic.
+ */
+async function executeWithKeyRotation<T>(
+    apiKeys: string[],
+    operation: (ai: GoogleGenAI) => Promise<T>
+): Promise<T> {
+    const keyManager = new KeyManager(apiKeys);
+    if (keyManager.getTotalKeys() === 0) {
+        throw new Error("No API keys provided.");
+    }
+
+    for (let i = 0; i < keyManager.getTotalKeys(); i++) {
+        const { key } = keyManager.getNextKey();
+        if (!key) continue;
+
+        try {
+            const ai = new GoogleGenAI({ apiKey: key });
+            const result = await operation(ai);
+            keyManager.saveSuccessIndex();
+            return result;
+        } catch (error) {
+            console.warn(`API call failed with key ending in ...${key.slice(-4)}. Trying next key. Error:`, error);
+            if (i === keyManager.getTotalKeys() - 1) {
+                console.error("All API keys failed.");
+                throw error;
+            }
+        }
+    }
+    throw new Error("All API keys failed.");
+}
+
+
+/**
+ * Executes a streaming API call with key rotation and retry logic.
+ */
+async function* executeStreamWithKeyRotation<T extends GenerateContentResponse>(
+    apiKeys: string[],
+    operation: (ai: GoogleGenAI) => Promise<AsyncGenerator<T>>
+): AsyncGenerator<T> {
+    const keyManager = new KeyManager(apiKeys);
+    if (keyManager.getTotalKeys() === 0) {
+        yield { text: "Error: No API keys provided." } as T;
+        return;
+    }
+
+    let lastError: any = null;
+    for (let i = 0; i < keyManager.getTotalKeys(); i++) {
+        const { key } = keyManager.getNextKey();
+        if (!key) continue;
+
+        try {
+            const ai = new GoogleGenAI({ apiKey: key });
+            const stream = await operation(ai);
+            keyManager.saveSuccessIndex();
+            yield* stream; // Yield all chunks from the successful stream
+            return; // Success, exit the generator
+        } catch (error) {
+            lastError = error;
+            console.warn(`API stream failed for key ending in ...${key.slice(-4)}. Trying next key. Error:`, error);
+        }
+    }
+
+    console.error("All API keys failed for streaming operation.");
+    yield { text: "Error: All API keys failed. " + (lastError?.message || "") } as T;
+}
+
+
+function prepareChatPayload(history: Message[], settings: Settings, toolConfig: any, persona?: Persona | null) {
   const formattedHistory = history.map(msg => {
     const parts: Part[] = [];
     if (msg.attachments) {
@@ -109,23 +158,10 @@ function getChat(apiKey: string, history: Message[], model: string, settings: Se
 
   let systemInstructionParts: string[] = [];
   
-  // 1. Persona Prompt
-  if (persona?.systemPrompt) {
-    systemInstructionParts.push(persona.systemPrompt);
-  }
-  
-  // 2. Global System Prompt
-  if (settings.enableGlobalSystemPrompt && settings.globalSystemPrompt.trim()) {
-      systemInstructionParts.push(settings.globalSystemPrompt.trim());
-  }
-  
-  // 3. Tool Prompts
-  if (settings.optimizeFormatting) {
-      systemInstructionParts.push(OPTIMIZE_FORMATTING_PROMPT);
-  }
-  if (settings.thinkDeeper) {
-      systemInstructionParts.push(THINK_DEEPER_PROMPT);
-  }
+  if (persona?.systemPrompt) systemInstructionParts.push(persona.systemPrompt);
+  if (settings.enableGlobalSystemPrompt && settings.globalSystemPrompt.trim()) systemInstructionParts.push(settings.globalSystemPrompt.trim());
+  if (settings.optimizeFormatting) systemInstructionParts.push(OPTIMIZE_FORMATTING_PROMPT);
+  if (settings.thinkDeeper) systemInstructionParts.push(THINK_DEEPER_PROMPT);
 
   let systemInstruction = systemInstructionParts.join('\n\n---\n\n');
 
@@ -136,25 +172,17 @@ function getChat(apiKey: string, history: Message[], model: string, settings: Se
   const toolsForApi: any[] = [];
   let isSearchEnabled = toolConfig.googleSearch || useGoogleSearch;
 
-  // Handle mutual exclusivity and tool configuration
   if (useCodeExecution) {
     toolsForApi.push({ codeExecution: {} });
-    if (useUrlContext) {
-      // URL Context is disabled if Code Execution is active
-    }
   } else if (useUrlContext) {
     isSearchEnabled = true; 
   }
 
-  // Add Google Search tool if it's enabled by any means.
-  if (isSearchEnabled) {
-    toolsForApi.push({ googleSearch: {} });
-  }
+  if (isSearchEnabled) toolsForApi.push({ googleSearch: {} });
 
-  // Add specific instructions for search if it was explicitly toggled for this query
   if (toolConfig.googleSearch) {
     systemInstruction += '\n\nThe user has explicitly enabled Google Search for this query, so you should prioritize its use to answer the request and provide citations.';
-  } else if (useGoogleSearch && !useUrlContext) { // Avoid duplicating search instructions
+  } else if (useGoogleSearch && !useUrlContext) {
     systemInstruction += '\n\nBy default, Google Search is available; however, you should use it with strict discretion. ONLY activate search for queries that clearly require real-time information (e.g., "what\'s the weather today", "latest stock prices") or very recent events. For general knowledge, creative tasks, or conversational responses, rely on your internal training data. Do not use search for questions like "who are you?" or simple explanations.';
   }
   
@@ -162,53 +190,39 @@ function getChat(apiKey: string, history: Message[], model: string, settings: Se
   if (toolConfig.showThoughts) {
     configForApi.thinkingConfig = { includeThoughts: true };
   }
+  
+  return { formattedHistory, configForApi };
+}
 
-  return ai.chats.create({
-    model: model,
-    history: formattedHistory,
-    config: configForApi,
+export function sendMessageStream(apiKeys: string[], messages: Message[], newMessage: string, attachments: FileAttachment[], model: string, settings: Settings, toolConfig: any, persona?: Persona | null): AsyncGenerator<GenerateContentResponse> {
+  const { formattedHistory, configForApi } = prepareChatPayload(messages, settings, toolConfig, persona);
+  const messageParts: Part[] = attachments.map(att => ({
+      inlineData: { mimeType: att.mimeType, data: att.data! }
+  }));
+  if (newMessage) messageParts.push({ text: newMessage });
+
+  return executeStreamWithKeyRotation(apiKeys, async (ai) => {
+    const chat = ai.chats.create({
+      model,
+      history: formattedHistory,
+      config: configForApi,
+    });
+    return chat.sendMessageStream({ message: messageParts });
   });
 }
 
-export async function* sendMessageStream(apiKey: string, messages: Message[], newMessage: string, attachments: FileAttachment[], model: string, settings: Settings, toolConfig: any, persona?: Persona | null): AsyncGenerator<GenerateContentResponse> {
+export async function generateChatDetails(apiKeys: string[], prompt: string, model: string): Promise<{ title: string; icon: string }> {
   try {
-    const chat = getChat(apiKey, messages, model, settings, toolConfig, persona);
-    const messageParts: Part[] = attachments.map(att => ({
-        inlineData: { mimeType: att.mimeType, data: att.data! }
-    }));
-    if (newMessage) messageParts.push({ text: newMessage });
-    
-    const result = await chat.sendMessageStream({ message: messageParts });
-    for await (const chunk of result) {
-      yield chunk;
-    }
-
-  } catch (error) {
-    console.error("Error sending message:", error);
-    // Yield an error-like response that conforms to the GenerateContentResponse type
-    const errorResponse = {
-        text: "I'm sorry, I encountered an error. Please check your API key and try again.",
-        candidates: [],
-        data: "",
-        functionCalls: [],
-        executableCode: [],
-        codeExecutionResult: null
-    } as unknown as GenerateContentResponse;
-    yield errorResponse;
-  }
-}
-
-export async function generateChatDetails(apiKey: string, prompt: string, model: string): Promise<{ title: string; icon: string }> {
-  try {
-    const ai = getAi(apiKey);
-    const response = await ai.models.generateContent({
-      model: model,
-      contents: `Generate a short, concise title (max 5 words) and a single, relevant emoji for a conversation starting with this user prompt: "${prompt}"`,
-      config: { 
-        responseMimeType: "application/json",
-        responseSchema: { type: Type.OBJECT, properties: { title: { type: Type.STRING }, icon: { type: Type.STRING } } }
-      },
-    });
+    const response = await executeWithKeyRotation(apiKeys, (ai) => 
+      ai.models.generateContent({
+        model: model,
+        contents: `Generate a short, concise title (max 5 words) and a single, relevant emoji for a conversation starting with this user prompt: "${prompt}"`,
+        config: { 
+          responseMimeType: "application/json",
+          responseSchema: { type: Type.OBJECT, properties: { title: { type: Type.STRING }, icon: { type: Type.STRING } } }
+        },
+      })
+    );
     const details = JSON.parse(response.text.trim());
     if (typeof details.title === 'string' && typeof details.icon === 'string') {
        return { title: details.title.replace(/["']/g, "").trim(), icon: details.icon };
@@ -220,19 +234,20 @@ export async function generateChatDetails(apiKey: string, prompt: string, model:
   }
 }
 
-export async function generateSuggestedReplies(apiKey: string, history: Message[], model: string): Promise<string[]> {
+export async function generateSuggestedReplies(apiKeys: string[], history: Message[], model: string): Promise<string[]> {
   if (history.length === 0) return [];
   try {
-    const ai = getAi(apiKey);
     const lastMessageContent = history[history.length - 1].content;
-    const response = await ai.models.generateContent({
-      model: model,
-      contents: `The AI just said: "${lastMessageContent}". Generate 4 very short, distinct, and relevant one-tap replies for the user. Return ONLY a JSON array of 4 strings.`,
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: { type: Type.ARRAY, items: { type: Type.STRING } }
-      }
-    });
+    const response = await executeWithKeyRotation(apiKeys, (ai) => 
+      ai.models.generateContent({
+        model: model,
+        contents: `The AI just said: "${lastMessageContent}". Generate 4 very short, distinct, and relevant one-tap replies for the user. Return ONLY a JSON array of 4 strings.`,
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: { type: Type.ARRAY, items: { type: Type.STRING } }
+        }
+      })
+    );
     const replies = JSON.parse(response.text.trim());
     return Array.isArray(replies) ? replies.slice(0, 4) : [];
   } catch (error) {
@@ -241,9 +256,8 @@ export async function generateSuggestedReplies(apiKey: string, history: Message[
   }
 }
 
-export async function generatePersonaUpdate(apiKey: string, model: string, currentPersona: Partial<Persona>, request: string): Promise<{ personaUpdate: Partial<Persona>, explanation: string }> {
+export async function generatePersonaUpdate(apiKeys: string[], model: string, currentPersona: Partial<Persona>, request: string): Promise<{ personaUpdate: Partial<Persona>, explanation: string }> {
   try {
-    const ai = getAi(apiKey);
     const systemInstruction = `You are an AI assistant that helps build another AI's persona. The user will give you instructions. You MUST respond with only a valid JSON object. This object must contain two keys: "personaUpdate" and "explanation".
 The "personaUpdate" key holds an object with the fields to be updated in the Persona object: {name: string, bio: string, systemPrompt: string, avatar: {type: 'emoji' | 'url', value: string}, tools: {googleSearch: boolean, codeExecution: boolean, urlContext: boolean}}.
 Only include fields that need changing in "personaUpdate".
@@ -254,34 +268,36 @@ Example Response:
     
     const prompt = `Current Persona State: ${JSON.stringify(currentPersona)}\n\nUser Request: "${request}"\n\nGenerate the JSON update object:`;
     
-    const response = await ai.models.generateContent({
-      model: model,
-      contents: prompt,
-      config: {
-        systemInstruction,
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            personaUpdate: {
-              type: Type.OBJECT,
-              properties: {
-                name: { type: Type.STRING, nullable: true },
-                bio: { type: Type.STRING, nullable: true },
-                systemPrompt: { type: Type.STRING, nullable: true },
-                avatar: { type: Type.OBJECT, nullable: true, properties: { type: { type: Type.STRING, enum: ['emoji', 'url'] }, value: { type: Type.STRING } } },
-                tools: { type: Type.OBJECT, nullable: true, properties: { googleSearch: { type: Type.BOOLEAN }, codeExecution: { type: Type.BOOLEAN }, urlContext: { type: Type.BOOLEAN } } }
+    const response = await executeWithKeyRotation(apiKeys, (ai) => 
+      ai.models.generateContent({
+        model: model,
+        contents: prompt,
+        config: {
+          systemInstruction,
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              personaUpdate: {
+                type: Type.OBJECT,
+                properties: {
+                  name: { type: Type.STRING, nullable: true },
+                  bio: { type: Type.STRING, nullable: true },
+                  systemPrompt: { type: Type.STRING, nullable: true },
+                  avatar: { type: Type.OBJECT, nullable: true, properties: { type: { type: Type.STRING, enum: ['emoji', 'url'] }, value: { type: Type.STRING } } },
+                  tools: { type: Type.OBJECT, nullable: true, properties: { googleSearch: { type: Type.BOOLEAN }, codeExecution: { type: Type.BOOLEAN }, urlContext: { type: Type.BOOLEAN } } }
+                }
+              },
+              explanation: {
+                  type: Type.STRING,
+                  description: "A short, conversational explanation of the changes made."
               }
             },
-            explanation: {
-                type: Type.STRING,
-                description: "A short, conversational explanation of the changes made."
-            }
-          },
-          required: ['personaUpdate', 'explanation']
+            required: ['personaUpdate', 'explanation']
+          }
         }
-      }
-    });
+      })
+    );
     
     return JSON.parse(response.text.trim());
   } catch (error) {

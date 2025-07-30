@@ -64,7 +64,7 @@ export interface ChatSession {
 export interface Settings {
   theme: 'light' | 'dark';
   language: 'en' | 'zh';
-  apiKey: string | null;
+  apiKey: string[] | null;
   showSuggestions: boolean;
   defaultModel: string;
   suggestionModel: string;

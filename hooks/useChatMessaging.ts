@@ -1,5 +1,3 @@
-
-
 import { useState, useCallback, useRef } from 'react';
 import { ChatSession, Message, MessageRole, Settings, Persona, FileAttachment } from '../types';
 import { sendMessageStream, generateChatDetails, generateSuggestedReplies } from '../services/geminiService';
@@ -24,8 +22,15 @@ export const useChatMessaging = ({ settings, activeChat, personas, setChats, set
   }, []);
 
   const _initiateStream = useCallback(async (chatId: string, historyForAPI: Message[], toolConfig: any, personaId: string | null | undefined) => {
-    const apiKey = settings.apiKey || process.env.API_KEY;
-    if (!apiKey) { alert("Please set your Gemini API key in Settings."); return; }
+    const apiKeys = settings.apiKey && settings.apiKey.length > 0
+      ? settings.apiKey
+      : (process.env.API_KEY ? [process.env.API_KEY] : []);
+    
+    if (apiKeys.length === 0) {
+        alert("Please set your Gemini API key in Settings.");
+        setIsLoading(false);
+        return;
+    }
 
     isCancelledRef.current = false;
     setIsLoading(true);
@@ -47,13 +52,22 @@ export const useChatMessaging = ({ settings, activeChat, personas, setChats, set
     let fullResponse = "";
     let accumulatedThoughts = "";
     let finalGroundingMetadata: any = null;
+    let streamHadError = false;
+
     try {
       const currentModel = chatSession.model;
       const effectiveToolConfig = { ...toolConfig, showThoughts: settings.showThoughts };
-      const stream = sendMessageStream(apiKey, historyForAPI.slice(0, -1), promptContent, promptAttachments, currentModel, settings, effectiveToolConfig, activePersona);
+      const stream = sendMessageStream(apiKeys, historyForAPI.slice(0, -1), promptContent, promptAttachments, currentModel, settings, effectiveToolConfig, activePersona);
       
       for await (const chunk of stream) {
         if(isCancelledRef.current) break;
+
+        // Check for error messages yielded from the stream wrapper
+        if (chunk.text?.startsWith("Error:")) {
+            streamHadError = true;
+            fullResponse = chunk.text;
+            break;
+        }
 
         const candidate = chunk.candidates?.[0];
         if (candidate?.content?.parts) {
@@ -77,13 +91,14 @@ export const useChatMessaging = ({ settings, activeChat, personas, setChats, set
     } catch(e) {
       console.error(e);
       if (!isCancelledRef.current) {
+        streamHadError = true;
         setChats(p => p.map(c => c.id === chatId ? { ...c, messages: c.messages.map(m => m.id === modelMessage.id ? { ...m, content: "Sorry, an error occurred." } : m) } : c));
       }
     } finally {
       if (!isCancelledRef.current) {
         setIsLoading(false);
-        if (settings.showSuggestions && fullResponse) {
-          generateSuggestedReplies(apiKey, [...historyForAPI, { ...modelMessage, content: fullResponse }], settings.suggestionModel).then(setSuggestedReplies);
+        if (settings.showSuggestions && fullResponse && !streamHadError) {
+          generateSuggestedReplies(apiKeys, [...historyForAPI, { ...modelMessage, content: fullResponse }], settings.suggestionModel).then(setSuggestedReplies);
         }
       }
     }
@@ -98,6 +113,10 @@ export const useChatMessaging = ({ settings, activeChat, personas, setChats, set
     let history: Message[];
     let currentPersonaId = activeChat?.personaId;
 
+    const apiKeys = settings.apiKey && settings.apiKey.length > 0
+      ? settings.apiKey
+      : (process.env.API_KEY ? [process.env.API_KEY] : []);
+
     if (!currentChatId) {
       currentPersonaId = null;
       const newChat: ChatSession = { id: crypto.randomUUID(), title: content.substring(0, 40) || "New Chat", icon: "💬", messages: [userMessage], createdAt: Date.now(), model: settings.defaultModel, folderId: null, personaId: null };
@@ -106,8 +125,7 @@ export const useChatMessaging = ({ settings, activeChat, personas, setChats, set
       setChats(prev => [newChat, ...prev]);
       setActiveChatId(newChat.id);
       if (settings.autoTitleGeneration && content) {
-        const apiKey = settings.apiKey || process.env.API_KEY;
-        if(apiKey) generateChatDetails(apiKey, content, settings.titleGenerationModel).then(({ title, icon }) => {
+        if(apiKeys.length > 0) generateChatDetails(apiKeys, content, settings.titleGenerationModel).then(({ title, icon }) => {
           setChats(p => p.map(c => c.id === currentChatId ? { ...c, title, icon } : c))
         });
       }
@@ -128,7 +146,6 @@ export const useChatMessaging = ({ settings, activeChat, personas, setChats, set
       const index = messages.findIndex(m => m.id === messageId);
       if (index === -1) return chat;
       
-      // Always delete just the single message.
       messages.splice(index, 1);
       
       return { ...chat, messages };
