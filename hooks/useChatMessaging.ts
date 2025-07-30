@@ -46,43 +46,31 @@ export const useChatMessaging = ({ settings, activeChat, personas, setChats, set
     const promptContent = lastUserMessage?.content || '';
     const promptAttachments = lastUserMessage?.attachments || [];
     
-    const modelMessage: Message = { id: crypto.randomUUID(), role: MessageRole.MODEL, content: "...", timestamp: Date.now(), groundingMetadata: null, thoughts: settings.showThoughts ? "" : undefined };
+    const modelMessage: Message = { id: crypto.randomUUID(), role: MessageRole.MODEL, content: "...", timestamp: Date.now(), groundingMetadata: null };
     setChats(prev => prev.map(c => c.id === chatId ? { ...c, messages: [...c.messages, modelMessage] } : c));
     
     let fullResponse = "";
-    let accumulatedThoughts = "";
     let finalGroundingMetadata: any = null;
     let streamHadError = false;
 
     try {
       const currentModel = chatSession.model;
-      const effectiveToolConfig = { ...toolConfig, showThoughts: settings.showThoughts };
-      const stream = sendMessageStream(apiKeys, historyForAPI.slice(0, -1), promptContent, promptAttachments, currentModel, settings, effectiveToolConfig, activePersona);
+      const stream = sendMessageStream(apiKeys, historyForAPI.slice(0, -1), promptContent, promptAttachments, currentModel, settings, toolConfig, activePersona);
       
       for await (const chunk of stream) {
         if(isCancelledRef.current) break;
 
-        // Check for error messages yielded from the stream wrapper
         if (chunk.text?.startsWith("Error:")) {
             streamHadError = true;
             fullResponse = chunk.text;
             break;
         }
-
-        const candidate = chunk.candidates?.[0];
-        if (candidate?.content?.parts) {
-            for (const part of candidate.content.parts) {
-                if ((part as any).thought) {
-                    if (settings.showThoughts && part.text) { accumulatedThoughts += part.text; }
-                } else {
-                    if (part.text) { fullResponse += part.text; }
-                }
-            }
-        }
         
-        if (candidate?.groundingMetadata) { finalGroundingMetadata = candidate.groundingMetadata; }
+        fullResponse += chunk.text;
+        
+        if (chunk.groundingMetadata) { finalGroundingMetadata = chunk.groundingMetadata; }
 
-        setChats(prev => prev.map(c => c.id === chatId ? { ...c, messages: c.messages.map(m => m.id === modelMessage.id ? { ...m, content: fullResponse || '...', thoughts: settings.showThoughts ? accumulatedThoughts : undefined } : m) } : c));
+        setChats(prev => prev.map(c => c.id === chatId ? { ...c, messages: c.messages.map(m => m.id === modelMessage.id ? { ...m, content: fullResponse || '...' } : m) } : c));
       }
 
       if (finalGroundingMetadata && !isCancelledRef.current) {
@@ -98,7 +86,7 @@ export const useChatMessaging = ({ settings, activeChat, personas, setChats, set
       if (!isCancelledRef.current) {
         setIsLoading(false);
         if (settings.showSuggestions && fullResponse && !streamHadError) {
-          generateSuggestedReplies(apiKeys, [...historyForAPI, { ...modelMessage, content: fullResponse }], settings.suggestionModel).then(setSuggestedReplies);
+          generateSuggestedReplies(apiKeys, [...historyForAPI, { ...modelMessage, content: fullResponse }], settings.suggestionModel, settings).then(setSuggestedReplies);
         }
       }
     }
@@ -125,7 +113,7 @@ export const useChatMessaging = ({ settings, activeChat, personas, setChats, set
       setChats(prev => [newChat, ...prev]);
       setActiveChatId(newChat.id);
       if (settings.autoTitleGeneration && content) {
-        if(apiKeys.length > 0) generateChatDetails(apiKeys, content, settings.titleGenerationModel).then(({ title, icon }) => {
+        if(apiKeys.length > 0) generateChatDetails(apiKeys, content, settings.titleGenerationModel, settings).then(({ title, icon }) => {
           setChats(p => p.map(c => c.id === currentChatId ? { ...c, title, icon } : c))
         });
       }

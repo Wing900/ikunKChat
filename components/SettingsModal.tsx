@@ -74,16 +74,28 @@ export const SettingsModal: React.FC<SettingsModalProps> = (props) => {
           </SettingsItem>
           
           <h3 className="settings-section-title">{t('model')}</h3>
-          <SettingsItem label={t('apiKey')} description={t('apiKeyDesc')}>
-             <textarea 
-                value={(settings.apiKey || []).join('\n')}
-                onChange={handleApiKeyChange}
-                disabled={isApiKeySetByEnv}
-                placeholder={isApiKeySetByEnv ? t('apiKeyEnvVar') : t('apiKeyPlaceholder')}
-                className="input-glass max-w-60 min-h-24"
-                rows={3}
-             />
-          </SettingsItem>
+          {!isApiKeySetByEnv && (
+            <>
+              <SettingsItem label={t('apiKey')} description={t('apiKeyDesc')}>
+                 <textarea 
+                    value={(settings.apiKey || []).join('\n')}
+                    onChange={handleApiKeyChange}
+                    placeholder={t('apiKeyPlaceholder')}
+                    className="input-glass max-w-60 min-h-24"
+                    rows={3}
+                 />
+              </SettingsItem>
+              <SettingsItem label={t('apiBaseUrl')} description={t('apiBaseUrlDesc')}>
+                <input
+                  type="text"
+                  value={settings.apiBaseUrl || ''}
+                  onChange={(e) => onSettingsChange({ apiBaseUrl: e.target.value.trim() })}
+                  placeholder="https://generativelanguage.googleapis.com"
+                  className="input-glass max-w-60"
+                />
+              </SettingsItem>
+            </>
+          )}
           <SettingsItem label={t('optimizeFormatting')} description={t('optimizeFormattingDesc')}>
             <Switch size="sm" checked={settings.optimizeFormatting} onChange={e => onSettingsChange({ optimizeFormatting: e.target.checked })} />
           </SettingsItem>
