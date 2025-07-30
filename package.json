@@ -9,11 +9,11 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
     "@google/genai": "^1.11.0",
-    "marked": "^13.0.2",
-    "mermaid": "10.9.1"
+    "marked": "^16.1.1",
+    "mermaid": "^11.9.0"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
