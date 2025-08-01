@@ -78,9 +78,9 @@ export interface Settings {
   suggestionModel: string;
   autoTitleGeneration: boolean;
   titleGenerationModel: string;
-  personaBuilderModel: string;
   languageDetectionModel: string;
   defaultSearch: boolean;
+  useSearchOptimizerPrompt: boolean;
   showThoughts: boolean;
   enableGlobalSystemPrompt: boolean;
   globalSystemPrompt: string;

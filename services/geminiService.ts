@@ -1,3 +1,4 @@
+
 import { GoogleGenAI, GenerateContentResponse, Type } from "@google/genai";
 import { Message, MessageRole, FileAttachment, Settings, Persona } from '../types';
 import { KeyManager } from './keyManager';
@@ -95,6 +96,8 @@ Before formulating any response, you will initiate an internal 'Deep Thought Mon
 Once your internal 'Deep Thought Monologue' is complete and you are confident in the robustness and depth of your reasoning, provide your final response to the user. This response should reflect the full breadth and depth of your internal process, but without explicitly detailing the monologue unless specifically requested by the user. Your output format will be determined by your assessment of the user's query, aiming for maximum clarity and utility.
 `;
 
+const SEARCH_OPTIMIZER_PROMPT = `You have access to Google Search. Analyze the user's query. If the query clearly requires real-time information (e.g., "what's the weather today," "latest news," "stock prices") or information about very recent events, you MUST use Google Search to get the most up-to-date answer. For general knowledge, creative tasks, or conversational responses, you should rely on your internal training data and SHOULD NOT use search. When you do use search, act as an expert search strategist: first, formulate an optimal, concise search query, then execute the search and synthesize the results into a clear, well-structured, and fully cited answer.`;
+
 interface Part {
   text?: string;
   inlineData?: {
@@ -191,8 +194,6 @@ function prepareChatPayload(history: Message[], settings: Settings, toolConfig: 
   if (settings.optimizeFormatting) systemInstructionParts.push(OPTIMIZE_FORMATTING_PROMPT);
   if (settings.thinkDeeper) systemInstructionParts.push(THINK_DEEPER_PROMPT);
 
-  let systemInstruction = systemInstructionParts.join('\n\n---\n\n');
-
   const useGoogleSearch = persona?.tools.googleSearch || settings.defaultSearch;
   const useCodeExecution = toolConfig.codeExecution || persona?.tools.codeExecution;
   const useUrlContext = toolConfig.urlContext || persona?.tools.urlContext;
@@ -208,13 +209,20 @@ function prepareChatPayload(history: Message[], settings: Settings, toolConfig: 
 
   if (isSearchEnabled) toolsForApi.push({ googleSearch: {} });
 
-  if (toolConfig.googleSearch) {
-    systemInstruction += '\n\nThe user has explicitly enabled Google Search for this query, so you should prioritize its use to answer the request and provide citations.';
-  } else if (useGoogleSearch && !useUrlContext) {
-    systemInstruction += '\n\nBy default, Google Search is available; however, you should use it with strict discretion. ONLY activate search for queries that clearly require real-time information (e.g., "what\'s the weather today", "latest stock prices") or very recent events. For general knowledge, creative tasks, or conversational responses, rely on your internal training data. Do not use search for questions like "who are you?" or simple explanations.';
+  let searchInstruction = '';
+  if (toolConfig.googleSearch) { // Explicit "Tools" search has highest priority
+    searchInstruction = 'The user has explicitly enabled Google Search for this query, so you MUST prioritize its use to answer the request and provide citations.';
+  } else if (useGoogleSearch && !useUrlContext && settings.useSearchOptimizerPrompt) { // Default search is on AND optimizer is on
+    searchInstruction = SEARCH_OPTIMIZER_PROMPT;
   }
   
-  const configForApi: any = { systemInstruction, tools: toolsForApi.length > 0 ? toolsForApi : undefined };
+  if (searchInstruction) {
+    systemInstructionParts.push(searchInstruction);
+  }
+  
+  const systemInstruction = systemInstructionParts.join('\n\n---\n\n').trim();
+  
+  const configForApi: any = { systemInstruction: systemInstruction || undefined, tools: toolsForApi.length > 0 ? toolsForApi : undefined };
   if (toolConfig.showThoughts) {
     configForApi.thinkingConfig = { includeThoughts: true };
   }
@@ -228,6 +236,16 @@ export function sendMessageStream(apiKeys: string[], messages: Message[], newMes
       inlineData: { mimeType: att.mimeType, data: att.data! }
   }));
   if (newMessage) messageParts.push({ text: newMessage });
+  
+  const fullContents = [...formattedHistory, { role: 'user' as const, parts: messageParts }];
+
+  console.log("--- Sending Message to Gemini ---");
+  console.log("Model:", model);
+  console.log("Full Payload:", {
+    contents: fullContents,
+    ...configForApi,
+  });
+  console.log("---------------------------------");
 
   return executeStreamWithKeyRotation(apiKeys, async (ai) => {
     const chat = ai.chats.create({
@@ -241,131 +259,207 @@ export function sendMessageStream(apiKeys: string[], messages: Message[], newMes
 
 export async function generateChatDetails(apiKeys: string[], prompt: string, model: string): Promise<{ title: string; icon: string }> {
   try {
+    const payload = {
+      model: model,
+      contents: `Generate a short, concise title (max 5 words) and a single, relevant emoji for a conversation starting with this user prompt: "${prompt}"`,
+      config: { 
+        responseMimeType: "application/json",
+        responseSchema: { type: Type.OBJECT, properties: { title: { type: Type.STRING }, icon: { type: Type.STRING } } }
+      },
+    };
+    console.log("--- Calling Gemini: generateChatDetails ---");
+    console.log("Payload:", payload);
+    console.log("------------------------------------------");
+    
     const response = await executeWithKeyRotation<GenerateContentResponse>(apiKeys, (ai) => 
-      ai.models.generateContent({
-        model: model,
-        contents: `Generate a short, concise title (max 5 words) and a single, relevant emoji for a conversation starting with this user prompt: "${prompt}"`,
-        config: { 
-          responseMimeType: "application/json",
-          responseSchema: { type: Type.OBJECT, properties: { title: { type: Type.STRING }, icon: { type: Type.STRING } } }
-        },
-      })
+      ai.models.generateContent(payload)
     );
-    const details = JSON.parse(response.text.trim());
-    if (typeof details.title === 'string' && typeof details.icon === 'string') {
-       return { title: details.title.replace(/["']/g, "").trim(), icon: details.icon };
+
+    const jsonText = response.text.trim();
+    if (jsonText) {
+      try {
+        const result = JSON.parse(jsonText);
+        if (typeof result.title === 'string' && typeof result.icon === 'string') {
+          return { title: result.title, icon: result.icon };
+        }
+      } catch (e) {
+        console.error("Failed to parse chat details JSON:", e);
+      }
     }
-    throw new Error("Invalid JSON structure from Gemini");
+    // Fallback if parsing or validation fails
+    return { title: prompt.substring(0, 40) || 'New Chat', icon: '💬' };
   } catch (error) {
     console.error("Error generating chat details:", error);
-    return { title: "New Chat", icon: "💬" };
+    return { title: prompt.substring(0, 40) || 'New Chat', icon: '💬' };
   }
 }
 
 export async function generateSuggestedReplies(apiKeys: string[], history: Message[], model: string): Promise<string[]> {
-  if (history.length === 0) return [];
   try {
-    const lastMessageContent = history[history.length - 1].content;
-    const response = await executeWithKeyRotation<GenerateContentResponse>(apiKeys, (ai) => 
-      ai.models.generateContent({
-        model: model,
-        contents: `The AI just said: "${lastMessageContent}". Generate 4 very short, distinct, and relevant one-tap replies for the user. Return ONLY a JSON array of 4 strings.`,
-        config: {
-          responseMimeType: "application/json",
-          responseSchema: { type: Type.ARRAY, items: { type: Type.STRING } }
+    const payload = {
+      model,
+      contents: [
+        ...history.map(msg => ({ role: msg.role, parts: [{ text: msg.content }] })),
+        { role: 'user' as const, parts: [{ text: 'Suggest three short, concise, and relevant replies to the last message. The user is looking for quick responses.' }] }
+      ],
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            replies: {
+              type: Type.ARRAY,
+              items: { type: Type.STRING }
+            }
+          }
         }
-      })
+      }
+    };
+    console.log("--- Calling Gemini: generateSuggestedReplies ---");
+    console.log("Payload:", payload);
+    console.log("-----------------------------------------------");
+
+    const response = await executeWithKeyRotation<GenerateContentResponse>(apiKeys, (ai) =>
+      ai.models.generateContent(payload)
     );
-    const replies = JSON.parse(response.text.trim());
-    return Array.isArray(replies) ? replies.slice(0, 4) : [];
+
+    const jsonText = response.text.trim();
+    if (jsonText) {
+       try {
+        const result = JSON.parse(jsonText);
+        return result.replies || [];
+      } catch (e) {
+        console.error("Failed to parse suggested replies JSON:", e);
+        return [];
+      }
+    }
+    return [];
   } catch (error) {
     console.error("Error generating suggested replies:", error);
     return [];
   }
 }
 
-export async function generatePersonaUpdate(apiKeys: string[], model: string, currentPersona: Partial<Persona>, request: string): Promise<{ personaUpdate: Partial<Persona>, explanation: string }> {
+export async function generatePersonaUpdate(apiKeys: string[], model: string, currentPersona: Persona, userInstruction: string): Promise<{ personaUpdate: Partial<Persona>, explanation: string }> {
+  const systemPrompt = `You are an AI assistant that helps users configure a persona for a chatbot. The user will provide their current persona configuration as a JSON object and an instruction on how to modify it.
+Your task is to generate a JSON object representing the *updated* fields of the persona, and a short, friendly explanation of the changes you made.
+
+Current Persona:
+${JSON.stringify(currentPersona, null, 2)}
+
+User Instruction:
+"${userInstruction}"
+
+Respond ONLY with a JSON object with two keys: "personaUpdate" (containing only the changed fields) and "explanation" (a brief, conversational string describing what you did).
+For example, if the user says "make it a pirate", you might change the name, bio, and system prompt.
+The 'tools' property is a boolean map: { "googleSearch": boolean, "codeExecution": boolean, "urlContext": boolean }.
+`;
+
   try {
-    const systemInstruction = `You are an AI assistant that helps build another AI's persona. The user will give you instructions. You MUST respond with only a valid JSON object. This object must contain two keys: "personaUpdate" and "explanation".
-The "personaUpdate" key holds an object with the fields to be updated in the Persona object: {name: string, bio: string, systemPrompt: string, avatar: {type: 'emoji' | 'url', value: string}, tools: {googleSearch: boolean, codeExecution: boolean, urlContext: boolean}}.
-Only include fields that need changing in "personaUpdate".
-If the user's request is creative (e.g., "make it a pirate") and the current persona state has empty fields like "bio" or "avatar", you MUST creatively generate appropriate content for them.
-The "explanation" key holds a short, conversational string explaining what changes you made.
-Example Response:
-{"personaUpdate": {"name": "Salty Dog", "bio": "A swashbuckling pirate captain, smells of rum.", "systemPrompt": "You are a pirate AI...", "avatar": {"type": "emoji", "value": "🏴‍☠️"}}, "explanation": "Aye, I've updated the persona to be a swashbuckling pirate captain for ye, complete with a new bio and a proper flag!"}`;
-    
-    const prompt = `Current Persona State: ${JSON.stringify(currentPersona)}\n\nUser Request: "${request}"\n\nGenerate the JSON update object:`;
-    
-    const response = await executeWithKeyRotation<GenerateContentResponse>(apiKeys, (ai) => 
-      ai.models.generateContent({
-        model: model,
-        contents: prompt,
-        config: {
-          systemInstruction,
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              personaUpdate: {
-                type: Type.OBJECT,
-                properties: {
-                  name: { type: Type.STRING, nullable: true },
-                  bio: { type: Type.STRING, nullable: true },
-                  systemPrompt: { type: Type.STRING, nullable: true },
-                  avatar: { type: Type.OBJECT, nullable: true, properties: { type: { type: Type.STRING, enum: ['emoji', 'url'] }, value: { type: Type.STRING } } },
-                  tools: { type: Type.OBJECT, nullable: true, properties: { googleSearch: { type: Type.BOOLEAN }, codeExecution: { type: Type.BOOLEAN }, urlContext: { type: Type.BOOLEAN } } }
+    const payload = {
+      model,
+      contents: systemPrompt,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            personaUpdate: {
+              type: Type.OBJECT,
+              properties: {
+                name: { type: Type.STRING, nullable: true },
+                avatar: {
+                  type: Type.OBJECT,
+                  nullable: true,
+                  properties: {
+                      type: { type: Type.STRING },
+                      value: { type: Type.STRING }
+                  }
+                },
+                bio: { type: Type.STRING, nullable: true },
+                systemPrompt: { type: Type.STRING, nullable: true },
+                tools: {
+                  type: Type.OBJECT,
+                  nullable: true,
+                  properties: {
+                    googleSearch: { type: Type.BOOLEAN, nullable: true },
+                    codeExecution: { type: Type.BOOLEAN, nullable: true },
+                    urlContext: { type: Type.BOOLEAN, nullable: true }
+                  }
                 }
-              },
-              explanation: {
-                  type: Type.STRING,
-                  description: "A short, conversational explanation of the changes made."
               }
             },
-            required: ['personaUpdate', 'explanation']
+            explanation: { type: Type.STRING }
           }
         }
-      })
+      }
+    };
+    console.log("--- Calling Gemini: generatePersonaUpdate ---");
+    console.log("Payload:", payload);
+    console.log("--------------------------------------------");
+
+    const response = await executeWithKeyRotation<GenerateContentResponse>(apiKeys, (ai) =>
+      ai.models.generateContent(payload)
     );
-    
-    return JSON.parse(response.text.trim());
+
+    const jsonText = response.text.trim();
+    if (jsonText) {
+      const result = JSON.parse(jsonText);
+      return result;
+    }
+    throw new Error("Empty response from AI for persona update.");
   } catch (error) {
     console.error("Error generating persona update:", error);
-    throw error;
+    throw new Error("Failed to update persona with AI. Please try again.");
   }
 }
 
 export async function detectLanguage(apiKeys: string[], model: string, text: string): Promise<string> {
+  if (!text.trim()) return 'en'; // Default to English for empty string
   try {
+    const payload = {
+      model,
+      contents: `Detect the primary language of the following text and return ONLY its two-letter ISO 639-1 code. For example, for "Hello world", return "en". For "你好世界", return "zh".\n\nText: "${text}"`,
+    };
+    console.log("--- Calling Gemini: detectLanguage ---");
+    console.log("Payload:", payload);
+    console.log("-------------------------------------");
+
     const response = await executeWithKeyRotation<GenerateContentResponse>(apiKeys, (ai) =>
-      ai.models.generateContent({
-        model: model,
-        contents: `Detect the language of the following text. Respond with only the two-letter ISO 639-1 code (e.g., "en", "es", "zh"). Text: "${text}"`,
-        config: { temperature: 0 },
-      })
+      ai.models.generateContent(payload)
     );
-    return response.text.trim().toLowerCase().replace(/["']/g, '');
+    const langCode = response.text.trim().toLowerCase();
+    // basic validation
+    if (langCode.length === 2 || langCode.length === 3) {
+      return langCode;
+    }
+    return 'en'; // Fallback
   } catch (error) {
     console.error("Error detecting language:", error);
-    throw new Error("Could not detect language.");
+    throw new Error("Language detection failed.");
   }
 }
 
-const NATURAL_TRANSLATION_PROMPT = `Your task is to translate text. Translate the text provided below from {sourceLang} into {targetLang}.\nYour translation should be colloquial and evocative, capturing the essence of a native speaker’s speech. Avoid a mechanical, literal translation. Instead, employ idiomatic expressions and natural phrasing that resonate with a native speaker of {targetLang}.\nIMPORTANT: Your response MUST contain *only* the translated text. Do not include the original text, source language name, target language name, or any other explanatory text, preambles, or apologies.\n\nText to translate:\n{text}`;
-const LITERAL_TRANSLATION_PROMPT = `Your task is to translate text. Translate the text provided below from {sourceLang} into {targetLang}.\nProvide a standard, literal translation. Focus on conveying the direct meaning accurately.\nIMPORTANT: Your response MUST contain *only* the translated text. Do not include the original text, source language name, target language name, or any other explanatory text, preambles, or apologies.\n\nText to translate:\n{text}`;
-
 export async function translateText(apiKeys: string[], model: string, text: string, sourceLang: string, targetLang: string, mode: 'natural' | 'literal'): Promise<string> {
-  const promptTemplate = mode === 'natural' ? NATURAL_TRANSLATION_PROMPT : LITERAL_TRANSLATION_PROMPT;
-  const prompt = promptTemplate
-    .replace('{sourceLang}', sourceLang)
-    .replace('{targetLang}', targetLang)
-    .replace('{text}', text);
+  const prompt = `Translate the following text from ${sourceLang} to ${targetLang}.
+The translation style should be "${mode}". "Natural" means a fluent, idiomatic translation. "Literal" means a more direct, word-for-word translation.
+Return ONLY the translated text, with no extra explanations or formatting.
+
+Text to translate:
+"${text}"
+`;
 
   try {
+    const payload = {
+      model,
+      contents: prompt,
+    };
+    console.log("--- Calling Gemini: translateText ---");
+    console.log("Payload:", payload);
+    console.log("------------------------------------");
+
     const response = await executeWithKeyRotation<GenerateContentResponse>(apiKeys, (ai) =>
-      ai.models.generateContent({
-        model,
-        contents: prompt,
-      })
+      ai.models.generateContent(payload)
     );
     return response.text.trim();
   } catch (error) {

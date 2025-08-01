@@ -8,19 +8,19 @@ const defaultSettings: Settings = {
   theme: 'light',
   language: 'en',
   apiKey: [],
-  showSuggestions: true,
+  showSuggestions: false,
   defaultModel: 'gemini-2.5-flash',
   suggestionModel: 'gemini-2.5-flash-lite',
   autoTitleGeneration: true,
   titleGenerationModel: 'gemini-2.5-flash-lite',
-  personaBuilderModel: 'gemini-2.5-flash',
   languageDetectionModel: 'gemini-2.5-flash-lite',
-  defaultSearch: true,
+  defaultSearch: false,
+  useSearchOptimizerPrompt: false,
   showThoughts: true,
   enableGlobalSystemPrompt: false,
   globalSystemPrompt: '',
-  optimizeFormatting: true,
-  thinkDeeper: true,
+  optimizeFormatting: false,
+  thinkDeeper: false,
 };
 
 export const useSettings = () => {
@@ -59,7 +59,6 @@ export const useSettings = () => {
           if (!allModels.includes(current.defaultModel)) newDefaults.defaultModel = allModels[0];
           if (!allModels.includes(current.suggestionModel)) newDefaults.suggestionModel = allModels.find(m => m.includes('lite')) || allModels[0];
           if (!allModels.includes(current.titleGenerationModel)) newDefaults.titleGenerationModel = allModels.find(m => m.includes('lite')) || allModels[0];
-          if (!allModels.includes(current.personaBuilderModel)) newDefaults.personaBuilderModel = allModels[0];
           if (!allModels.includes(current.languageDetectionModel)) newDefaults.languageDetectionModel = allModels.find(m => m.includes('lite')) || allModels[0];
           return Object.keys(newDefaults).length > 0 ? { ...current, ...newDefaults } : current;
         });
