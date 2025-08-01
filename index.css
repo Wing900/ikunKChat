@@ -56,6 +56,10 @@ body {
     -moz-osx-font-smoothing: grayscale;
 }
 
+.h-dvh-screen {
+    height: 100dvh;
+}
+
 body.dark-mode {
     --bg-color: var(--bg-color-dark);
     --bg-image: var(--bg-image-dark);
