@@ -64,6 +64,10 @@ export const useChatData = ({ settings, isStorageLoaded }: UseChatDataProps) => 
       setActiveChatId(null);
     }
   }, [activeChatId]);
+  
+  const handleToggleStudyMode = useCallback((chatId: string, enabled: boolean) => {
+    setChats(p => p.map(c => c.id === chatId ? { ...c, isStudyMode: enabled } : c));
+  }, []);
 
   const handleSetModelForActiveChat = useCallback((model: string) => {
     if (activeChatId) {
@@ -88,5 +92,6 @@ export const useChatData = ({ settings, isStorageLoaded }: UseChatDataProps) => 
     handleSetModelForActiveChat,
     handleSetCurrentModel,
     handleArchiveChat,
+    handleToggleStudyMode,
   };
 };

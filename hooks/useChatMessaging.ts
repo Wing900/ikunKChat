@@ -11,9 +11,11 @@ interface UseChatMessagingProps {
   setSuggestedReplies: React.Dispatch<React.SetStateAction<string[]>>;
   setActiveChatId: React.Dispatch<React.SetStateAction<string | null>>;
   addToast: (message: string, type: 'success' | 'error' | 'info') => void;
+  isNextChatStudyMode: boolean;
+  setIsNextChatStudyMode: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-export const useChatMessaging = ({ settings, activeChat, personas, setChats, setSuggestedReplies, setActiveChatId, addToast }: UseChatMessagingProps) => {
+export const useChatMessaging = ({ settings, activeChat, personas, setChats, setSuggestedReplies, setActiveChatId, addToast, isNextChatStudyMode, setIsNextChatStudyMode }: UseChatMessagingProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const isCancelledRef = useRef(false);
 
@@ -22,7 +24,7 @@ export const useChatMessaging = ({ settings, activeChat, personas, setChats, set
     setIsLoading(false); 
   }, []);
 
-  const _initiateStream = useCallback(async (chatId: string, historyForAPI: Message[], toolConfig: any, personaId: string | null | undefined) => {
+  const _initiateStream = useCallback(async (chatId: string, historyForAPI: Message[], toolConfig: any, personaId: string | null | undefined, isStudyMode?: boolean) => {
     const apiKeys = settings.apiKey && settings.apiKey.length > 0
       ? settings.apiKey
       : (process.env.API_KEY ? [process.env.API_KEY] : []);
@@ -39,7 +41,7 @@ export const useChatMessaging = ({ settings, activeChat, personas, setChats, set
 
     const chatSession = activeChat && activeChat.id === chatId 
         ? activeChat 
-        : { id: chatId, messages: historyForAPI, model: settings.defaultModel, personaId, title: "New Chat", createdAt: Date.now(), folderId: null };
+        : { id: chatId, messages: historyForAPI, model: settings.defaultModel, personaId, title: "New Chat", createdAt: Date.now(), folderId: null, isStudyMode };
 
     const activePersona = chatSession.personaId ? personas.find(p => p.id === chatSession.personaId) : null;
 
@@ -58,7 +60,7 @@ export const useChatMessaging = ({ settings, activeChat, personas, setChats, set
     try {
       const currentModel = chatSession.model;
       const effectiveToolConfig = { ...toolConfig, showThoughts: settings.showThoughts };
-      const stream = sendMessageStream(apiKeys, historyForAPI.slice(0, -1), promptContent, promptAttachments, currentModel, settings, effectiveToolConfig, activePersona);
+      const stream = sendMessageStream(apiKeys, historyForAPI.slice(0, -1), promptContent, promptAttachments, currentModel, settings, effectiveToolConfig, activePersona, chatSession.isStudyMode);
       
       for await (const chunk of stream) {
         if(isCancelledRef.current) break;
@@ -115,6 +117,7 @@ export const useChatMessaging = ({ settings, activeChat, personas, setChats, set
     let currentChatId = activeChat?.id;
     let history: Message[];
     let currentPersonaId = activeChat?.personaId;
+    let currentIsStudyMode = activeChat?.isStudyMode;
 
     const apiKeys = settings.apiKey && settings.apiKey.length > 0
       ? settings.apiKey
@@ -122,11 +125,13 @@ export const useChatMessaging = ({ settings, activeChat, personas, setChats, set
 
     if (!currentChatId) {
       currentPersonaId = null;
-      const newChat: ChatSession = { id: crypto.randomUUID(), title: content.substring(0, 40) || "New Chat", icon: "💬", messages: [userMessage], createdAt: Date.now(), model: settings.defaultModel, folderId: null, personaId: null };
+      currentIsStudyMode = isNextChatStudyMode;
+      const newChat: ChatSession = { id: crypto.randomUUID(), title: content.substring(0, 40) || "New Chat", icon: "💬", messages: [userMessage], createdAt: Date.now(), model: settings.defaultModel, folderId: null, personaId: null, isStudyMode: currentIsStudyMode };
       currentChatId = newChat.id;
       history = newChat.messages;
       setChats(prev => [newChat, ...prev]);
       setActiveChatId(newChat.id);
+      setIsNextChatStudyMode(false);
       if (settings.autoTitleGeneration && content) {
         if(apiKeys.length > 0) generateChatDetails(apiKeys, content, settings.titleGenerationModel).then(({ title, icon }) => {
           setChats(p => p.map(c => c.id === currentChatId ? { ...c, title, icon } : c))
@@ -136,8 +141,8 @@ export const useChatMessaging = ({ settings, activeChat, personas, setChats, set
       history = [...(activeChat?.messages || []), userMessage];
       setChats(prev => prev.map(c => c.id === currentChatId ? { ...c, messages: [...c.messages, userMessage] } : c));
     }
-    await _initiateStream(currentChatId, history, toolConfig, currentPersonaId);
-  }, [activeChat, settings, setChats, setActiveChatId, _initiateStream]);
+    await _initiateStream(currentChatId, history, toolConfig, currentPersonaId, currentIsStudyMode);
+  }, [activeChat, settings, setChats, setActiveChatId, _initiateStream, isNextChatStudyMode, setIsNextChatStudyMode]);
 
   const handleDeleteMessage = useCallback((messageId: string) => {
     if (!activeChat?.id) return;
@@ -186,7 +191,7 @@ export const useChatMessaging = ({ settings, activeChat, personas, setChats, set
     if (historyForResubmit.length > 0) {
         setChats(prev => prev.map(c => c.id === chatId ? { ...c, messages: historyForResubmit } : c));
         const toolConfig = { codeExecution: false, googleSearch: settings.defaultSearch, urlContext: false };
-        _initiateStream(chatId, historyForResubmit, toolConfig, activeChat.personaId);
+        _initiateStream(chatId, historyForResubmit, toolConfig, activeChat.personaId, activeChat.isStudyMode);
     }
   }, [activeChat, isLoading, settings.defaultSearch, setChats, _initiateStream]);
 
@@ -206,7 +211,7 @@ export const useChatMessaging = ({ settings, activeChat, personas, setChats, set
     if (historyForResubmit.length > 0) {
         setChats(prev => prev.map(c => c.id === chatId ? { ...c, messages: historyForResubmit } : c));
         const toolConfig = { codeExecution: false, googleSearch: settings.defaultSearch, urlContext: false };
-        _initiateStream(chatId, historyForResubmit, toolConfig, activeChat.personaId);
+        _initiateStream(chatId, historyForResubmit, toolConfig, activeChat.personaId, activeChat.isStudyMode);
     }
   }, [activeChat, isLoading, settings.defaultSearch, setChats, _initiateStream]);
 
