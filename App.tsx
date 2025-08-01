@@ -70,6 +70,7 @@ const AppContainer = () => {
   const [editingPersona, setEditingPersona] = useState<Persona | null>(null);
   const [translationHistory, setTranslationHistory] = useState<TranslationHistoryItem[]>([]);
   const [confirmation, setConfirmation] = useState<{ title: string, message: string, onConfirm: () => void } | null>(null);
+  const [isNextChatStudyMode, setIsNextChatStudyMode] = useState(false);
 
   useEffect(() => {
     if (isStorageLoaded) {
@@ -98,7 +99,8 @@ const AppContainer = () => {
     handleUpdateMessageContent, handleRegenerate, handleEditAndResubmit 
   } = useChatMessaging({ 
     settings, activeChat, personas, setChats, 
-    setSuggestedReplies: chatDataHandlers.setSuggestedReplies, setActiveChatId, addToast 
+    setSuggestedReplies: chatDataHandlers.setSuggestedReplies, setActiveChatId, addToast,
+    isNextChatStudyMode, setIsNextChatStudyMode
   });
 
   const [editingChat, setEditingChat] = useState<ChatSession | null>(null);
@@ -122,14 +124,15 @@ const AppContainer = () => {
         title: persona?.name || 'New Persona Chat',
         icon: persona?.avatar.type === 'emoji' ? persona.avatar.value : '💬',
         messages: [], createdAt: Date.now(), model: settings.defaultModel,
-        folderId: null, personaId: personaId,
+        folderId: null, personaId: personaId, isStudyMode: isNextChatStudyMode,
       };
       setChats(prev => [newChatSession, ...prev]);
       setActiveChatId(newChatSession.id);
+      setIsNextChatStudyMode(false);
     } else { setActiveChatId(null); }
     setSearchQuery(''); chatDataHandlers.setSuggestedReplies([]); 
     setIsMobileSidebarOpen(false); setCurrentView('chat');
-  }, [setActiveChatId, chatDataHandlers.setSuggestedReplies, settings.defaultModel, setChats, personas]);
+  }, [setActiveChatId, chatDataHandlers.setSuggestedReplies, settings.defaultModel, setChats, personas, isNextChatStudyMode, setIsNextChatStudyMode]);
 
   const handleSelectChat = useCallback((id: string) => { setActiveChatId(id); chatDataHandlers.setSuggestedReplies([]); setIsMobileSidebarOpen(false); setCurrentView('chat'); }, [setActiveChatId, chatDataHandlers.setSuggestedReplies]);
   
@@ -191,7 +194,7 @@ const AppContainer = () => {
         <div className={`flex-1 flex flex-col h-full transition-all duration-300 ${isSidebarCollapsed ? 'p-3 pb-2' : 'p-3 pb-2 md:pl-0'}`}>
           <div className="view-wrapper">
               <ViewContainer view="chat" activeView={currentView}>
-                <ChatView chatSession={activeChat} personas={personas} onSendMessage={handleSendMessage} isLoading={isLoading} onCancelGeneration={handleCancel} currentModel={settings.defaultModel} onSetCurrentModel={(model) => handleSettingsChange({ defaultModel: model })} onSetModelForActiveChat={chatDataHandlers.handleSetModelForActiveChat} availableModels={availableModels} isSidebarCollapsed={isSidebarCollapsed} onToggleSidebar={() => setIsSidebarCollapsed(p => !p)} onToggleMobileSidebar={() => setIsMobileSidebarOpen(p => !p)} onNewChat={() => handleNewChat(null)} onImageClick={setLightboxImage} suggestedReplies={chatDataHandlers.suggestedReplies} settings={settings} onDeleteMessage={handleDeleteMessage} onUpdateMessageContent={handleUpdateMessageContent} onRegenerate={handleRegenerate} onEditAndResubmit={handleEditAndResubmit} onShowCitations={setCitationChunks} onDeleteChat={chatDataHandlers.handleDeleteChat} onEditChat={setEditingChat} />
+                <ChatView chatSession={activeChat} personas={personas} onSendMessage={handleSendMessage} isLoading={isLoading} onCancelGeneration={handleCancel} currentModel={settings.defaultModel} onSetCurrentModel={(model) => handleSettingsChange({ defaultModel: model })} onSetModelForActiveChat={chatDataHandlers.handleSetModelForActiveChat} availableModels={availableModels} isSidebarCollapsed={isSidebarCollapsed} onToggleSidebar={() => setIsSidebarCollapsed(p => !p)} onToggleMobileSidebar={() => setIsMobileSidebarOpen(p => !p)} onNewChat={() => handleNewChat(null)} onImageClick={setLightboxImage} suggestedReplies={chatDataHandlers.suggestedReplies} settings={settings} onDeleteMessage={handleDeleteMessage} onUpdateMessageContent={handleUpdateMessageContent} onRegenerate={handleRegenerate} onEditAndResubmit={handleEditAndResubmit} onShowCitations={setCitationChunks} onDeleteChat={chatDataHandlers.handleDeleteChat} onEditChat={setEditingChat} onToggleStudyMode={chatDataHandlers.handleToggleStudyMode} isNextChatStudyMode={isNextChatStudyMode} onToggleNextChatStudyMode={setIsNextChatStudyMode} />
               </ViewContainer>
               <ViewContainer view="personas" activeView={currentView}>
                 <RolesView personas={personas} onStartChat={handleNewChat} onEditPersona={handleOpenEditor} onCreatePersona={() => handleOpenEditor(null)} onDeletePersona={handleDeletePersona} onClose={() => setCurrentView('chat')} />

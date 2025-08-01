@@ -1,4 +1,5 @@
 
+
 export enum MessageRole {
   USER = 'user',
   MODEL = 'model',
@@ -55,6 +56,7 @@ export interface ChatSession {
   folderId: string | null;
   personaId?: string | null;
   isArchived?: boolean;
+  isStudyMode?: boolean;
 }
 
 export interface TranslationHistoryItem {

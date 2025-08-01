@@ -32,6 +32,9 @@ interface ChatViewProps {
   onShowCitations: (chunks: any[]) => void;
   onDeleteChat: (id: string) => void;
   onEditChat: (chat: ChatSession) => void;
+  onToggleStudyMode: (chatId: string, enabled: boolean) => void;
+  isNextChatStudyMode: boolean;
+  onToggleNextChatStudyMode: (enabled: boolean) => void;
 }
 
 const InternalView: React.FC<{ active: boolean; children: React.ReactNode }> = ({ active, children }) => {
@@ -50,7 +53,7 @@ const InternalView: React.FC<{ active: boolean; children: React.ReactNode }> = (
 };
 
 export const ChatView: React.FC<ChatViewProps> = (props) => {
-  const { chatSession, personas, onSendMessage, isLoading, onCancelGeneration, currentModel, onSetCurrentModel, onSetModelForActiveChat, availableModels, isSidebarCollapsed, onToggleSidebar, onToggleMobileSidebar, onNewChat, onImageClick, suggestedReplies, settings, onDeleteMessage, onUpdateMessageContent, onRegenerate, onEditAndResubmit, onShowCitations, onDeleteChat, onEditChat } = props;
+  const { chatSession, personas, onSendMessage, isLoading, onCancelGeneration, currentModel, onSetCurrentModel, onSetModelForActiveChat, availableModels, isSidebarCollapsed, onToggleSidebar, onToggleMobileSidebar, onNewChat, onImageClick, suggestedReplies, settings, onDeleteMessage, onUpdateMessageContent, onRegenerate, onEditAndResubmit, onShowCitations, onDeleteChat, onEditChat, onToggleStudyMode: onToggleSessionStudyMode, isNextChatStudyMode, onToggleNextChatStudyMode } = props;
   const { t } = useLocalization();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
@@ -142,6 +145,14 @@ export const ChatView: React.FC<ChatViewProps> = (props) => {
     }
   }, [chatSession, onDeleteChat, t]);
 
+  const handleToggleStudyMode = (enabled: boolean) => {
+    if (chatSession) {
+      onToggleSessionStudyMode(chatSession.id, enabled);
+    } else {
+      onToggleNextChatStudyMode(enabled);
+    }
+  };
+
 
   const ChatHeader = (
       <header className={`p-4 pl-14 md:pl-4 border-b border-[var(--glass-border)] flex-shrink-0 flex items-center justify-between gap-4 transition-all duration-300 ${isSidebarCollapsed ? 'md:pl-16' : ''}`}>
@@ -187,7 +198,7 @@ export const ChatView: React.FC<ChatViewProps> = (props) => {
         
         {!isLoading && suggestedReplies.length > 0 && !editingMessageId && !chatInput && <SuggestedReplies suggestions={suggestedReplies} onSendSuggestion={handleSendSuggestion} />}
 
-        <ChatInput onSendMessage={handleSendMessageWithTools} isLoading={isLoading} onCancel={onCancelGeneration} toolConfig={toolConfig} onToolConfigChange={setToolConfig} input={chatInput} setInput={setChatInput}/>
+        <ChatInput onSendMessage={handleSendMessageWithTools} isLoading={isLoading} onCancel={onCancelGeneration} toolConfig={toolConfig} onToolConfigChange={setToolConfig} input={chatInput} setInput={setChatInput} chatSession={chatSession} onToggleStudyMode={handleToggleStudyMode} isNextChatStudyMode={isNextChatStudyMode}/>
     </main>
   );
 };

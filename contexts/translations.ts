@@ -40,10 +40,11 @@ export const translations = {
     codeExecution: 'Code Execution',
     googleSearch: 'Google Search',
     urlContext: 'URL Context',
-    urlContextPlaceholder: 'Enter a URL for context',
     showThoughts: 'Show Thoughts',
     showThoughtsDesc: "Display the model's thinking process before the final answer.",
     thoughts: 'Thoughts',
+    studyLearn: 'Study and Learn',
+    studyLearnDesc: 'Enable a persistent teaching assistant for this chat.',
     // Translator
     translate: 'Translate',
     translator: 'Translator',
@@ -168,6 +169,8 @@ export const translations = {
     showThoughts: '显示思考过程',
     showThoughtsDesc: '在最终答案之前显示模型的思考过程。',
     thoughts: '思考过程',
+    studyLearn: '学习模式',
+    studyLearnDesc: '为此对话启用持久的学习助手。',
     // Translator
     translate: '翻译',
     translator: '翻译器',

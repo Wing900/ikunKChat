@@ -664,6 +664,31 @@ body.drawer-open .drawer {
   transform: scale(1.1);
 }
 
+/* Active Tool Indicator */
+@keyframes tool-chip-in {
+  from { opacity: 0; transform: translateY(5px) scale(0.9); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.active-tools-indicator {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+}
+.active-tool-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--radius-full);
+  background: color-mix(in srgb, var(--accent-color) 15%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent-color) 30%, transparent);
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--accent-color);
+  animation: tool-chip-in 0.3s var(--transition-fluid) backwards;
+}
+
+
 /* Image Lightbox Styles */
 @keyframes lightbox-fade-out { from { opacity: 1; } to { opacity: 0; } }
 @keyframes lightbox-zoom-out { from { transform: scale(1); } to { transform: scale(0.95); } }
