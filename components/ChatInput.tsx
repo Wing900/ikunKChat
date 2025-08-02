@@ -3,6 +3,8 @@ import { Icon } from './Icon';
 import { useLocalization } from '../contexts/LocalizationContext';
 import { Switch } from './Switch';
 import { ChatSession } from '../types';
+import { useToast } from '../contexts/ToastContext';
+import { getSupportedMimeTypes, isFileSupported } from '../utils/fileUtils';
 
 export interface ChatInputRef {
   addFiles: (files: File[]) => void;
@@ -61,6 +63,7 @@ const ActiveToolIndicator: React.FC<{ toolConfig: any, isStudyMode: boolean, t: 
 
 export const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(({ onSendMessage, isLoading, onCancel, toolConfig, onToolConfigChange, input, setInput, chatSession, onToggleStudyMode, isNextChatStudyMode }, ref) => {
   const { t } = useLocalization();
+  const { addToast } = useToast();
   const [files, setFiles] = useState<FileWithId[]>([]);
   const [isToolsOpen, setIsToolsOpen] = useState(false);
   const [enteringFileIds, setEnteringFileIds] = useState<Set<string>>(new Set());
@@ -108,7 +111,18 @@ export const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(({ onSendMessa
   }, []);
 
   const addFiles = (newFiles: File[]) => {
-    const newFilesWithId = newFiles.map(file => ({ file, id: crypto.randomUUID() }));
+    const supportedFiles = newFiles.filter(isFileSupported);
+    const unsupportedCount = newFiles.length - supportedFiles.length;
+
+    if (unsupportedCount > 0) {
+      addToast(`${unsupportedCount} file(s) have an unsupported format and were not added.`, 'error');
+    }
+
+    if (supportedFiles.length === 0) {
+      return;
+    }
+
+    const newFilesWithId = supportedFiles.map(file => ({ file, id: crypto.randomUUID() }));
     const newFileIds = newFilesWithId.map(f => f.id);
     
     setFiles(prev => [...prev, ...newFilesWithId]);
@@ -217,7 +231,7 @@ export const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(({ onSendMessa
             <button type="button" onClick={() => fileInputRef.current?.click()} className="p-2 text-[var(--text-color-secondary)] hover:text-[var(--accent-color)] disabled:opacity-50 flex-shrink-0" aria-label="Attach files">
               <Icon icon="paperclip" className="w-6 h-6" />
             </button>
-            <input type="file" ref={fileInputRef} onChange={handleFileChange} style={{ display: 'none' }} multiple accept="image/*,application/pdf,text/*,.json,.csv" />
+            <input type="file" ref={fileInputRef} onChange={handleFileChange} style={{ display: 'none' }} multiple accept={getSupportedMimeTypes()} />
             <textarea
                 ref={textareaRef} value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={handleKeyDown}
                 placeholder={t('typeMessage')} rows={1}
