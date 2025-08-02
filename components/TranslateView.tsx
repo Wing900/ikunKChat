@@ -131,6 +131,14 @@ const TranslateView: React.FC<TranslateViewProps> = ({ settings, onClose, histor
         setMode(item.mode);
       }
   }
+  
+  const handleClearHistory = useCallback(() => {
+    setHistory([]);
+  }, [setHistory]);
+
+  const handleDeleteHistoryItem = useCallback((id: string) => {
+    setHistory(prev => prev.filter(item => item.id !== id));
+  }, [setHistory]);
 
   const handleRead = async (text: string, langCode: string) => {
     if (!text.trim()) return;
@@ -214,7 +222,7 @@ const TranslateView: React.FC<TranslateViewProps> = ({ settings, onClose, histor
             <span>{isLoading ? t('translating') : t('translate')}</span>
           </button>
       </div>
-      {isHistoryOpen && <TranslationHistoryModal history={history} onClear={() => setHistory([])} onClose={handleHistoryModalClose} />}
+      {isHistoryOpen && <TranslationHistoryModal history={history} onClear={handleClearHistory} onDeleteItem={handleDeleteHistoryItem} onClose={handleHistoryModalClose} />}
     </main>
   );
 };

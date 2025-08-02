@@ -1645,6 +1645,14 @@ body:not(.dark-mode) .hljs-link { text-decoration: underline; }
 }
 
 /* --- Translation History Modal --- */
+@keyframes translation-item-out {
+  from { opacity: 1; transform: translateY(0) scale(1); max-height: 100px; }
+  to { opacity: 0; transform: translateY(10px) scale(0.95); max-height: 0; padding-top: 0; padding-bottom: 0; margin-top:0; margin-bottom:0; }
+}
+.translation-history-item.leaving {
+  animation: translation-item-out 0.35s ease-out forwards;
+  pointer-events: none;
+}
 .translation-history-item {
   transition: background-color 0.2s ease-out, border-color 0.2s ease-out, max-height 0.35s ease-out, opacity 0.35s ease-out, padding 0.35s ease-out, margin 0.35s ease-out;
   max-height: 100px;

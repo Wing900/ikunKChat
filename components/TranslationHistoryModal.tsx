@@ -7,12 +7,15 @@ interface TranslationHistoryModalProps {
   history: TranslationHistoryItem[];
   onClose: (item: TranslationHistoryItem | null) => void;
   onClear: () => void;
+  onDeleteItem: (id: string) => void;
 }
 
-export const TranslationHistoryModal: React.FC<TranslationHistoryModalProps> = ({ history, onClose, onClear }) => {
+export const TranslationHistoryModal: React.FC<TranslationHistoryModalProps> = ({ history, onClose, onClear, onDeleteItem }) => {
   const { t } = useLocalization();
   const [isVisible, setIsVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
+  const [isClearing, setIsClearing] = useState(false);
 
   const filteredHistory = useMemo(() => {
       const hasQuery = !!searchQuery.trim();
@@ -44,6 +47,24 @@ export const TranslationHistoryModal: React.FC<TranslationHistoryModalProps> = (
     };
   }, [handleClose]);
 
+  const handleClearClick = () => {
+    if (history.length === 0 || isClearing) return;
+    setIsClearing(true);
+    const animationTime = Math.min(1000, history.length * 30 + 350);
+    setTimeout(() => {
+        onClear();
+        setIsClearing(false);
+    }, animationTime);
+  };
+
+  const handleDeleteItemClick = (e: React.MouseEvent, id: string) => {
+      e.stopPropagation();
+      setDeletingIds(prev => new Set(prev).add(id));
+      setTimeout(() => {
+          onDeleteItem(id);
+      }, 350);
+  };
+
   return (
     <>
       <div className={`modal-backdrop ${isVisible ? 'visible' : ''}`} onClick={() => handleClose()}></div>
@@ -56,7 +77,7 @@ export const TranslationHistoryModal: React.FC<TranslationHistoryModalProps> = (
               <input type="text" placeholder={t('searchHistory')} className="sidebar-search-input !py-2 !text-sm" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
             </div>
             {history.length > 0 && (
-                <button onClick={onClear} className="action-btn danger" data-tooltip={t('clear')}><Icon icon="delete" className="w-4 h-4"/></button>
+                <button onClick={handleClearClick} className="action-btn danger" data-tooltip={t('clearHistory')}><Icon icon="delete" className="w-4 h-4"/></button>
             )}
             <button onClick={() => handleClose()} className="p-2 rounded-full hover:bg-black/10 dark:hover:bg-white/10 -mr-2"><Icon icon="close" className="w-5 h-5"/></button>
           </div>
@@ -64,13 +85,29 @@ export const TranslationHistoryModal: React.FC<TranslationHistoryModalProps> = (
         <div className="flex-grow min-h-0 overflow-y-auto -mr-4 pr-4">
             {hasVisibleHistory ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {filteredHistory.map(item => (
-                        <div key={item.id} onClick={() => handleClose(item)} className={`p-3 rounded-[var(--radius-2xl)] cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 border border-transparent hover:border-[var(--glass-border)] transition-all duration-200 translation-history-item ${item.isHiding ? 'hiding' : ''}`}>
-                            <p className="font-semibold text-sm truncate">{item.sourceText}</p>
-                            <p className="text-sm text-[var(--text-color-secondary)] truncate">{item.translatedText}</p>
-                            <div className="text-xs text-[var(--text-color-secondary)] mt-2 opacity-75">
-                                {t((item.sourceLang || 'auto') as any) || item.sourceLang} -&gt; {t(item.targetLang as any) || item.targetLang}
+                    {filteredHistory.map((item, index) => (
+                        <div 
+                            key={item.id} 
+                            onClick={() => !(deletingIds.has(item.id) || isClearing) && handleClose(item)}
+                            className={`group flex items-center gap-2 p-3 rounded-[var(--radius-2xl)] cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 border border-transparent hover:border-[var(--glass-border)] transition-all duration-200 translation-history-item ${item.isHiding ? 'hiding' : ''} ${(deletingIds.has(item.id) || isClearing) ? 'leaving' : ''}`}
+                            style={{ animationDelay: isClearing ? `${index * 30}ms` : '0ms' }}
+                        >
+                            <div className="flex-grow min-w-0">
+                                <p className="font-semibold text-sm truncate">{item.sourceText}</p>
+                                <p className="text-sm text-[var(--text-color-secondary)] truncate">{item.translatedText}</p>
+                                <div className="text-xs text-[var(--text-color-secondary)] mt-2 opacity-75">
+                                    {t((item.sourceLang || 'auto') as any) || item.sourceLang} -&gt; {t(item.targetLang as any) || item.targetLang}
+                                </div>
                             </div>
+                             <button 
+                                onClick={(e) => handleDeleteItemClick(e, item.id)} 
+                                className="action-btn danger ml-auto flex-shrink-0 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
+                                aria-label="Delete entry"
+                                data-tooltip={t('delete')}
+                                data-tooltip-placement="left"
+                            >
+                                <Icon icon="delete" className="w-4 h-4"/>
+                            </button>
                         </div>
                     ))}
                 </div>
