@@ -4,13 +4,8 @@ import { useLocalization } from '../contexts/LocalizationContext';
 import { Switch } from './Switch';
 import { ChatSession } from '../types';
 
-export interface FileWithId {
-  file: File;
-  id: string;
-}
-
 interface ChatInputProps {
-  onSendMessage: (message: string) => void;
+  onSendMessage: (message: string, files: File[]) => void;
   isLoading: boolean;
   onCancel: () => void;
   toolConfig: any;
@@ -20,11 +15,11 @@ interface ChatInputProps {
   chatSession: ChatSession | null;
   onToggleStudyMode: (enabled: boolean) => void;
   isNextChatStudyMode: boolean;
-  files: FileWithId[];
-  onAddFiles: (newFiles: File[]) => void;
-  onRemoveFile: (idToRemove: string) => void;
-  enteringFileIds: Set<string>;
-  deletingFileIds: Set<string>;
+}
+
+interface FileWithId {
+  file: File;
+  id: string;
 }
 
 const ToolItem: React.FC<{icon: any, label: string, checked: boolean, onChange: (e:any)=>void, disabled?: boolean}> = ({icon, label, checked, onChange, disabled}) => (
@@ -60,13 +55,12 @@ const ActiveToolIndicator: React.FC<{ toolConfig: any, isStudyMode: boolean, t: 
 };
 
 
-export const ChatInput: React.FC<ChatInputProps> = ({ 
-    onSendMessage, isLoading, onCancel, toolConfig, onToolConfigChange, 
-    input, setInput, chatSession, onToggleStudyMode, isNextChatStudyMode,
-    files, onAddFiles, onRemoveFile, enteringFileIds, deletingFileIds 
-}) => {
+export const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isLoading, onCancel, toolConfig, onToolConfigChange, input, setInput, chatSession, onToggleStudyMode, isNextChatStudyMode }) => {
   const { t } = useLocalization();
+  const [files, setFiles] = useState<FileWithId[]>([]);
   const [isToolsOpen, setIsToolsOpen] = useState(false);
+  const [enteringFileIds, setEnteringFileIds] = useState<Set<string>>(new Set());
+  const [deletingFileIds, setDeletingFileIds] = useState<Set<string>>(new Set());
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const toolsWrapperRef = useRef<HTMLDivElement>(null);
@@ -108,15 +102,43 @@ export const ChatInput: React.FC<ChatInputProps> = ({
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      onAddFiles(Array.from(e.target.files));
+      const newFiles = Array.from(e.target.files).map(file => ({ file, id: crypto.randomUUID() }));
+      const newFileIds = newFiles.map(f => f.id);
+      
+      setFiles(prev => [...prev, ...newFiles]);
+      setEnteringFileIds(prev => new Set([...prev, ...newFileIds]));
+
+      setTimeout(() => {
+        setEnteringFileIds(prev => {
+          const nextSet = new Set(prev);
+          newFileIds.forEach(id => nextSet.delete(id));
+          return nextSet;
+        });
+      }, 350);
     }
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
+  const handleRemoveFile = (idToRemove: string) => {
+    setDeletingFileIds(prev => new Set(prev).add(idToRemove));
+    setTimeout(() => {
+      setFiles(prev => prev.filter(f => f.id !== idToRemove));
+      setDeletingFileIds(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(idToRemove);
+        return newSet;
+      });
+    }, 350);
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSendMessage(input.trim());
-    setIsToolsOpen(false);
+    if ((input.trim() || files.length > 0) && !isLoading) {
+      onSendMessage(input.trim(), files.map(f => f.file));
+      // setInput is now handled by ChatView
+      setFiles([]);
+      setIsToolsOpen(false);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -137,8 +159,6 @@ export const ChatInput: React.FC<ChatInputProps> = ({
       
       onToolConfigChange(newConfig);
   }
-
-  const supportedFileTypes = "image/png,image/jpeg,image/webp,audio/mpeg,audio/wav,audio/x-aiff,audio/aac,audio/ogg,audio/flac,video/mp4,video/mpeg,video/quicktime,video/x-msvideo,video/x-flv,video/mpg,video/webm,video/x-ms-wmv,video/3gpp,text/plain,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/rtf,text/csv,text/tab-separated-values,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,.c,.cpp,.py,.java,.php,.sql,.html";
 
   return (
     <form onSubmit={handleSubmit} className="p-2 pt-0 flex flex-col relative">
@@ -164,7 +184,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                     ) : (
                       <div className="file-info"> <Icon icon="file" className="w-8 h-8"/> <span>{file.name}</span> </div>
                     )}
-                    <button type="button" className="remove-file-btn" onClick={() => onRemoveFile(id)} aria-label={`Remove ${file.name}`}>
+                    <button type="button" className="remove-file-btn" onClick={() => handleRemoveFile(id)} aria-label={`Remove ${file.name}`}>
                       <Icon icon="close" className="w-3 h-3" />
                     </button>
                   </div>
@@ -182,7 +202,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             <button type="button" onClick={() => fileInputRef.current?.click()} className="p-2 text-[var(--text-color-secondary)] hover:text-[var(--accent-color)] disabled:opacity-50 flex-shrink-0" aria-label="Attach files">
               <Icon icon="paperclip" className="w-6 h-6" />
             </button>
-            <input type="file" ref={fileInputRef} onChange={handleFileChange} style={{ display: 'none' }} multiple accept={supportedFileTypes} />
+            <input type="file" ref={fileInputRef} onChange={handleFileChange} style={{ display: 'none' }} multiple accept="image/*,application/pdf,text/*,.json,.csv" />
             <textarea
                 ref={textareaRef} value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={handleKeyDown}
                 placeholder={t('typeMessage')} rows={1}

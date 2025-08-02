@@ -4,10 +4,9 @@ import { Icon } from './Icon';
 import { ModelSelector } from './ModelSelector';
 import { WelcomeView } from './WelcomeView';
 import { MessageBubble } from './MessageBubble';
-import { ChatInput, FileWithId } from './ChatInput';
+import { ChatInput } from './ChatInput';
 import { SuggestedReplies } from './SuggestedReplies';
 import { useLocalization } from '../contexts/LocalizationContext';
-import { DropzoneOverlay } from './DropzoneOverlay';
 
 interface ChatViewProps {
   chatSession: ChatSession | null;
@@ -60,11 +59,6 @@ export const ChatView: React.FC<ChatViewProps> = (props) => {
   
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [chatInput, setChatInput] = useState('');
-  const [files, setFiles] = useState<FileWithId[]>([]);
-  const [enteringFileIds, setEnteringFileIds] = useState<Set<string>>(new Set());
-  const [deletingFileIds, setDeletingFileIds] = useState<Set<string>>(new Set());
-  const [isDragging, setIsDragging] = useState(false);
-  const dragCounter = useRef(0);
 
   const activePersona = chatSession?.personaId ? personas.find(p => p.id === chatSession.personaId) : null;
 
@@ -83,7 +77,6 @@ export const ChatView: React.FC<ChatViewProps> = (props) => {
         setToolConfig(getDefaultToolConfig());
         setEditingMessageId(null);
         setChatInput('');
-        setFiles([]);
     }
     prevChatIdRef.current = currentChatId;
   }, [chatSession, getDefaultToolConfig]);
@@ -98,40 +91,9 @@ export const ChatView: React.FC<ChatViewProps> = (props) => {
     scrollToBottom();
   }, [chatSession, chatSession?.messages, scrollToBottom, isLoading, editingMessageId]);
 
-  const handleAddFiles = useCallback((newFiles: File[]) => {
-    const newFilesWithId = newFiles.map(file => ({ file, id: crypto.randomUUID() }));
-    const newFileIds = newFilesWithId.map(f => f.id);
-    
-    setFiles(prev => [...prev, ...newFilesWithId]);
-    setEnteringFileIds(prev => new Set([...prev, ...newFileIds]));
-
-    setTimeout(() => {
-        setEnteringFileIds(prev => {
-            const nextSet = new Set(prev);
-            newFileIds.forEach(id => nextSet.delete(id));
-            return nextSet;
-        });
-    }, 350); // animation duration
-  }, []);
-
-  const handleRemoveFile = useCallback((idToRemove: string) => {
-      setDeletingFileIds(prev => new Set(prev).add(idToRemove));
-      setTimeout(() => {
-          setFiles(prev => prev.filter(f => f.id !== idToRemove));
-          setDeletingFileIds(prev => {
-              const newSet = new Set(prev);
-              newSet.delete(idToRemove);
-              return newSet;
-          });
-      }, 350); // animation duration
-  }, []);
-
-  const handleTriggerSend = (message: string) => {
-    if ((message.trim() || files.length > 0) && !isLoading) {
-        onSendMessage(message, files.map(f => f.file), toolConfig);
-        setChatInput('');
-        setFiles([]);
-    }
+  const handleSendMessageWithTools = (message: string, files: File[]) => {
+    onSendMessage(message, files, toolConfig);
+    setChatInput('');
   };
   
   const handleSendSuggestion = (suggestion: string) => {
@@ -191,39 +153,6 @@ export const ChatView: React.FC<ChatViewProps> = (props) => {
     }
   };
 
-  const handleDragEnter = useCallback((e: React.DragEvent<HTMLElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    dragCounter.current++;
-    if (e.dataTransfer.types && e.dataTransfer.types.includes('Files')) {
-        setIsDragging(true);
-    }
-  }, []);
-
-  const handleDragLeave = useCallback((e: React.DragEvent<HTMLElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    dragCounter.current--;
-    if (dragCounter.current === 0) {
-        setIsDragging(false);
-    }
-  }, []);
-
-  const handleDragOver = useCallback((e: React.DragEvent<HTMLElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-  }, []);
-
-  const handleDrop = useCallback((e: React.DragEvent<HTMLElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
-    dragCounter.current = 0;
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-        handleAddFiles(Array.from(e.dataTransfer.files));
-        e.dataTransfer.clearData();
-    }
-  }, [handleAddFiles]);
 
   const ChatHeader = (
       <header className={`p-4 pl-14 md:pl-4 border-b border-[var(--glass-border)] flex-shrink-0 flex items-center justify-between gap-4 transition-all duration-300 ${isSidebarCollapsed ? 'md:pl-16' : ''}`}>
@@ -252,14 +181,7 @@ export const ChatView: React.FC<ChatViewProps> = (props) => {
   );
 
   return (
-    <main 
-      className="glass-pane rounded-[var(--radius-2xl)] flex flex-col h-full overflow-hidden relative"
-      onDragEnter={handleDragEnter}
-      onDragLeave={handleDragLeave}
-      onDragOver={handleDragOver}
-      onDrop={handleDrop}
-    >
-        <DropzoneOverlay isActive={isDragging} />
+    <main className="glass-pane rounded-[var(--radius-2xl)] flex flex-col h-full overflow-hidden relative">
         <button onClick={onToggleMobileSidebar} className="md:hidden absolute top-3 left-3 z-20 p-2 rounded-full hover:bg-black/10 dark:hover:bg-white/10" aria-label={t('showSidebar')} data-tooltip={t('showSidebar')} data-tooltip-placement="right"><Icon icon="menu" className="w-6 h-6" /></button>
         {isSidebarCollapsed && <button onClick={onToggleSidebar} className="md:flex hidden items-center justify-center absolute top-3 left-3 z-20 p-2 rounded-full hover:bg-black/10 dark:hover:bg-white/10" aria-label={t('showSidebar')} data-tooltip={t('showSidebar')} data-tooltip-placement="right"><Icon icon="menu" className="w-6 h-6" /></button>}
         
@@ -276,23 +198,7 @@ export const ChatView: React.FC<ChatViewProps> = (props) => {
         
         {!isLoading && suggestedReplies.length > 0 && !editingMessageId && !chatInput && <SuggestedReplies suggestions={suggestedReplies} onSendSuggestion={handleSendSuggestion} />}
 
-        <ChatInput 
-          onSendMessage={handleTriggerSend} 
-          isLoading={isLoading} 
-          onCancel={onCancelGeneration} 
-          toolConfig={toolConfig} 
-          onToolConfigChange={setToolConfig} 
-          input={chatInput} 
-          setInput={setChatInput} 
-          chatSession={chatSession} 
-          onToggleStudyMode={handleToggleStudyMode} 
-          isNextChatStudyMode={isNextChatStudyMode}
-          files={files}
-          onAddFiles={handleAddFiles}
-          onRemoveFile={handleRemoveFile}
-          enteringFileIds={enteringFileIds}
-          deletingFileIds={deletingFileIds}
-        />
+        <ChatInput onSendMessage={handleSendMessageWithTools} isLoading={isLoading} onCancel={onCancelGeneration} toolConfig={toolConfig} onToolConfigChange={setToolConfig} input={chatInput} setInput={setChatInput} chatSession={chatSession} onToggleStudyMode={handleToggleStudyMode} isNextChatStudyMode={isNextChatStudyMode}/>
     </main>
   );
 };
