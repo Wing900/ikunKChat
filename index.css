@@ -465,6 +465,50 @@ body.drawer-open .drawer {
 }
 
 
+/* --- Dropzone Overlay --- */
+.dropzone-overlay {
+    position: absolute;
+    inset: 1rem;
+    z-index: 50;
+    
+    background: var(--glass-bg);
+    -webkit-backdrop-filter: blur(10px) saturate(180%);
+    backdrop-filter: blur(10px) saturate(180%);
+    
+    border-radius: var(--radius-2xl);
+    border: 2px dashed color-mix(in srgb, var(--accent-color) 40%, transparent);
+    
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    opacity: 0;
+    transform: scale(1.05);
+    pointer-events: none;
+    
+    /* Apply transition to both enter and exit states */
+    transition: opacity 200ms ease-out, transform 200ms ease-out, backdrop-filter 200ms ease-out, border-color 200ms ease-out;
+}
+
+.dropzone-overlay.visible {
+    opacity: 1;
+    transform: scale(1);
+    pointer-events: auto;
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    backdrop-filter: blur(20px) saturate(180%);
+    border-color: color-mix(in srgb, var(--accent-color) 50%, transparent);
+}
+
+.dropzone-overlay-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+    color: var(--text-color);
+    text-shadow: 0 2px 4px var(--shadow-color);
+}
+
+
 /* Animation Keyframes */
 @keyframes message-in {
   from { opacity: 0; transform: translateY(15px) scale(0.95); }

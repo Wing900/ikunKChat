@@ -1,8 +1,12 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { Icon } from './Icon';
 import { useLocalization } from '../contexts/LocalizationContext';
 import { Switch } from './Switch';
 import { ChatSession } from '../types';
+
+export interface ChatInputRef {
+  addFiles: (files: File[]) => void;
+}
 
 interface ChatInputProps {
   onSendMessage: (message: string, files: File[]) => void;
@@ -55,7 +59,7 @@ const ActiveToolIndicator: React.FC<{ toolConfig: any, isStudyMode: boolean, t: 
 };
 
 
-export const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isLoading, onCancel, toolConfig, onToolConfigChange, input, setInput, chatSession, onToggleStudyMode, isNextChatStudyMode }) => {
+export const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(({ onSendMessage, isLoading, onCancel, toolConfig, onToolConfigChange, input, setInput, chatSession, onToggleStudyMode, isNextChatStudyMode }, ref) => {
   const { t } = useLocalization();
   const [files, setFiles] = useState<FileWithId[]>([]);
   const [isToolsOpen, setIsToolsOpen] = useState(false);
@@ -69,6 +73,10 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isLoading, 
 
   const isStudyModeActive = chatSession ? !!chatSession.isStudyMode : isNextChatStudyMode;
 
+  useEffect(() => {
+    setFiles([]);
+  }, [chatSession?.id]);
+  
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
@@ -99,22 +107,29 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isLoading, 
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  const addFiles = (newFiles: File[]) => {
+    const newFilesWithId = newFiles.map(file => ({ file, id: crypto.randomUUID() }));
+    const newFileIds = newFilesWithId.map(f => f.id);
+    
+    setFiles(prev => [...prev, ...newFilesWithId]);
+    setEnteringFileIds(prev => new Set([...prev, ...newFileIds]));
+
+    setTimeout(() => {
+      setEnteringFileIds(prev => {
+        const nextSet = new Set(prev);
+        newFileIds.forEach(id => nextSet.delete(id));
+        return nextSet;
+      });
+    }, 350);
+  };
+
+  useImperativeHandle(ref, () => ({
+    addFiles
+  }));
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      const newFiles = Array.from(e.target.files).map(file => ({ file, id: crypto.randomUUID() }));
-      const newFileIds = newFiles.map(f => f.id);
-      
-      setFiles(prev => [...prev, ...newFiles]);
-      setEnteringFileIds(prev => new Set([...prev, ...newFileIds]));
-
-      setTimeout(() => {
-        setEnteringFileIds(prev => {
-          const nextSet = new Set(prev);
-          newFileIds.forEach(id => nextSet.delete(id));
-          return nextSet;
-        });
-      }, 350);
+      addFiles(Array.from(e.target.files));
     }
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
@@ -223,4 +238,4 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isLoading, 
         </div>
     </form>
   )
-};
+});

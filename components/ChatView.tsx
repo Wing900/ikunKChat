@@ -4,7 +4,7 @@ import { Icon } from './Icon';
 import { ModelSelector } from './ModelSelector';
 import { WelcomeView } from './WelcomeView';
 import { MessageBubble } from './MessageBubble';
-import { ChatInput } from './ChatInput';
+import { ChatInput, ChatInputRef } from './ChatInput';
 import { SuggestedReplies } from './SuggestedReplies';
 import { useLocalization } from '../contexts/LocalizationContext';
 
@@ -56,6 +56,9 @@ export const ChatView: React.FC<ChatViewProps> = (props) => {
   const { chatSession, personas, onSendMessage, isLoading, onCancelGeneration, currentModel, onSetCurrentModel, onSetModelForActiveChat, availableModels, isSidebarCollapsed, onToggleSidebar, onToggleMobileSidebar, onNewChat, onImageClick, suggestedReplies, settings, onDeleteMessage, onUpdateMessageContent, onRegenerate, onEditAndResubmit, onShowCitations, onDeleteChat, onEditChat, onToggleStudyMode: onToggleSessionStudyMode, isNextChatStudyMode, onToggleNextChatStudyMode } = props;
   const { t } = useLocalization();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const chatInputRef = useRef<ChatInputRef>(null);
+  const [isDraggingOver, setIsDraggingOver] = useState(false);
+  const dragCounter = useRef(0);
   
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [chatInput, setChatInput] = useState('');
@@ -153,6 +156,42 @@ export const ChatView: React.FC<ChatViewProps> = (props) => {
     }
   };
 
+  const handleDragEnter = (e: React.DragEvent<HTMLElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounter.current++;
+    if (e.dataTransfer.types && Array.from(e.dataTransfer.types).includes('Files')) {
+        setIsDraggingOver(true);
+    }
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounter.current--;
+    if (dragCounter.current === 0) {
+        setIsDraggingOver(false);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDraggingOver(false);
+    dragCounter.current = 0;
+    
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        const droppedFiles = Array.from(e.dataTransfer.files);
+        chatInputRef.current?.addFiles(droppedFiles);
+        e.dataTransfer.clearData();
+    }
+  };
+
 
   const ChatHeader = (
       <header className={`p-4 pl-14 md:pl-4 border-b border-[var(--glass-border)] flex-shrink-0 flex items-center justify-between gap-4 transition-all duration-300 ${isSidebarCollapsed ? 'md:pl-16' : ''}`}>
@@ -181,9 +220,22 @@ export const ChatView: React.FC<ChatViewProps> = (props) => {
   );
 
   return (
-    <main className="glass-pane rounded-[var(--radius-2xl)] flex flex-col h-full overflow-hidden relative">
+    <main
+      className="glass-pane rounded-[var(--radius-2xl)] flex flex-col h-full overflow-hidden relative"
+      onDragEnter={handleDragEnter}
+      onDragLeave={handleDragLeave}
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
+    >
         <button onClick={onToggleMobileSidebar} className="md:hidden absolute top-3 left-3 z-20 p-2 rounded-full hover:bg-black/10 dark:hover:bg-white/10" aria-label={t('showSidebar')} data-tooltip={t('showSidebar')} data-tooltip-placement="right"><Icon icon="menu" className="w-6 h-6" /></button>
         {isSidebarCollapsed && <button onClick={onToggleSidebar} className="md:flex hidden items-center justify-center absolute top-3 left-3 z-20 p-2 rounded-full hover:bg-black/10 dark:hover:bg-white/10" aria-label={t('showSidebar')} data-tooltip={t('showSidebar')} data-tooltip-placement="right"><Icon icon="menu" className="w-6 h-6" /></button>}
+        
+        <div className={`dropzone-overlay ${isDraggingOver ? 'visible' : ''}`}>
+            <div className="dropzone-overlay-content">
+                <Icon icon="upload" className="w-20 h-20" />
+                <h3 className="text-2xl font-bold">Drop files here to upload</h3>
+            </div>
+        </div>
         
         <div className="flex-grow flex flex-col relative min-h-0">
             <InternalView active={!!chatSession}>
@@ -198,7 +250,7 @@ export const ChatView: React.FC<ChatViewProps> = (props) => {
         
         {!isLoading && suggestedReplies.length > 0 && !editingMessageId && !chatInput && <SuggestedReplies suggestions={suggestedReplies} onSendSuggestion={handleSendSuggestion} />}
 
-        <ChatInput onSendMessage={handleSendMessageWithTools} isLoading={isLoading} onCancel={onCancelGeneration} toolConfig={toolConfig} onToolConfigChange={setToolConfig} input={chatInput} setInput={setChatInput} chatSession={chatSession} onToggleStudyMode={handleToggleStudyMode} isNextChatStudyMode={isNextChatStudyMode}/>
+        <ChatInput ref={chatInputRef} onSendMessage={handleSendMessageWithTools} isLoading={isLoading} onCancel={onCancelGeneration} toolConfig={toolConfig} onToolConfigChange={setToolConfig} input={chatInput} setInput={setChatInput} chatSession={chatSession} onToggleStudyMode={handleToggleStudyMode} isNextChatStudyMode={isNextChatStudyMode}/>
     </main>
   );
 };
