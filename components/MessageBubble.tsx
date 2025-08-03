@@ -97,7 +97,22 @@ export const MessageBubble: React.FC<MessageBubbleProps> = (props) => {
                       ))}
                     </div>
                   )}
-                  {hasContent && (isRawView ? <pre className="raw-text-view"><code>{message.content}</code></pre> : <MarkdownRenderer content={message.content} theme={settings.theme} />)}
+                  {hasContent && (
+                    <div className="grid items-start">
+                      {/* Rendered View */}
+                      <div className={`col-start-1 row-start-1 grid transition-all duration-300 ease-in-out ${isRawView ? 'grid-rows-[0fr] opacity-0' : 'grid-rows-[1fr] opacity-100'}`} aria-hidden={isRawView}>
+                        <div className="overflow-hidden">
+                            <MarkdownRenderer content={message.content} theme={settings.theme} />
+                        </div>
+                      </div>
+                      {/* Raw View */}
+                      <div className={`col-start-1 row-start-1 grid transition-all duration-300 ease-in-out ${isRawView ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`} aria-hidden={!isRawView}>
+                        <div className="overflow-hidden">
+                            <pre className="raw-text-view"><code>{message.content}</code></pre>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                   {isPulsing && <div className="whitespace-pre-wrap">{message.content}</div>}
               </div>
               {hasCitations && (
