@@ -36,6 +36,12 @@ export const useSettings = () => {
     if (!loadedSettings && window.matchMedia?.('(prefers-color-scheme: dark)').matches) {
       initialSettings.theme = 'dark';
     }
+
+    // Override API Base URL if set in environment variables
+    if (process.env.API_BASE_URL) {
+      initialSettings.apiBaseUrl = process.env.API_BASE_URL;
+    }
+
     setSettings(initialSettings);
     setLanguage(initialSettings.language);
     setIsStorageLoaded(true);

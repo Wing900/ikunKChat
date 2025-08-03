@@ -10,7 +10,8 @@ export async function getAvailableModels(apiKeys: string[], apiBaseUrl?: string)
     if (!sanitizedApiKey) continue;
 
     try {
-      const baseUrl = (apiBaseUrl || 'https://generativelanguage.googleapis.com').replace(/\/$/, '');
+      const trimmedApiBaseUrl = apiBaseUrl?.trim();
+      const baseUrl = (trimmedApiBaseUrl || 'https://generativelanguage.googleapis.com').replace(/\/$/, '');
       const url = `${baseUrl}/v1beta/models`;
       
       const response = await fetch(url, {

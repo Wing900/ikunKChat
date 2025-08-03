@@ -17,10 +17,11 @@ export async function executeWithKeyRotation<T>(
 
     const originalFetch = window.fetch;
     let proxyActive = false;
+    const trimmedApiEndpoint = apiEndpoint?.trim();
 
-    if (apiEndpoint) {
+    if (trimmedApiEndpoint) {
         try {
-            const proxyUrl = new URL(apiEndpoint);
+            const proxyUrl = new URL(trimmedApiEndpoint);
             proxyActive = true;
             window.fetch = (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
                 let urlString = input instanceof Request ? input.url : String(input);
@@ -37,7 +38,7 @@ export async function executeWithKeyRotation<T>(
                 return originalFetch(urlString, init);
             };
         } catch (e) {
-            console.error("Invalid API Base URL provided:", apiEndpoint, e);
+            console.error("Invalid API Base URL provided:", trimmedApiEndpoint, e);
         }
     }
     
@@ -85,10 +86,11 @@ export async function* executeStreamWithKeyRotation<T extends GenerateContentRes
 
     const originalFetch = window.fetch;
     let proxyActive = false;
+    const trimmedApiEndpoint = apiEndpoint?.trim();
 
-    if (apiEndpoint) {
+    if (trimmedApiEndpoint) {
         try {
-            const proxyUrl = new URL(apiEndpoint);
+            const proxyUrl = new URL(trimmedApiEndpoint);
             proxyActive = true;
             window.fetch = (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
                 let urlString = input instanceof Request ? input.url : String(input);
@@ -105,7 +107,7 @@ export async function* executeStreamWithKeyRotation<T extends GenerateContentRes
                 return originalFetch(urlString, init);
             };
         } catch (e) {
-            console.error("Invalid API Base URL provided:", apiEndpoint, e);
+            console.error("Invalid API Base URL provided:", trimmedApiEndpoint, e);
         }
     }
 

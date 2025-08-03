@@ -14,6 +14,7 @@ interface AdvancedSettingsProps {
 }
 
 const isApiKeySetByEnv = !!process.env.API_KEY;
+const isApiBaseUrlSetByEnv = !!process.env.API_BASE_URL;
 
 export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({ settings, onSettingsChange, visibleIds, availableModels }) => {
   const { t } = useLocalization();
@@ -44,7 +45,8 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({ settings, on
             type="text"
             value={settings.apiBaseUrl || ''}
             onChange={e => onSettingsChange({ apiBaseUrl: e.target.value })}
-            placeholder="e.g. https://my-proxy.com"
+            disabled={isApiBaseUrlSetByEnv}
+            placeholder={isApiBaseUrlSetByEnv ? t('apiKeyEnvVar') : "https://generativelanguage.googleapis.com"}
             className="input-glass w-60"
           />
         </SettingsItem>
