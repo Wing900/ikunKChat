@@ -26,13 +26,23 @@ export async function detectLanguage(apiKeys: string[], model: string, text: str
 }
 
 export async function translateText(apiKeys: string[], model: string, text: string, sourceLang: string, targetLang: string, mode: 'natural' | 'literal'): Promise<string> {
-  const prompt = `Translate the following text from ${sourceLang} to ${targetLang}.
-The translation style should be "${mode}". "Natural" means a fluent, idiomatic translation. "Literal" means a more direct, word-for-word translation.
-Return ONLY the translated text, with no extra explanations or formatting.
+  const naturalPrompt = `Your task is to translate the following text from ${sourceLang} to ${targetLang}.
+Your translation should be colloquial and evocative, capturing the essence of a native speaker’s speech. Avoid a mechanical, literal translation. Instead, employ idiomatic expressions and natural phrasing that resonate with a native speaker of ${targetLang}.
+IMPORTANT: Your response MUST contain *only* the translated text. Do not include the original text, detected language, target language name, or any other explanatory text, preambles, or apologies.
 
 Text to translate:
-"${text}"
+${text}
 `;
+
+  const literalPrompt = `Your task is to translate the following text from ${sourceLang} to ${targetLang}.
+Provide a standard, literal translation. Focus on conveying the direct meaning accurately.
+IMPORTANT: Your response MUST contain *only* the translated text. Do not include the original text, detected language, target language name, or any other explanatory text, preambles, or apologies.
+
+Text to translate:
+${text}
+`;
+
+  const prompt = mode === 'natural' ? naturalPrompt : literalPrompt;
 
   try {
     const payload = { model, contents: prompt };
