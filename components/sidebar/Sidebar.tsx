@@ -128,7 +128,7 @@ export const Sidebar: React.FC<SidebarProps> = (props) => {
   
   return (
     <aside className={`h-full flex-col flex flex-shrink-0 transition-transform md:transition-all duration-300 ease-in-out fixed md:relative inset-y-0 left-0 z-40 ${isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:transform-none ${isCollapsed ? 'md:w-0 md:p-0' : 'w-80 p-3'}`}>
-      <div className={`glass-pane rounded-[var(--radius-2xl)] h-full flex flex-col p-4 relative overflow-hidden transition-opacity duration-200 ${isCollapsed ? 'opacity-0' : 'opacity-100'}`}>
+      <div className={`glass-pane rounded-[var(--radius-2xl)] h-full flex flex-col p-4 relative overflow-hidden transition-opacity duration-200 ${isCollapsed ? 'md:opacity-0' : 'opacity-100'}`}>
         <div className="flex items-center justify-between gap-3 mb-4 px-2">
             <div className="flex items-center gap-3"><Icon icon="kchat" className="w-8 h-8 text-[var(--accent-color)]" /><h1 className="text-2xl font-bold text-[var(--text-color)]">KChat</h1></div>
             <button onClick={onToggleCollapse} className="p-2 rounded-full hover:bg-black/10 dark:hover:bg-white/10 -mr-2 hidden md:block" aria-label={t('collapseSidebar')} data-tooltip={t('collapseSidebar')} data-tooltip-placement="left"><Icon icon="panel-left-close" className="w-5 h-5" /></button>
