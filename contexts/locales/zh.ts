@@ -125,5 +125,4 @@ export const zh = {
     unarchive: '取消归档',
     archivedChats: '已归档对话',
     archiveDesc: '查看和管理已归档的对话。'
-  }
 };
