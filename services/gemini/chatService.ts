@@ -33,10 +33,10 @@ export function sendMessageStream(apiKeys: string[], messages: Message[], newMes
       config: configForApi,
     });
     return chat.sendMessageStream({ message: messageParts });
-  });
+  }, settings.apiBaseUrl);
 }
 
-export async function generateChatDetails(apiKeys: string[], prompt: string, model: string): Promise<{ title: string; icon: string }> {
+export async function generateChatDetails(apiKeys: string[], prompt: string, model: string, settings: Settings): Promise<{ title: string; icon: string }> {
   try {
     const payload = {
       model: model,
@@ -53,7 +53,8 @@ export async function generateChatDetails(apiKeys: string[], prompt: string, mod
     console.log('----------------------');
 
     const response = await executeWithKeyRotation<GenerateContentResponse>(apiKeys, (ai) => 
-      ai.models.generateContent(payload)
+      ai.models.generateContent(payload),
+      settings.apiBaseUrl
     );
 
     const jsonText = response.text.trim();
@@ -68,7 +69,7 @@ export async function generateChatDetails(apiKeys: string[], prompt: string, mod
   }
 }
 
-export async function generateSuggestedReplies(apiKeys: string[], history: Message[], model: string): Promise<string[]> {
+export async function generateSuggestedReplies(apiKeys: string[], history: Message[], model: string, settings: Settings): Promise<string[]> {
   try {
     const payload = {
       model,
@@ -91,7 +92,8 @@ export async function generateSuggestedReplies(apiKeys: string[], history: Messa
     console.log('----------------------');
 
     const response = await executeWithKeyRotation<GenerateContentResponse>(apiKeys, (ai) =>
-      ai.models.generateContent(payload)
+      ai.models.generateContent(payload),
+      settings.apiBaseUrl
     );
 
     const jsonText = response.text.trim();

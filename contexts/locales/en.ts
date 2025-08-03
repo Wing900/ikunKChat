@@ -89,6 +89,8 @@ export const en = {
     apiKeyDesc: 'Your key is stored locally and securely.',
     apiKeyPlaceholder: 'Enter one or more API keys, separated by newlines or commas.',
     apiKeyEnvVar: 'Key set by environment variable',
+    apiBaseUrl: 'API Base URL',
+    apiBaseUrlDesc: 'Optional. Use a proxy or a different API endpoint.',
     suggestions: 'Suggested Replies',
     suggestionsDesc: 'Show AI-generated reply suggestions.',
     suggestionModel: 'Suggestion Model',

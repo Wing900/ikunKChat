@@ -24,6 +24,7 @@ export const useSettingsSearch = (searchQuery: string) => {
 
     // Advanced
     { id: 'apiKey', section: 'advanced', texts: [t('apiKey'), t('apiKeyDesc'), translations.zh.apiKey, translations.zh.apiKeyDesc] },
+    { id: 'apiBaseUrl', section: 'advanced', texts: [t('apiBaseUrl'), t('apiBaseUrlDesc'), translations.zh.apiBaseUrl, translations.zh.apiBaseUrlDesc] },
     { id: 'globalSystemPrompt', section: 'advanced', texts: [t('globalSystemPrompt'), t('globalSystemPromptDesc'), translations.zh.globalSystemPrompt, translations.zh.globalSystemPromptDesc] },
     { id: 'optimizeFormatting', section: 'advanced', texts: [t('optimizeFormatting'), t('optimizeFormattingDesc'), translations.zh.optimizeFormatting, translations.zh.optimizeFormattingDesc] },
     { id: 'thinkDeeper', section: 'advanced', texts: [t('thinkDeeper'), t('thinkDeeperDesc'), translations.zh.thinkDeeper, translations.zh.thinkDeeperDesc] },

@@ -1,8 +1,8 @@
 import { GenerateContentResponse, Type } from "@google/genai";
-import { Persona } from '../../types';
+import { Persona, Settings } from '../../types';
 import { executeWithKeyRotation } from './apiExecutor';
 
-export async function generatePersonaUpdate(apiKeys: string[], model: string, currentPersona: Persona, userInstruction: string): Promise<{ personaUpdate: Partial<Persona>, explanation: string }> {
+export async function generatePersonaUpdate(apiKeys: string[], model: string, currentPersona: Persona, userInstruction: string, settings: Settings): Promise<{ personaUpdate: Partial<Persona>, explanation: string }> {
   const systemPrompt = `You are an AI assistant that helps users configure a persona for a chatbot. The user will provide their current persona configuration as a JSON object and an instruction on how to modify it.
 Your task is to generate a JSON object representing the *updated* fields of the persona, and a short, friendly explanation of the changes you made.
 
@@ -63,7 +63,8 @@ The 'tools' property is a boolean map: { "googleSearch": boolean, "codeExecution
     console.log('----------------------');
     
     const response = await executeWithKeyRotation<GenerateContentResponse>(apiKeys, (ai) =>
-      ai.models.generateContent(payload)
+      ai.models.generateContent(payload),
+      settings.apiBaseUrl
     );
 
     const jsonText = response.text.trim();

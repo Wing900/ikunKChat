@@ -70,10 +70,10 @@ const TranslateView: React.FC<TranslateViewProps> = ({ settings, onClose, histor
         
         let finalSourceLang = sourceLang;
         if (sourceLang === 'auto') {
-            finalSourceLang = await detectLanguage(apiKeys, settings.languageDetectionModel, sourceText);
+            finalSourceLang = await detectLanguage(apiKeys, settings.languageDetectionModel, sourceText, settings);
         }
 
-        const result = await translateText(apiKeys, settings.defaultModel, sourceText, finalSourceLang, targetLang, mode);
+        const result = await translateText(apiKeys, settings.defaultModel, sourceText, finalSourceLang, targetLang, mode, settings);
         setTranslatedText(result);
         
         const newHistoryItem: TranslationHistoryItem = { id: crypto.randomUUID(), sourceLang, targetLang, sourceText, translatedText: result, timestamp: Date.now(), mode };
@@ -149,7 +149,7 @@ const TranslateView: React.FC<TranslateViewProps> = ({ settings, onClose, histor
             if (apiKeys.length === 0 && !process.env.API_KEY) {
                 throw new Error("API key not set.");
             }
-            langToRead = await detectLanguage(apiKeys, settings.languageDetectionModel, text);
+            langToRead = await detectLanguage(apiKeys, settings.languageDetectionModel, text, settings);
         }
         await readAloud(text, langToRead);
     } catch(e) {

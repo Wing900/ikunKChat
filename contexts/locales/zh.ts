@@ -90,6 +90,8 @@ export const zh = {
     apiKeyDesc: '您的密钥安全地存储在本地。',
     apiKeyPlaceholder: '输入一个或多个 API 密钥，用换行符或逗号分隔。',
     apiKeyEnvVar: '密钥已由环境变量设置',
+    apiBaseUrl: 'API Base URL',
+    apiBaseUrlDesc: '可选。使用代理或不同的 API 端点。',
     suggestions: '建议回复',
     suggestionsDesc: '显示 AI 生成的回复建议。',
     suggestionModel: '建议模型',

@@ -86,4 +86,5 @@ export interface Settings {
   globalSystemPrompt: string;
   optimizeFormatting: boolean;
   thinkDeeper: boolean;
+  apiBaseUrl?: string;
 }

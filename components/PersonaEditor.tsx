@@ -60,7 +60,7 @@ const AIBuilder: React.FC<{ persona: Persona, onUpdate: (update: Partial<Persona
                 throw new Error("API Key not set.");
             }
 
-            const { personaUpdate, explanation } = await generatePersonaUpdate(apiKeys, settings.defaultModel, persona, userInput);
+            const { personaUpdate, explanation } = await generatePersonaUpdate(apiKeys, settings.defaultModel, persona, userInput, settings);
             
             onUpdate(personaUpdate);
 

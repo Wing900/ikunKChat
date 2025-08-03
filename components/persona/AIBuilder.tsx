@@ -43,7 +43,7 @@ export const AIBuilder: React.FC<AIBuilderProps> = ({ persona, onUpdate, setting
             const apiKeys = settings.apiKey?.length ? settings.apiKey : (process.env.API_KEY ? [process.env.API_KEY] : []);
             if (apiKeys.length === 0) throw new Error("API Key not set.");
 
-            const { personaUpdate, explanation } = await generatePersonaUpdate(apiKeys, settings.defaultModel, persona, userInput);
+            const { personaUpdate, explanation } = await generatePersonaUpdate(apiKeys, settings.defaultModel, persona, userInput, settings);
             
             onUpdate(personaUpdate);
             setMessages(prev => prev.map(m => m.id === statusMessageId ? { ...m, role: 'model', content: explanation } : m));

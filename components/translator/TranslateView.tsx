@@ -51,8 +51,8 @@ const TranslateView: React.FC<TranslateViewProps> = ({ settings, onClose, histor
         const apiKeys = settings.apiKey?.length ? settings.apiKey : (process.env.API_KEY ? [process.env.API_KEY] : []);
         if (apiKeys.length === 0) throw new Error("API key not configured in Settings.");
         
-        let finalSourceLang = sourceLang === 'auto' ? await detectLanguage(apiKeys, settings.languageDetectionModel, sourceText) : sourceLang;
-        const result = await translateText(apiKeys, settings.defaultModel, sourceText, finalSourceLang, targetLang, mode);
+        let finalSourceLang = sourceLang === 'auto' ? await detectLanguage(apiKeys, settings.languageDetectionModel, sourceText, settings) : sourceLang;
+        const result = await translateText(apiKeys, settings.defaultModel, sourceText, finalSourceLang, targetLang, mode, settings);
         setTranslatedText(result);
         
         const newHistoryItem: TranslationHistoryItem = { id: crypto.randomUUID(), sourceLang, targetLang, sourceText, translatedText: result, timestamp: Date.now(), mode };
@@ -100,7 +100,7 @@ const TranslateView: React.FC<TranslateViewProps> = ({ settings, onClose, histor
     try {
         const apiKeys = settings.apiKey || [];
         if (apiKeys.length === 0 && !process.env.API_KEY) throw new Error("API key not set.");
-        const langToRead = langCode === 'auto' ? await detectLanguage(apiKeys, settings.languageDetectionModel, text) : langCode;
+        const langToRead = langCode === 'auto' ? await detectLanguage(apiKeys, settings.languageDetectionModel, text, settings) : langCode;
         await readAloud(text, langToRead);
     } catch(e) {
         addToast(`Could not read aloud: ${(e as Error).message}.`, 'error');

@@ -21,6 +21,7 @@ const defaultSettings: Settings = {
   globalSystemPrompt: '',
   optimizeFormatting: false,
   thinkDeeper: false,
+  apiBaseUrl: '',
 };
 
 export const useSettings = () => {
@@ -50,7 +51,7 @@ export const useSettings = () => {
   useEffect(() => {
     const apiKeys = settings.apiKey || (process.env.API_KEY ? [process.env.API_KEY] : []);
     if (isStorageLoaded && apiKeys.length > 0) {
-      getAvailableModels(apiKeys).then(models => {
+      getAvailableModels(apiKeys, settings.apiBaseUrl).then(models => {
         if (!models || models.length === 0) return;
         const allModels = [...new Set([...models, ...availableModels])];
         setAvailableModels(allModels);
@@ -64,7 +65,7 @@ export const useSettings = () => {
         });
       });
     }
-  }, [isStorageLoaded, settings.apiKey]);
+  }, [isStorageLoaded, settings.apiKey, settings.apiBaseUrl]);
 
   return { settings, setSettings, availableModels, isStorageLoaded };
 };

@@ -38,6 +38,17 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({ settings, on
            />
         </SettingsItem>
       )}
+      {visibleIds.has('apiBaseUrl') && (
+        <SettingsItem label={t('apiBaseUrl')} description={t('apiBaseUrlDesc')}>
+          <input
+            type="text"
+            value={settings.apiBaseUrl || ''}
+            onChange={e => onSettingsChange({ apiBaseUrl: e.target.value })}
+            placeholder="e.g. https://my-proxy.com"
+            className="input-glass w-60"
+          />
+        </SettingsItem>
+      )}
       {visibleIds.has('globalSystemPrompt') && (
         <div className="flex flex-col">
             <SettingsItem label={t('globalSystemPrompt')} description={t('globalSystemPromptDesc')}>

@@ -103,7 +103,7 @@ export const useChatMessaging = ({ settings, activeChat, personas, setChats, set
       if (!isCancelledRef.current) {
         setIsLoading(false);
         if (settings.showSuggestions && fullResponse && !streamHadError) {
-          generateSuggestedReplies(apiKeys, [...historyForAPI, { ...modelMessage, content: fullResponse }], settings.suggestionModel).then(setSuggestedReplies);
+          generateSuggestedReplies(apiKeys, [...historyForAPI, { ...modelMessage, content: fullResponse }], settings.suggestionModel, settings).then(setSuggestedReplies);
         }
       }
     }
@@ -133,7 +133,7 @@ export const useChatMessaging = ({ settings, activeChat, personas, setChats, set
       setActiveChatId(newChat.id);
       setIsNextChatStudyMode(false);
       if (settings.autoTitleGeneration && content) {
-        if(apiKeys.length > 0) generateChatDetails(apiKeys, content, settings.titleGenerationModel).then(({ title, icon }) => {
+        if(apiKeys.length > 0) generateChatDetails(apiKeys, content, settings.titleGenerationModel, settings).then(({ title, icon }) => {
           setChats(p => p.map(c => c.id === currentChatId ? { ...c, title, icon } : c))
         });
       }
