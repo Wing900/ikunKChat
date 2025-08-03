@@ -5,8 +5,7 @@ export const en = {
     history: 'History',
     newFolder: 'New Folder',
     collapseSidebar: 'Collapse sidebar',
-    closeSidebar: 'Close sidebar',
-    showSidebar: 'Show sidebar',
+    expandSidebar: 'Expand Sidebar',
     // Personas
     personas: 'Personas',
     selectPersona: 'Select a Persona',

@@ -5,8 +5,7 @@ export const zh = {
     history: '历史记录',
     newFolder: '新建文件夹',
     collapseSidebar: '收起侧边栏',
-    closeSidebar: '关闭侧边栏',
-    showSidebar: '显示侧边栏',
+    expandSidebar: '展开侧边栏',
     // Personas
     personas: '角色',
     selectPersona: '选择一个角色',

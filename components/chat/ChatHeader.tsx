@@ -19,21 +19,33 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({ chatSession, onNewChat, 
     const { t } = useLocalization();
 
     return (
-        <header className={`p-4 border-b border-[var(--glass-border)] flex-shrink-0 flex items-center justify-between gap-2`}>
-            <div className="flex items-center gap-2 truncate">
-                <button onClick={onToggleMobileSidebar} className="md:hidden p-1 rounded-full hover:bg-black/10 dark:hover:bg-white/10" aria-label={t('showSidebar')}>
+        <header className={`p-4 flex-shrink-0 flex items-center justify-between gap-2 ${chatSession ? 'border-b border-[var(--glass-border)]' : ''}`}>
+            <div className="flex items-center gap-2 min-w-0">
+                <button 
+                    onClick={onToggleMobileSidebar} 
+                    className="md:hidden p-1 rounded-full hover:bg-black/10 dark:hover:bg-white/10" 
+                    aria-label={t('expandSidebar')}
+                    data-tooltip={t('expandSidebar')}
+                    data-tooltip-placement="right"
+                >
                     <Icon icon="menu" className="w-6 h-6" />
                 </button>
                 {isSidebarCollapsed && (
-                    <button onClick={onToggleSidebar} className="hidden md:flex items-center justify-center p-1 rounded-full hover:bg-black/10 dark:hover:bg-white/10" aria-label={t('showSidebar')}>
+                    <button 
+                        onClick={onToggleSidebar} 
+                        className="hidden md:flex items-center justify-center p-1 rounded-full hover:bg-black/10 dark:hover:bg-white/10" 
+                        aria-label={t('expandSidebar')}
+                        data-tooltip={t('expandSidebar')}
+                        data-tooltip-placement="right"
+                    >
                         <Icon icon="menu" className="w-6 h-6" />
                     </button>
                 )}
                 {chatSession && (
-                    <>
+                    <div className="flex items-center gap-2 truncate">
                         <span className="text-2xl">{chatSession.icon || "💬"}</span>
                         <h2 className="text-xl font-bold text-[var(--text-color)] truncate">{chatSession.title}</h2>
-                    </>
+                    </div>
                 )}
             </div>
             {chatSession && (
