@@ -2,13 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Persona } from '../types';
 import { Icon } from './Icon';
 import { useLocalization } from '../contexts/LocalizationContext';
-
-const PersonaAvatar: React.FC<{ avatar: Persona['avatar'] }> = ({ avatar }) => {
-  if (avatar.type === 'emoji') {
-    return <span className="text-4xl flex items-center justify-center w-full h-full">{avatar.value}</span>;
-  }
-  return <img src={avatar.value} alt="persona avatar" className="w-full h-full object-cover" />;
-};
+import { PersonaAvatar } from './common/PersonaAvatar';
 
 const PersonaCard: React.FC<{ persona: Persona & { isHiding?: boolean }, onStartChat: () => void, onEdit: () => void, onDelete: () => void, index: number }> = ({ persona, onStartChat, onEdit, onDelete, index }) => {
     const { t } = useLocalization();
@@ -31,7 +25,7 @@ const PersonaCard: React.FC<{ persona: Persona & { isHiding?: boolean }, onStart
             )}
             <div className="flex items-center gap-4 mb-3">
                 <div className="w-16 h-16 flex-shrink-0 rounded-full bg-white/10 dark:bg-black/10 flex items-center justify-center text-white overflow-hidden">
-                    <PersonaAvatar avatar={persona.avatar} />
+                    <PersonaAvatar avatar={persona.avatar} className="text-4xl" />
                 </div>
                 <div>
                     <h3 className="text-lg font-bold">{persona.name}</h3>

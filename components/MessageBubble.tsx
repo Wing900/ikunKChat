@@ -1,17 +1,10 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Message, MessageRole, Settings, Persona } from '../types';
 import { Icon } from './Icon';
-import { CitationPanel } from './CitationPanel';
 import { MarkdownRenderer } from './MarkdownRenderer';
 import { useLocalization } from '../contexts/LocalizationContext';
-
-const PersonaAvatar: React.FC<{ avatar: Persona['avatar'] }> = ({ avatar }) => {
-  if (avatar.type === 'emoji') {
-    return <span className="text-xl flex items-center justify-center w-full h-full">{avatar.value}</span>;
-  }
-  return <img src={avatar.value} alt="persona avatar" className="w-full h-full object-cover" />;
-};
-
+import { PersonaAvatar } from './common/PersonaAvatar';
+import { MessageActions } from './MessageActions';
 
 interface MessageBubbleProps {
     message: Message;
@@ -30,56 +23,8 @@ interface MessageBubbleProps {
     onShowCitations: (chunks: any[]) => void;
 }
 
-const MessageActions: React.FC<{
-  message: Message;
-  isModelResponse: boolean;
-  onEdit: () => void;
-  onCopy: () => void;
-  onRegenerate: () => void;
-  onDelete: () => void;
-  onToggleRawView: () => void;
-  isRawView: boolean;
-}> = ({ message, isModelResponse, onEdit, onCopy, onRegenerate, onDelete, onToggleRawView, isRawView }) => {
-    const [copied, setCopied] = useState(false);
-
-    const handleCopy = () => {
-        onCopy();
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-    }
-
-    return (
-        <div className="message-actions">
-            {!isModelResponse && (
-                <button className="action-btn" onClick={onEdit} data-tooltip="Edit & Resubmit" data-tooltip-placement="top">
-                    <Icon icon="edit" className="w-4 h-4"/>
-                </button>
-            )}
-            {isModelResponse && (
-                 <button className="action-btn" onClick={onRegenerate} data-tooltip="Regenerate" data-tooltip-placement="top">
-                    <Icon icon="regenerate" className="w-4 h-4"/>
-                </button>
-            )}
-             {isModelResponse && (
-                <button className="action-btn" onClick={onEdit} data-tooltip="Edit" data-tooltip-placement="top">
-                    <Icon icon="edit" className="w-4 h-4"/>
-                </button>
-            )}
-            <button className="action-btn" onClick={onToggleRawView} data-tooltip={isRawView ? "Show Rendered" : "Show Raw Text"} data-tooltip-placement="top">
-                <Icon icon="eye" className="w-4 h-4"/>
-            </button>
-            <button className="action-btn" onClick={handleCopy} data-tooltip={copied ? "Copied!" : "Copy"} data-tooltip-placement="top">
-                <Icon icon="copy" className="w-4 h-4"/>
-            </button>
-            <button className="action-btn danger" onClick={onDelete} data-tooltip="Delete" data-tooltip-placement="top">
-                <Icon icon="delete" className="w-4 h-4"/>
-            </button>
-        </div>
-    );
-};
-
 export const MessageBubble: React.FC<MessageBubbleProps> = (props) => {
-  const { message, index, onImageClick, settings, persona, isLastMessageLoading, isEditing, onEditRequest, onCancelEdit, onSaveEdit, onDelete, onRegenerate, onCopy, onShowCitations } = props;
+  const { message, index, onImageClick, settings, persona, isEditing, onEditRequest, onCancelEdit, onSaveEdit, onDelete, onRegenerate, onCopy, onShowCitations } = props;
   const { t } = useLocalization();
   const isUser = message.role === MessageRole.USER;
   const hasContent = message.content && message.content !== '...';
@@ -95,31 +40,15 @@ export const MessageBubble: React.FC<MessageBubbleProps> = (props) => {
 
   useEffect(() => {
     setEditedContent(message.content);
-    // Reset raw view when edit mode is toggled
-    setIsRawView(false);
+    setIsRawView(false); // Reset raw view when edit mode is toggled
   }, [message.content, isEditing]);
   
-  const handleDelete = () => {
-    setIsBeingDeleted(true);
-    setTimeout(() => {
-      onDelete(message.id);
-    }, 350);
-  };
+  const handleDelete = () => { setIsBeingDeleted(true); setTimeout(() => onDelete(message.id), 350); };
+  const handleSave = () => { if (editedContent.trim()) onSaveEdit(message, editedContent); };
   
-  const handleSave = () => {
-    if (editedContent.trim()) {
-      onSaveEdit(message, editedContent);
-    }
-  };
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && e.metaKey) {
-      e.preventDefault();
-      handleSave();
-    }
-    if (e.key === 'Escape') {
-      e.preventDefault();
-      onCancelEdit();
-    }
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSave(); }
+    if (e.key === 'Escape') { e.preventDefault(); onCancelEdit(); }
   };
 
   return (
@@ -129,19 +58,12 @@ export const MessageBubble: React.FC<MessageBubbleProps> = (props) => {
     >
       {!isUser && (
         <div className="w-8 h-8 flex-shrink-0 rounded-full bg-[var(--accent-color)] flex items-center justify-center text-white overflow-hidden">
-          {persona ? <PersonaAvatar avatar={persona.avatar} /> : <Icon icon="kchat" className="w-5 h-5"/>}
+          {persona ? <PersonaAvatar avatar={persona.avatar} className="text-xl"/> : <Icon icon="kchat" className="w-5 h-5"/>}
         </div>
       )}
       
       <div className={`flex flex-col ${isUser ? 'items-end' : 'items-start'}`}>
-        <div
-          className={`max-w-xl text-base flex flex-col relative transition-all duration-300 ${
-            isUser
-              ? 'bg-[var(--accent-color)] text-white rounded-[var(--radius-2xl)] rounded-br-lg'
-              : 'model-bubble rounded-[var(--radius-2xl)] rounded-bl-lg'
-          }`}
-        >
-          {/* Animated Container for Display View */}
+        <div className={`max-w-xl text-base flex flex-col relative transition-all duration-300 ${isUser ? 'bg-[var(--accent-color)] text-white rounded-[var(--radius-2xl)] rounded-br-lg' : 'model-bubble rounded-[var(--radius-2xl)] rounded-bl-lg'}`}>
           <div className={`grid transition-all duration-300 ease-in-out ${isEditing ? 'grid-rows-[0fr] opacity-0' : 'grid-rows-[1fr] opacity-100'}`}>
             <div className="overflow-hidden">
               {hasThoughts && (
@@ -152,9 +74,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = (props) => {
                           <Icon icon="chevron-down" className={`w-4 h-4 transition-transform duration-200 ml-auto ${isThoughtsOpen ? 'rotate-180' : ''}`} />
                       </button>
                       <div className={`thoughts-expander-content ${isThoughtsOpen ? 'expanded' : ''}`}>
-                          <div className="inner-content">
-                              <MarkdownRenderer content={message.thoughts!} theme={settings.theme} />
-                          </div>
+                          <div className="inner-content"><MarkdownRenderer content={message.thoughts!} theme={settings.theme} /></div>
                       </div>
                   </div>
               )}
@@ -177,49 +97,29 @@ export const MessageBubble: React.FC<MessageBubbleProps> = (props) => {
                       ))}
                     </div>
                   )}
-                  {hasContent && (
-                    <>
-                      <div className={`grid transition-all duration-300 ease-in-out ${isRawView ? 'grid-rows-[0fr] opacity-0' : 'grid-rows-[1fr] opacity-100'}`}>
-                          <div className="overflow-hidden">
-                              <MarkdownRenderer content={message.content} theme={settings.theme} />
-                          </div>
-                      </div>
-                      <div className={`grid transition-all duration-300 ease-in-out ${isRawView ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
-                          <div className="overflow-hidden">
-                              <pre className="raw-text-view"><code>{message.content}</code></pre>
-                          </div>
-                      </div>
-                    </>
-                  )}
+                  {hasContent && (isRawView ? <pre className="raw-text-view"><code>{message.content}</code></pre> : <MarkdownRenderer content={message.content} theme={settings.theme} />)}
                   {isPulsing && <div className="whitespace-pre-wrap">{message.content}</div>}
               </div>
-              
               {hasCitations && (
                   <div className="border-t border-[var(--glass-border)] mt-2 mx-2 mb-2 pt-2">
                       <button onClick={() => onShowCitations(message.groundingMetadata!.groundingChunks)} className="citations-button">
-                          <Icon icon="search" className="w-4 h-4" />
-                          <span>Sources</span>
+                          <Icon icon="search" className="w-4 h-4" /><span>Sources</span>
                       </button>
                   </div>
               )}
-
             </div>
           </div>
           
-          {/* Animated Container for Edit View */}
           <div className={`grid transition-all duration-300 ease-in-out ${isEditing ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
-            <div className="overflow-hidden">
-              <div className="p-2 w-full">
-                <textarea value={editedContent} onChange={(e) => setEditedContent(e.target.value)} onKeyDown={handleKeyDown} className="message-edit-textarea" autoFocus={isEditing} />
-                <div className="message-edit-actions">
-                    <button onClick={onCancelEdit} className="px-3 py-1.5 rounded-[var(--radius-2xl)] font-semibold glass-pane border-none text-[var(--text-color)] hover:bg-black/10 dark:hover:bg-white/10">{t('cancel')}</button>
-                    <button onClick={handleSave} className="px-3 py-1.5 rounded-[var(--radius-2xl)] font-semibold bg-[var(--accent-color)] text-white transition-transform hover:scale-105">{isUser ? 'Save & Resubmit' : t('save')}</button>
-                </div>
+            <div className="overflow-hidden p-2 w-full">
+              <textarea value={editedContent} onChange={(e) => setEditedContent(e.target.value)} onKeyDown={handleKeyDown} className="message-edit-textarea" autoFocus={isEditing} />
+              <div className="message-edit-actions">
+                  <button onClick={onCancelEdit} className="px-3 py-1.5 rounded-[var(--radius-2xl)] font-semibold glass-pane border-none text-[var(--text-color)] hover:bg-black/10 dark:hover:bg-white/10">{t('cancel')}</button>
+                  <button onClick={handleSave} className="px-3 py-1.5 rounded-[var(--radius-2xl)] font-semibold bg-[var(--accent-color)] text-white transition-transform hover:scale-105">{isUser ? 'Save & Resubmit' : t('save')}</button>
               </div>
             </div>
           </div>
         </div>
-        
         <MessageActions message={message} isModelResponse={!isUser} onCopy={() => onCopy(message.content)} onEdit={onEditRequest} onDelete={handleDelete} onRegenerate={onRegenerate} onToggleRawView={() => setIsRawView(p => !p)} isRawView={isRawView} />
       </div>
 

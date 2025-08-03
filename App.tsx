@@ -1,97 +1,42 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { Sidebar } from './components/Sidebar';
+import { Sidebar } from './components/sidebar/Sidebar';
 import { ChatView } from './components/ChatView';
 import { EditChatModal } from './components/EditChatModal';
 import { FolderActionModal } from './components/FolderActionModal';
 import { ImageLightbox } from './components/ImageLightbox';
-import { SettingsModal } from './components/SettingsModal';
+import { SettingsModal } from './components/settings/SettingsModal';
 import { CitationDrawer } from './components/CitationDrawer';
 import { RolesView } from './components/RolesView';
-import { PersonaEditor } from './components/PersonaEditor';
+import { PersonaEditor } from './components/persona/PersonaEditor';
 import { ArchiveView } from './components/ArchiveView';
-import TranslateView from './components/TranslateView';
+import TranslateView from './components/translator/TranslateView';
 import { ToastContainer } from './components/ToastContainer';
 import { ConfirmationModal } from './components/ConfirmationModal';
-import { ChatSession, Folder, Settings, Persona, TranslationHistoryItem } from './types';
+import { ChatSession, Folder, Settings, Persona } from './types';
 import { LocalizationProvider, useLocalization } from './contexts/LocalizationContext';
 import { useSettings } from './hooks/useSettings';
 import { useChatData } from './hooks/useChatData';
 import { useChatMessaging } from './hooks/useChatMessaging';
 import { useToast } from './contexts/ToastContext';
-import { exportData, importData, clearAllData, saveRoles, loadRoles, loadTranslationHistory, saveTranslationHistory } from './services/storageService';
-import { defaultPersonas } from './data/defaultRoles';
+import { usePersonas } from './hooks/usePersonas';
+import { useTranslationHistory } from './hooks/useTranslationHistory';
+import { exportData, importData, clearAllData } from './services/storageService';
+import { ViewContainer } from './components/common/ViewContainer';
 
 type View = 'chat' | 'personas' | 'editor' | 'archive' | 'translate';
-
-const ViewContainer: React.FC<{ view: View; activeView: View; children: React.ReactNode }> = ({ view, activeView, children }) => {
-    const isCurrentlyActive = view === activeView;
-    const [isMounted, setIsMounted] = useState(isCurrentlyActive);
-    const [isRendered, setIsRendered] = useState(false);
-
-    useEffect(() => {
-        if (isCurrentlyActive) {
-            setIsMounted(true);
-            const id = requestAnimationFrame(() => setIsRendered(true));
-            return () => cancelAnimationFrame(id);
-        } else {
-            setIsRendered(false);
-        }
-    }, [isCurrentlyActive]);
-
-    const handleTransitionEnd = () => {
-        if (!isCurrentlyActive) {
-            setIsMounted(false);
-        }
-    };
-
-    if (!isMounted) {
-        return null;
-    }
-
-    return (
-        <div
-            className={`view-container ${isRendered ? 'active' : ''}`}
-            onTransitionEnd={handleTransitionEnd}
-        >
-            {children}
-        </div>
-    );
-};
-
 
 const AppContainer = () => {
   const { settings, setSettings, availableModels, isStorageLoaded } = useSettings();
   const { chats, setChats, folders, setFolders, activeChatId, setActiveChatId, ...chatDataHandlers } = useChatData({ settings, isStorageLoaded });
+  const { personas, setPersonas, savePersonas } = usePersonas({ isStorageLoaded });
+  const { translationHistory, setTranslationHistory } = useTranslationHistory({ isStorageLoaded });
   const { addToast } = useToast();
   const { t } = useLocalization();
   
-  const [personas, setPersonas] = useState<Persona[]>([]);
   const [currentView, setCurrentView] = useState<View>('chat');
   const [editingPersona, setEditingPersona] = useState<Persona | null>(null);
-  const [translationHistory, setTranslationHistory] = useState<TranslationHistoryItem[]>([]);
   const [confirmation, setConfirmation] = useState<{ title: string, message: string, onConfirm: () => void } | null>(null);
   const [isNextChatStudyMode, setIsNextChatStudyMode] = useState(false);
-
-  useEffect(() => {
-    if (isStorageLoaded) {
-      const customPersonas = loadRoles();
-      setPersonas([...defaultPersonas, ...customPersonas]);
-      setTranslationHistory(loadTranslationHistory());
-    }
-  }, [isStorageLoaded]);
-
-  useEffect(() => {
-    if (isStorageLoaded) {
-      const customPersonas = personas.filter(p => !p.isDefault);
-      saveRoles(customPersonas);
-    }
-  }, [personas, isStorageLoaded]);
-  
-  useEffect(() => {
-    if(isStorageLoaded) {
-      saveTranslationHistory(translationHistory);
-    }
-  }, [translationHistory, isStorageLoaded])
 
   const activeChat = chats.find(c => c.id === activeChatId) || null;
   const { 
@@ -117,8 +62,8 @@ const AppContainer = () => {
   }, [setSettings]);
 
   const handleNewChat = useCallback((personaId?: string | null) => { 
-    if (personaId) {
-      const persona = personas.find(p => p.id === personaId);
+    const persona = personaId ? personas.find(p => p.id === personaId) : null;
+    if (persona) {
       const newChatSession: ChatSession = {
         id: crypto.randomUUID(),
         title: persona?.name || 'New Persona Chat',
@@ -136,32 +81,21 @@ const AppContainer = () => {
 
   const handleSelectChat = useCallback((id: string) => { setActiveChatId(id); chatDataHandlers.setSuggestedReplies([]); setIsMobileSidebarOpen(false); setCurrentView('chat'); }, [setActiveChatId, chatDataHandlers.setSuggestedReplies]);
   
-  const handleOpenPersonas = () => { setIsMobileSidebarOpen(false); setCurrentView('personas'); }
-  const handleOpenArchive = () => { setIsMobileSidebarOpen(false); setCurrentView('archive'); }
-  const handleOpenTranslate = () => { setIsMobileSidebarOpen(false); setCurrentView('translate'); }
+  const handleOpenView = (view: View) => {
+    setIsMobileSidebarOpen(false);
+    setCurrentView(view);
+  }
+  
   const handleOpenEditor = (persona: Persona | null) => { setEditingPersona(persona); setCurrentView('editor'); }
-
-  const handleSavePersona = (personaToSave: Persona) => {
-    setPersonas(prev => {
-      const existing = prev.find(p => p.id === personaToSave.id);
-      if (existing) {
-        return prev.map(p => p.id === personaToSave.id ? personaToSave : p);
-      }
-      return [...prev, { ...personaToSave, id: crypto.randomUUID(), isDefault: false }];
-    });
-    setCurrentView('personas');
-  };
-
-  const handleDeletePersona = (id: string) => {
-    setPersonas(p => p.filter(persona => persona.id !== id));
-  };
+  const handleSavePersona = (personaToSave: Persona) => { savePersonas(personaToSave); setCurrentView('personas'); };
+  const handleDeletePersona = (id: string) => setPersonas(p => p.filter(persona => persona.id !== id));
 
   const handleImport = (file: File) => {
     importData(file).then(({ settings, chats, folders, personas: importedPersonas }) => {
         if (settings) handleSettingsChange(settings);
         if (chats) setChats(chats);
         if (folders) setFolders(folders);
-        if (importedPersonas) setPersonas(p => [...defaultPersonas, ...importedPersonas]);
+        if (importedPersonas) setPersonas(p => [...p.filter(p => p.isDefault), ...importedPersonas]);
         addToast("Import successful!", 'success');
     }).catch(err => { 
         addToast("Invalid backup file.", 'error');
@@ -177,7 +111,7 @@ const AppContainer = () => {
             clearAllData(); 
             setChats([]); 
             setFolders([]); 
-            setPersonas(defaultPersonas); 
+            setPersonas(p => p.filter(p => p.isDefault)); 
             setTranslationHistory([]); 
             setActiveChatId(null);
             setConfirmation(null);
@@ -190,7 +124,7 @@ const AppContainer = () => {
     <div className="h-dvh-screen w-screen flex bg-[var(--bg-image)] text-[var(--text-color)] overflow-hidden">
         <ToastContainer />
         {isMobileSidebarOpen && <div className="fixed inset-0 bg-black/30 z-30 md:hidden" onClick={() => setIsMobileSidebarOpen(false)} aria-hidden="true"/>}
-        <Sidebar chats={chats} folders={folders} activeChatId={activeChatId} onNewChat={() => handleNewChat(null)} onSelectChat={handleSelectChat} onDeleteChat={chatDataHandlers.handleDeleteChat} onEditChat={setEditingChat} onArchiveChat={(id) => chatDataHandlers.handleArchiveChat(id, true)} onNewFolder={() => setEditingFolder('new')} onEditFolder={setEditingFolder} onDeleteFolder={chatDataHandlers.handleDeleteFolder} onMoveChatToFolder={chatDataHandlers.handleMoveChatToFolder} isCollapsed={isSidebarCollapsed} onToggleCollapse={() => setIsSidebarCollapsed(p => !p)} isMobileSidebarOpen={isMobileSidebarOpen} onToggleMobileSidebar={() => setIsMobileSidebarOpen(false)} searchQuery={searchQuery} onSetSearchQuery={setSearchQuery} onOpenSettings={() => setIsSettingsOpen(true)} onOpenPersonas={handleOpenPersonas} onOpenArchive={handleOpenArchive} onOpenTranslate={handleOpenTranslate} />
+        <Sidebar chats={chats} folders={folders} activeChatId={activeChatId} onNewChat={() => handleNewChat(null)} onSelectChat={handleSelectChat} onDeleteChat={chatDataHandlers.handleDeleteChat} onEditChat={setEditingChat} onArchiveChat={(id) => chatDataHandlers.handleArchiveChat(id, true)} onNewFolder={() => setEditingFolder('new')} onEditFolder={setEditingFolder} onDeleteFolder={chatDataHandlers.handleDeleteFolder} onMoveChatToFolder={chatDataHandlers.handleMoveChatToFolder} isCollapsed={isSidebarCollapsed} onToggleCollapse={() => setIsSidebarCollapsed(p => !p)} isMobileSidebarOpen={isMobileSidebarOpen} onToggleMobileSidebar={() => setIsMobileSidebarOpen(false)} searchQuery={searchQuery} onSetSearchQuery={setSearchQuery} onOpenSettings={() => setIsSettingsOpen(true)} onOpenPersonas={() => handleOpenView('personas')} onOpenArchive={() => handleOpenView('archive')} onOpenTranslate={() => handleOpenView('translate')} />
         <div className={`flex-1 flex flex-col h-full transition-all duration-300 ${isSidebarCollapsed ? 'p-3 pb-2' : 'p-3 pb-2 md:pl-0'}`}>
           <div className="view-wrapper">
               <ViewContainer view="chat" activeView={currentView}>
