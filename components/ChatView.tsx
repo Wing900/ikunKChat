@@ -114,9 +114,6 @@ export const ChatView: React.FC<ChatViewProps> = (props) => {
       className="glass-pane rounded-[var(--radius-2xl)] flex flex-col h-full overflow-hidden relative"
       onDragEnter={handleDragEnter} onDragLeave={handleDragLeave} onDragOver={(e) => {e.preventDefault(); e.stopPropagation();}} onDrop={handleDrop}
     >
-        <button onClick={props.onToggleMobileSidebar} className="md:hidden absolute top-3 left-3 z-20 p-2 rounded-full hover:bg-black/10 dark:hover:bg-white/10" aria-label={t('showSidebar')} data-tooltip={t('showSidebar')} data-tooltip-placement="right"><Icon icon="menu" className="w-6 h-6" /></button>
-        {props.isSidebarCollapsed && <button onClick={props.onToggleSidebar} className="md:flex hidden items-center justify-center absolute top-3 left-3 z-20 p-2 rounded-full hover:bg-black/10 dark:hover:bg-white/10" aria-label={t('showSidebar')} data-tooltip={t('showSidebar')} data-tooltip-placement="right"><Icon icon="menu" className="w-6 h-6" /></button>}
-        
         <div className={`dropzone-overlay ${isDraggingOver ? 'visible' : ''}`}>
             <div className="dropzone-overlay-content">
                 <Icon icon="upload" className="w-20 h-20" />
@@ -124,9 +121,19 @@ export const ChatView: React.FC<ChatViewProps> = (props) => {
             </div>
         </div>
         
+        <ChatHeader 
+          chatSession={chatSession} 
+          onNewChat={onNewChat} 
+          availableModels={props.availableModels} 
+          onSetModelForActiveChat={props.onSetModelForActiveChat} 
+          currentModel={props.currentModel} 
+          isSidebarCollapsed={props.isSidebarCollapsed}
+          onToggleSidebar={props.onToggleSidebar}
+          onToggleMobileSidebar={props.onToggleMobileSidebar}
+        />
+        
         <div className="flex-grow flex flex-col relative min-h-0">
             <InternalView active={!!chatSession}>
-              <ChatHeader chatSession={chatSession} onNewChat={onNewChat} availableModels={props.availableModels} onSetModelForActiveChat={props.onSetModelForActiveChat} currentModel={props.currentModel} isSidebarCollapsed={props.isSidebarCollapsed} />
               <div className="flex-grow overflow-y-auto p-4">
                   {(chatSession?.messages || []).map((msg, index) => (
                     <MessageBubble key={msg.id} message={msg} index={index} onImageClick={props.onImageClick} settings={settings} persona={activePersona} isLastMessageLoading={isLoading && index === chatSession!.messages.length - 1} isEditing={editingMessageId === msg.id} onEditRequest={() => setEditingMessageId(msg.id)} onCancelEdit={() => setEditingMessageId(null)} onSaveEdit={handleSaveEdit} onDelete={props.onDeleteMessage} onRegenerate={props.onRegenerate} onCopy={(c) => navigator.clipboard.writeText(c)} onShowCitations={props.onShowCitations} />
