@@ -85,7 +85,7 @@ export const useChatMessaging = ({ settings, activeChat, personas, setChats, set
         
         if (candidate?.groundingMetadata) { finalGroundingMetadata = candidate.groundingMetadata; }
 
-        setChats(prev => prev.map(c => c.id === chatId ? { ...c, messages: c.messages.map(m => m.id === modelMessage.id ? { ...m, content: fullResponse || '...', thoughts: settings.showThoughts ? accumulatedThoughts : undefined } : m) } : c));
+        setChats(prev => prev.map(c => c.id === chatId ? { ...c, messages: c.messages.map(m => m.id === modelMessage.id ? { ...m, content: fullResponse || 'AI 正在唱、跳、rap...', thoughts: settings.showThoughts ? accumulatedThoughts : undefined } : m) } : c));
       }
 
       if (finalGroundingMetadata && !isCancelledRef.current) {

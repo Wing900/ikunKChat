@@ -60,6 +60,7 @@ export const en = {
     // Modals
     editChat: 'Edit Chat',
     shareChat: 'Share Chat',
+    deleteChat: 'Delete Chat',
     deleteChatConfirm: 'Are you sure you want to delete this chat?',
     iconEmoji: 'Icon (Emoji)',
     title: 'Title',
@@ -79,6 +80,8 @@ export const en = {
     appearance: 'Appearance',
     theme: 'Theme',
     themeDesc: 'Switch between light and dark mode.',
+    fontFamily: 'Font Family',
+    fontFamilyDesc: 'Change the application font.',
     light: 'Light',
     dark: 'Dark',
     behavior: 'Behavior',
@@ -125,4 +128,18 @@ export const en = {
     unarchive: 'Unarchive',
     archivedChats: 'Archived Chats',
     archiveDesc: 'View and manage archived conversations.',
+    // Model Parameters
+    modelParameters: 'Model Parameters',
+    temperature: 'Temperature',
+    temperatureDesc: 'Controls randomness. Lower is more deterministic, higher is more creative.',
+    contextLength: 'Context Length',
+    contextLengthDesc: 'Number of past messages to send. 0 for infinite.',
+    maxOutputTokens: 'Max Output Tokens',
+    maxOutputTokensDesc: 'The maximum number of tokens to generate in a response.',
+    // Password View
+    password_required: 'Password Required',
+    password_prompt: 'Please enter the password to access ikunKChat',
+    enter_password: 'Enter password',
+    incorrect_password: 'Incorrect password. Please try again.',
+    continue: 'Continue',
 };

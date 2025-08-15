@@ -108,6 +108,26 @@ export const PersonaEditor: React.FC<PersonaEditorProps> = ({ personaToEdit, onS
                         <div className="flex justify-between items-center"><label className="font-medium">{t('urlContext')}</label><Switch size="sm" checked={persona.tools.urlContext} onChange={e => handleUpdate({tools: { ...persona.tools, urlContext: e.target.checked }})} /></div>
                     </div>
                 </div>
+                <div className="form-group">
+                    <label>{t('modelParameters')}</label>
+                    <div className="p-4 rounded-[var(--radius-2xl)] glass-pane flex flex-col gap-4">
+                        <div className="flex justify-between items-center">
+                            <label className="font-medium">{t('temperature')}</label>
+                            <div className="flex items-center gap-4 w-40">
+                                <input type="range" min="0" max="1" step="0.1" value={persona.temperature ?? settings.temperature} onChange={e => handleUpdate({ temperature: parseFloat(e.target.value) })} className="w-full" />
+                                <span className="font-mono text-sm">{(persona.temperature ?? settings.temperature).toFixed(1)}</span>
+                            </div>
+                        </div>
+                        <div className="flex justify-between items-center">
+                            <label className="font-medium">{t('contextLength')}</label>
+                            <input type="number" min="0" step="1" value={persona.contextLength ?? settings.contextLength} onChange={e => handleUpdate({ contextLength: parseInt(e.target.value, 10) })} className="input-glass w-24" />
+                        </div>
+                        <div className="flex justify-between items-center">
+                            <label className="font-medium">{t('maxOutputTokens')}</label>
+                            <input type="number" min="1" step="1" value={persona.maxOutputTokens ?? settings.maxOutputTokens} onChange={e => handleUpdate({ maxOutputTokens: parseInt(e.target.value, 10) })} className="input-glass w-24" />
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
         <div className="persona-editor-builder-pane w-full md:w-auto h-96 md:h-auto">

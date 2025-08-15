@@ -1,7 +1,7 @@
 export const zh = {
     // Sidebar
-    newChat: '新对话',
-    searchHistory: '搜索历史...',
+    newChat: '开启新练习',
+    searchHistory: '搜索...',
     history: '历史记录',
     newFolder: '新建文件夹',
     collapseSidebar: '收起侧边栏',
@@ -16,7 +16,7 @@ export const zh = {
     // Persona Editor
     personaEditor: '角色编辑器',
     personaName: '名称',
-    personaNamePlaceholder: '例如，杰克船长',
+    personaNamePlaceholder: '例如，Kun',
     personaAvatar: '头像',
     personaAvatarDesc: '输入一个表情符号或图片网址。',
     personaBio: '简介',
@@ -25,13 +25,13 @@ export const zh = {
     personaSystemPromptPlaceholder: '定义角色的性格和指示...',
     personaTools: '工具',
     savePersona: '保存角色',
-    builderInputPlaceholder: '例如，“把它变成一个乐于助人的图书管理员”',
-    builderApplying: '正在应用更改...',
+    builderInputPlaceholder: '例如，"把他变成一个唱跳rap的高手"',
+    builderApplying: '正在唱、跳、rap...',
     // Welcome
-    welcomeTo: '欢迎来到 KChat',
-    welcomeDesc: '在下方选择一个模型并开始新的对话。',
+    welcomeTo: '欢迎来到ikunKChat',
+    welcomeDesc: '全民制作人们大家好',
     // Chat Input
-    typeMessage: '输入您的消息...',
+    typeMessage: '你干嘛~~ 在这里输入...',
     tools: '工具',
     codeExecution: '代码执行',
     googleSearch: '谷歌搜索',
@@ -61,6 +61,7 @@ export const zh = {
     // Modals
     editChat: '编辑对话',
     shareChat: '分享对话',
+    deleteChat: '删除对话',
     deleteChatConfirm: '您确定要删除此对话吗？',
     iconEmoji: '图标 (Emoji)',
     title: '标题',
@@ -80,6 +81,8 @@ export const zh = {
     appearance: '外观',
     theme: '主题',
     themeDesc: '切换浅色和深色模式。',
+    fontFamily: '字体',
+    fontFamilyDesc: '更改应用程序的字体。',
     light: '浅色',
     dark: '深色',
     behavior: '行为',
@@ -125,5 +128,19 @@ export const zh = {
     archive: '归档',
     unarchive: '取消归档',
     archivedChats: '已归档对话',
-    archiveDesc: '查看和管理已归档的对话。'
+    archiveDesc: '查看和管理已归档的对话。',
+    // Model Parameters
+    modelParameters: '模型参数',
+    temperature: '温度',
+    temperatureDesc: '控制输出的随机性。值越低结果越确定，值越高结果越有创意。',
+    contextLength: '上下文长度',
+    contextLengthDesc: '发送过去的旧消息数量。0代表无限。',
+    maxOutputTokens: '最大输出字符',
+    maxOutputTokensDesc: '限制模型在单个回复中生成的最大字符数。',
+    // Password View
+    password_required: '访问密码',
+    password_prompt: '请输入密码以访问ikunKChat',
+    enter_password: '输入密码',
+    incorrect_password: '密码不正确，哎哟你干嘛~',
+    continue: '开始练习',
 };
