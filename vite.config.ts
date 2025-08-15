@@ -1,5 +1,6 @@
 import path from 'path';
 import { defineConfig, loadEnv } from 'vite';
+import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, '.', '');
@@ -15,6 +16,40 @@ export default defineConfig(({ mode }) => {
       },
       build: {
         outDir: 'dist'
-      }
+      },
+      plugins: [
+        VitePWA({
+          registerType: 'autoUpdate',
+          devOptions: {
+            enabled: true
+          },
+          manifest: {
+            name: 'ikunKChat',
+            short_name: 'KChat',
+            description: 'A chat application powered by Gemini',
+            theme_color: '#4F46E5',
+            background_color: '#FFFFFF',
+            display: 'standalone',
+            start_url: '/',
+            icons: [
+              {
+                src: 'favicon.svg',
+                sizes: 'any',
+                type: 'image/svg+xml',
+              },
+              {
+                src: 'icon-192.png',
+                sizes: '192x192',
+                type: 'image/png',
+              },
+              {
+                src: 'icon-512.png',
+                sizes: '512x512',
+                type: 'image/png',
+              }
+            ]
+          }
+        })
+      ]
     };
 });
