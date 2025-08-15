@@ -5,8 +5,9 @@ import { getAvailableModels } from '../services/modelService';
 import { loadSettings, saveSettings } from '../services/storageService';
 
 const defaultSettings: Settings = {
-  theme: 'light',
-  language: 'en',
+  theme: 'apple-light',
+  language: 'zh',
+  fontFamily: 'lxgw',
   apiKey: [],
   showSuggestions: false,
   defaultModel: 'gemini-2.5-flash',
@@ -22,6 +23,10 @@ const defaultSettings: Settings = {
   optimizeFormatting: false,
   thinkDeeper: false,
   apiBaseUrl: '',
+  temperature: 0.7,
+  maxOutputTokens: 4096,
+  contextLength: 10,
+  password: undefined,
 };
 
 export const useSettings = () => {
@@ -50,7 +55,11 @@ export const useSettings = () => {
   useEffect(() => {
     if (!isStorageLoaded) return;
     saveSettings(settings);
-    document.body.classList.toggle('dark-mode', settings.theme === 'dark');
+    document.body.classList.remove('theme-dark', 'theme-apple-light', 'theme-apple-dark', 'theme-pink-ocean', 'theme-blue-sky');
+    if (settings.theme !== 'light') {
+      document.body.classList.add(`theme-${settings.theme}`);
+    }
+    document.body.dataset.font = settings.fontFamily;
     setLanguage(settings.language);
   }, [settings, isStorageLoaded, setLanguage]);
 

@@ -11,7 +11,7 @@ interface FolderActionModalProps {
 export const FolderActionModal: React.FC<FolderActionModalProps> = ({ folder, onClose, onSave }) => {
   const { t } = useLocalization();
   const [name, setName] = useState(folder?.name || '');
-  const [icon, setIcon] = useState(folder?.icon || '📁');
+  const [icon, setIcon] = useState(folder?.icon || '🐔');
   const [isVisible, setIsVisible] = useState(false);
 
   const isNew = folder === null;

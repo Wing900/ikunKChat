@@ -24,10 +24,33 @@ export const GeneralSettings: React.FC<GeneralSettingsProps> = ({ settings, onSe
       )}
       {visibleIds.has('theme') && (
         <SettingsItem label={t('theme')} description={t('themeDesc')}>
-          <div className="flex items-center p-1 rounded-full glass-pane">
-            <button onClick={() => onSettingsChange({ theme: 'light' })} className={`p-2 rounded-full transition-colors ${settings.theme === 'light' ? 'bg-[var(--accent-color)] text-white' : 'hover:bg-white/20'}`}><Icon icon="sun" className="w-5 h-5" /></button>
-            <button onClick={() => onSettingsChange({ theme: 'dark' })} className={`p-2 rounded-full transition-colors ${settings.theme === 'dark' ? 'bg-[var(--accent-color)] text-white' : 'hover:bg-black/20'}`}><Icon icon="moon" className="w-5 h-5" /></button>
-          </div>
+          <CustomSelect
+            options={[
+              { value: 'light', label: 'Light' },
+              { value: 'dark', label: 'Dark' },
+              { value: 'apple-light', label: 'Apple Light' },
+              { value: 'apple-dark', label: 'Apple Dark' },
+              { value: 'pink-ocean', label: 'Pink Ocean' },
+              { value: 'blue-sky', label: 'Blue Sky' },
+            ]}
+            selectedValue={settings.theme}
+            onSelect={(value) => onSettingsChange({ theme: value as any })}
+            className="w-48"
+          />
+        </SettingsItem>
+      )}
+      {visibleIds.has('fontFamily') && (
+        <SettingsItem label={t('fontFamily')} description={t('fontFamilyDesc')}>
+          <CustomSelect
+            options={[
+              { value: 'system', label: '系统默认' },
+              { value: 'lxgw', label: '霞鹜文楷' },
+              { value: 'yozai', label: '悠哉字体' },
+            ]}
+            selectedValue={settings.fontFamily}
+            onSelect={(value) => onSettingsChange({ fontFamily: value as any })}
+            className="w-48"
+          />
         </SettingsItem>
       )}
     </>

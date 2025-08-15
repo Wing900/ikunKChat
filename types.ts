@@ -70,8 +70,9 @@ export interface TranslationHistoryItem {
 }
 
 export interface Settings {
-  theme: 'light' | 'dark';
+  theme: 'light' | 'dark' | 'apple-light' | 'apple-dark' | 'pink-ocean' | 'blue-sky';
   language: 'en' | 'zh';
+  fontFamily: 'system' | 'lxgw' | 'yozai';
   apiKey: string[] | null;
   showSuggestions: boolean;
   defaultModel: string;
@@ -87,4 +88,8 @@ export interface Settings {
   optimizeFormatting: boolean;
   thinkDeeper: boolean;
   apiBaseUrl?: string;
+  temperature: number;
+  maxOutputTokens: number;
+  contextLength: number;
+  password?: string;
 }

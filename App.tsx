@@ -12,6 +12,7 @@ import { ArchiveView } from './components/ArchiveView';
 import TranslateView from './components/translator/TranslateView';
 import { ToastContainer } from './components/ToastContainer';
 import { ConfirmationModal } from './components/ConfirmationModal';
+import PasswordView from './components/PasswordView';
 import { ChatSession, Folder, Settings, Persona } from './types';
 import { LocalizationProvider, useLocalization } from './contexts/LocalizationContext';
 import { useSettings } from './hooks/useSettings';
@@ -26,12 +27,26 @@ import { ViewContainer } from './components/common/ViewContainer';
 type View = 'chat' | 'personas' | 'editor' | 'archive' | 'translate';
 
 const AppContainer = () => {
+  const VITE_ACCESS_PASSWORD = import.meta.env.VITE_ACCESS_PASSWORD;
+  const [isAuthenticated, setIsAuthenticated] = useState(() => !VITE_ACCESS_PASSWORD || sessionStorage.getItem('kchat-auth') === 'true');
+
   const { settings, setSettings, availableModels, isStorageLoaded } = useSettings();
   const { chats, setChats, folders, setFolders, activeChatId, setActiveChatId, ...chatDataHandlers } = useChatData({ settings, isStorageLoaded });
   const { personas, setPersonas, savePersonas } = usePersonas({ isStorageLoaded });
   const { translationHistory, setTranslationHistory } = useTranslationHistory({ isStorageLoaded });
   const { addToast } = useToast();
   const { t } = useLocalization();
+
+  useEffect(() => {
+    if (isAuthenticated && VITE_ACCESS_PASSWORD) {
+      sessionStorage.setItem('kchat-auth', 'true');
+    }
+  }, [isAuthenticated, VITE_ACCESS_PASSWORD]);
+
+  useEffect(() => {
+    console.log("哇真的是你啊");
+    console.log("多看一眼就会爆炸");
+  }, []);
   
   const [currentView, setCurrentView] = useState<View>('chat');
   const [editingPersona, setEditingPersona] = useState<Persona | null>(null);
@@ -119,6 +134,10 @@ const AppContainer = () => {
         }
     });
   };
+
+  if (VITE_ACCESS_PASSWORD && !isAuthenticated) {
+    return <PasswordView onVerified={() => setIsAuthenticated(true)} />;
+  }
   
   return (
     <div className="h-dvh-screen w-screen flex bg-[var(--bg-image)] text-[var(--text-color)] overflow-hidden">
@@ -153,22 +172,11 @@ const AppContainer = () => {
         {confirmation && <ConfirmationModal {...confirmation} onClose={() => setConfirmation(null)} />}
     </div>
   );
-};
+}
 
 export default function App() {
-  const getInitialLanguage = (): 'en' | 'zh' => {
-     try {
-      const savedSettings = localStorage.getItem('kchat-settings');
-      if (savedSettings) {
-        const parsed = JSON.parse(savedSettings);
-        if (parsed.language === 'en' || parsed.language === 'zh') return parsed.language;
-      }
-    } catch {}
-    return 'en';
-  }
-
   return (
-    <LocalizationProvider initialLanguage={getInitialLanguage()}>
+    <LocalizationProvider>
       <AppContainer />
     </LocalizationProvider>
   );

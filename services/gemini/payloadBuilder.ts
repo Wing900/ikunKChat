@@ -10,7 +10,19 @@ interface Part {
 }
 
 export function prepareChatPayload(history: Message[], settings: Settings, toolConfig: any, persona?: Persona | null, isStudyMode?: boolean) {
-  const formattedHistory = history.map(msg => {
+  // 1. Determine the source of settings (persona or global)
+  const settingsSource = {
+    temperature: persona?.temperature ?? settings.temperature,
+    maxOutputTokens: persona?.maxOutputTokens ?? settings.maxOutputTokens,
+    contextLength: persona?.contextLength ?? settings.contextLength,
+  };
+
+  // 2. Slice history based on context length
+  const slicedHistory = settingsSource.contextLength > 0
+    ? history.slice(-settingsSource.contextLength)
+    : history;
+
+  const formattedHistory = slicedHistory.map(msg => {
     const parts: Part[] = [];
     if (msg.attachments) {
       parts.push(...msg.attachments.map(att => ({ inlineData: { mimeType: att.mimeType, data: att.data! } })));
@@ -51,7 +63,14 @@ export function prepareChatPayload(history: Message[], settings: Settings, toolC
   
   const systemInstruction = systemInstructionParts.join('\n\n---\n\n').trim();
   
-  const configForApi: any = { systemInstruction: systemInstruction || undefined, tools: toolsForApi.length > 0 ? toolsForApi : undefined };
+  // 3. Add new parameters to the generation config
+  const configForApi: any = {
+    systemInstruction: systemInstruction || undefined,
+    tools: toolsForApi.length > 0 ? toolsForApi : undefined,
+    temperature: settingsSource.temperature,
+    maxOutputTokens: settingsSource.maxOutputTokens,
+  };
+
   if (toolConfig.showThoughts) {
     configForApi.thinkingConfig = { includeThoughts: true };
   }
