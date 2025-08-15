@@ -28,7 +28,7 @@ type View = 'chat' | 'personas' | 'editor' | 'archive' | 'translate';
 
 const AppContainer = () => {
   const VITE_ACCESS_PASSWORD = import.meta.env.VITE_ACCESS_PASSWORD;
-  const [isAuthenticated, setIsAuthenticated] = useState(() => !VITE_ACCESS_PASSWORD || sessionStorage.getItem('kchat-auth') === 'true');
+  const [isAuthenticated, setIsAuthenticated] = useState(() => !VITE_ACCESS_PASSWORD || localStorage.getItem('kchat-auth') === 'true');
 
   const { settings, setSettings, availableModels, isStorageLoaded } = useSettings();
   const { chats, setChats, folders, setFolders, activeChatId, setActiveChatId, ...chatDataHandlers } = useChatData({ settings, isStorageLoaded });
@@ -39,7 +39,7 @@ const AppContainer = () => {
 
   useEffect(() => {
     if (isAuthenticated && VITE_ACCESS_PASSWORD) {
-      sessionStorage.setItem('kchat-auth', 'true');
+      localStorage.setItem('kchat-auth', 'true');
     }
   }, [isAuthenticated, VITE_ACCESS_PASSWORD]);
 
