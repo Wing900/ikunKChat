@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useRef } from 'react';
-import { ChatSession, Message, MessageRole, Settings, Persona, FileAttachment } from '../types';
+import { ChatSession, Message, MessageRole, Settings, Persona, FileAttachment, PersonaMemory } from '../types';
 import { sendMessageStream, generateChatDetails, generateSuggestedReplies } from '../services/geminiService';
 import { fileToData } from '../utils/fileUtils';
 
@@ -7,6 +7,7 @@ interface UseChatMessagingProps {
   settings: Settings;
   activeChat: ChatSession | null;
   personas: Persona[];
+  memories: Record<string, PersonaMemory[]>;
   setChats: React.Dispatch<React.SetStateAction<ChatSession[]>>;
   setSuggestedReplies: React.Dispatch<React.SetStateAction<string[]>>;
   setActiveChatId: React.Dispatch<React.SetStateAction<string | null>>;
@@ -15,7 +16,7 @@ interface UseChatMessagingProps {
   setIsNextChatStudyMode: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-export const useChatMessaging = ({ settings, activeChat, personas, setChats, setSuggestedReplies, setActiveChatId, addToast, isNextChatStudyMode, setIsNextChatStudyMode }: UseChatMessagingProps) => {
+export const useChatMessaging = ({ settings, activeChat, personas, memories, setChats, setSuggestedReplies, setActiveChatId, addToast, isNextChatStudyMode, setIsNextChatStudyMode }: UseChatMessagingProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const isCancelledRef = useRef(false);
 
@@ -25,6 +26,7 @@ export const useChatMessaging = ({ settings, activeChat, personas, setChats, set
   }, []);
 
   const _initiateStream = useCallback(async (chatId: string, historyForAPI: Message[], toolConfig: any, personaId: string | null | undefined, isStudyMode?: boolean) => {
+    const personaMemories = personaId ? memories[personaId] : undefined;
     const apiKeys = settings.apiKey && settings.apiKey.length > 0
       ? settings.apiKey
       : (process.env.API_KEY ? [process.env.API_KEY] : []);
@@ -60,7 +62,7 @@ export const useChatMessaging = ({ settings, activeChat, personas, setChats, set
     try {
       const currentModel = chatSession.model;
       const effectiveToolConfig = { ...toolConfig, showThoughts: settings.showThoughts };
-      const stream = sendMessageStream(apiKeys, historyForAPI.slice(0, -1), promptContent, promptAttachments, currentModel, settings, effectiveToolConfig, activePersona, chatSession.isStudyMode);
+      const stream = sendMessageStream(apiKeys, historyForAPI.slice(0, -1), promptContent, promptAttachments, currentModel, settings, effectiveToolConfig, activePersona, chatSession.isStudyMode, personaMemories);
       
       for await (const chunk of stream) {
         if(isCancelledRef.current) break;
@@ -107,7 +109,7 @@ export const useChatMessaging = ({ settings, activeChat, personas, setChats, set
         }
       }
     }
-  }, [settings, setChats, activeChat, personas, setSuggestedReplies, addToast]);
+  }, [settings, setChats, activeChat, personas, memories, setSuggestedReplies, addToast]);
 
   const handleSendMessage = useCallback(async (content: string, files: File[] = [], toolConfig: any) => {
     const attachments = await Promise.all(files.map(fileToData));

@@ -43,10 +43,22 @@ export interface Persona {
     codeExecution: boolean;
     urlContext: boolean;
   };
+  model?: string;
   temperature?: number;
   contextLength?: number;
   maxOutputTokens?: number;
   isNew?: boolean;
+  memoryEnabled?: boolean;
+  maxMemories?: number;
+}
+
+export interface PersonaMemory {
+  id: string;
+  personaId: string;
+  content: string;
+  createdAt: number;
+  updatedAt: number;
+  source: 'manual' | 'auto';
 }
 
 export interface ChatSession {

@@ -40,6 +40,7 @@ All chat history, settings, and custom personas are stored securely in your brow
     *   Theme selection (Light/Dark).
     *   Full data import and export (JSON).
 *   **Glassmorphism UI:** A beautiful, fluid interface with light and dark modes.
+*   **Persona Memory:** Equip your personas with long-term memory. Manually add, edit, and delete memories to maintain context across conversations.
 
 ### Built With
 

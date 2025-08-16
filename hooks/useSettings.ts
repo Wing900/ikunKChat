@@ -10,12 +10,12 @@ const defaultSettings: Settings = {
   fontFamily: 'lxgw',
   apiKey: [],
   showSuggestions: false,
-  defaultModel: 'gemini-2.5-flash',
+  defaultModel: 'gemini-2.5-pro',
   defaultPersona: 'default-assistant',
-  suggestionModel: 'gemini-2.5-flash-lite',
+  suggestionModel: 'gemini-2.5-flash',
   autoTitleGeneration: true,
-  titleGenerationModel: 'gemini-2.5-flash-lite',
-  languageDetectionModel: 'gemini-2.5-flash-lite',
+  titleGenerationModel: 'gemini-2.5-flash',
+  languageDetectionModel: 'gemini-2.5-flash',
   defaultSearch: false,
   useSearchOptimizerPrompt: false,
   showThoughts: true,
@@ -32,7 +32,7 @@ const defaultSettings: Settings = {
 
 export const useSettings = () => {
   const [settings, setSettings] = useState<Settings>(defaultSettings);
-  const [availableModels, setAvailableModels] = useState<string[]>(['gemini-2.5-flash', 'gemini-2.5-flash-lite']);
+  const [availableModels, setAvailableModels] = useState<string[]>(['gemini-2.5-pro', 'gemini-2.5-flash']);
   const [isStorageLoaded, setIsStorageLoaded] = useState(false);
   const { setLanguage } = useLocalization();
 

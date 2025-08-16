@@ -1,5 +1,5 @@
 export async function getAvailableModels(apiKeys: string[], apiBaseUrl?: string): Promise<string[]> {
-  const defaultModelList = ['gemini-2.5-flash'];
+  const defaultModelList = ['gemini-2.5-pro', 'gemini-2.5-flash'];
 
   if (!apiKeys || apiKeys.length === 0) {
     return defaultModelList;

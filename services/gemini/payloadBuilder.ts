@@ -1,4 +1,4 @@
-import { Message, Settings, Persona } from '../../types';
+import { Message, Settings, Persona, PersonaMemory } from '../../types';
 import { STUDY_MODE_PROMPT, OPTIMIZE_FORMATTING_PROMPT, THINK_DEEPER_PROMPT, SEARCH_OPTIMIZER_PROMPT } from '../../data/prompts';
 
 interface Part {
@@ -9,7 +9,7 @@ interface Part {
   };
 }
 
-export function prepareChatPayload(history: Message[], settings: Settings, toolConfig: any, persona?: Persona | null, isStudyMode?: boolean) {
+export function prepareChatPayload(history: Message[], settings: Settings, toolConfig: any, persona?: Persona | null, isStudyMode?: boolean, memories?: PersonaMemory[]) {
   // 1. Determine the source of settings (persona or global)
   const settingsSource = {
     temperature: persona?.temperature ?? settings.temperature,
@@ -35,6 +35,12 @@ export function prepareChatPayload(history: Message[], settings: Settings, toolC
 
   let systemInstructionParts: string[] = [];
   
+  if (persona?.memoryEnabled && memories && memories.length > 0) {
+    const memoryHeader = "### Persona Memories (for context, not for direct response):\n";
+    const memoryContent = memories.map(mem => `- ${mem.content}`).join('\n');
+    systemInstructionParts.push(`${memoryHeader}${memoryContent}`);
+  }
+
   if (isStudyMode) systemInstructionParts.push(STUDY_MODE_PROMPT);
   if (persona?.systemPrompt) systemInstructionParts.push(persona.systemPrompt);
   if (settings.enableGlobalSystemPrompt && settings.globalSystemPrompt.trim()) systemInstructionParts.push(settings.globalSystemPrompt.trim());

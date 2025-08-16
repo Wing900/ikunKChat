@@ -1,0 +1,14 @@
+{
+  "version": "1.1.0",
+  "releaseDate": "2025-08-16",
+  "notes": {
+    "zh": [
+      "🤖 模型更新：所有聊天模型默认使用 Gemini-2.5-Pro。",
+      "🧠 新增功能：增加了基本的角色记忆功能，您可以为每个角色自定义记忆。"
+    ],
+    "en": [
+      "🤖 Model Update: All chat models now default to Gemini-2.5-Pro.",
+      "🧠 New Feature: Added basic persona memory functionality, allowing you to add custom memories for each persona."
+    ]
+  }
+}

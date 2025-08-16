@@ -148,4 +148,30 @@ export const en = {
     password: 'Access Password',
     passwordDesc: 'Set a password to access the app. Leave empty to disable password protection.',
     passwordPlaceholder: 'Enter access password...',
+
+    // Privacy Notice
+    privacyNoticeTitle: 'Terms of Service and Disclaimer',
+    privacyNoticeIntro: 'Before using this service, please read and fully understand the following terms. Your continued use of the service will be deemed as acceptance of this entire statement.',
+    privacyComplianceTitle: '1. ✅ Legal & Compliant',
+    privacyComplianceText: 'Our site operates legally, strictly adhering to national laws including the "Cybersecurity Law," "Data Security Law," and "Personal Information Protection Law" of the P.R.C.',
+    privacyDataTitle: '2. 🔒 Absolute Privacy',
+    privacyDataIntro: 'Your data is under your full control:',
+    privacyDataPoint1: '<strong>Stateless Server</strong>: No chat content is ever recorded or stored.',
+    privacyDataPoint2: '<strong>Purely Local Data</strong>: Conversation history is saved only in your browser, which you can clear at any time.',
+    privacyDataPoint3: '<strong>Completely Anonymous</strong>: No accounts, no login. We don\'t know who you are.',
+    privacyUserResponsibilityTitle: '3. ⚠️ Your Responsibility',
+    privacyUserResponsibilityText: 'This site is a tool, and you are responsible for the content you generate. You must bear all legal liabilities for it. Do not use it for illegal activities.',
+    privacyConfirmationPrompt: 'To continue, please manually type "<code class="text-[var(--accent-color)] bg-black/10 px-1 py-0.5 rounded">{confirmationText}</code>" in the input box below to confirm that you have fully understood and accepted the entire content of this statement.',
+    privacyConfirmationText: 'I acknowledge the site is legal, respects user privacy, and will be used lawfully',
+    privacyInputPlaceholder: 'Please type the confirmation text here',
+    confirm: 'Confirm',
+
+    // Update Notice
+    updateAvailable: 'New Version Available',
+    releaseNotes: 'Release Notes',
+    gotIt: 'Got it!',
+
+    // Persona Memory
+    personaMemory: 'Persona Memory',
+    addMemoryPlaceholder: 'Add a new memory...',
 };
