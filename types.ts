@@ -43,6 +43,9 @@ export interface Persona {
     codeExecution: boolean;
     urlContext: boolean;
   };
+  temperature?: number;
+  contextLength?: number;
+  maxOutputTokens?: number;
   isNew?: boolean;
 }
 
@@ -76,6 +79,7 @@ export interface Settings {
   apiKey: string[] | null;
   showSuggestions: boolean;
   defaultModel: string;
+  defaultPersona: string;
   suggestionModel: string;
   autoTitleGeneration: boolean;
   titleGenerationModel: string;

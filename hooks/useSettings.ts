@@ -11,6 +11,7 @@ const defaultSettings: Settings = {
   apiKey: [],
   showSuggestions: false,
   defaultModel: 'gemini-2.5-flash',
+  defaultPersona: 'default-assistant',
   suggestionModel: 'gemini-2.5-flash-lite',
   autoTitleGeneration: true,
   titleGenerationModel: 'gemini-2.5-flash-lite',

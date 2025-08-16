@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { ChatSession, Message, MessageRole, Settings, Persona, FileAttachment } from '../types';
 import { sendMessageStream, generateChatDetails, generateSuggestedReplies } from '../services/geminiService';
 import { fileToData } from '../utils/fileUtils';
@@ -43,7 +43,7 @@ export const useChatMessaging = ({ settings, activeChat, personas, setChats, set
         ? activeChat 
         : { id: chatId, messages: historyForAPI, model: settings.defaultModel, personaId, title: "New Chat", createdAt: Date.now(), folderId: null, isStudyMode };
 
-    const activePersona = chatSession.personaId ? personas.find(p => p.id === chatSession.personaId) : null;
+    const activePersona = chatSession.personaId ? personas.find(p => p && p.id === chatSession.personaId) : null;
 
     const lastUserMessage = [...historyForAPI].reverse().find(m => m.role === MessageRole.USER);
     const promptContent = lastUserMessage?.content || '';

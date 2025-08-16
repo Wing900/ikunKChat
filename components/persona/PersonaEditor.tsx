@@ -13,7 +13,7 @@ const newPersonaTemplate: Persona = {
   name: '',
   avatar: { type: 'emoji', value: '🤖' },
   bio: '',
-  systemPrompt: 'You are a helpful AI assistant.',
+  systemPrompt: '你是一个有帮助的AI助手。',
   tools: { googleSearch: false, codeExecution: false, urlContext: false },
   isNew: true,
 };
@@ -61,7 +61,14 @@ export const PersonaEditor: React.FC<PersonaEditorProps> = ({ personaToEdit, onS
       addToast("Please fill out all fields before saving.", 'error');
       return;
     }
-    onSave(persona);
+    
+    // 确保内置角色的 isDefault 属性不会被更改
+    const personaToSave = { ...persona };
+    if (personaToEdit?.isDefault) {
+      personaToSave.isDefault = true;
+    }
+    
+    onSave(personaToSave);
   };
 
   return (

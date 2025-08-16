@@ -75,6 +75,8 @@ export const en = {
     general: 'General',
     language: 'Language',
     languageDesc: 'Set the display language of the app.',
+    defaultPersona: 'Default Persona',
+    defaultPersonaDesc: 'Select the default persona for new chats.',
     english: 'English',
     chinese: 'Chinese',
     appearance: 'Appearance',
@@ -142,4 +144,8 @@ export const en = {
     enter_password: 'Enter password',
     incorrect_password: 'Incorrect password. Please try again.',
     continue: 'Continue',
+    // Password Settings
+    password: 'Access Password',
+    passwordDesc: 'Set a password to access the app. Leave empty to disable password protection.',
+    passwordPlaceholder: 'Enter access password...',
 };

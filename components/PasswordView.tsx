@@ -1,23 +1,28 @@
 import React, { useState } from 'react';
 import { useLocalization } from '../contexts/LocalizationContext';
 import { Icon } from './Icon';
+import { authService } from '../services/authService';
 
 interface PasswordViewProps {
-  onVerified: () => void;
+  onVerified: (rememberMe: boolean) => void;
 }
 
 const PasswordView: React.FC<PasswordViewProps> = ({ onVerified }) => {
   const { t } = useLocalization();
   const [inputPassword, setInputPassword] = useState('');
   const [error, setError] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
   
   // Get password from environment variable
-  const VITE_ACCESS_PASSWORD = import.meta.env.VITE_ACCESS_PASSWORD;
+  const VITE_ACCESS_PASSWORD = (import.meta as any).env.VITE_ACCESS_PASSWORD;
 
   const handlePasswordSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (inputPassword === VITE_ACCESS_PASSWORD) {
-      onVerified();
+    setError('');
+    
+    // 使用认证服务验证密码
+    if (authService.verifyPassword(inputPassword)) {
+      onVerified(rememberMe);
     } else {
       setError(t('incorrect_password'));
     }
@@ -53,9 +58,22 @@ const PasswordView: React.FC<PasswordViewProps> = ({ onVerified }) => {
         
         {error && <p className="mt-2 text-sm text-center text-red-500">{error}</p>}
         
+        <div className="flex items-center mt-4">
+          <input
+            type="checkbox"
+            id="rememberMe"
+            checked={rememberMe}
+            onChange={(e) => setRememberMe(e.target.checked)}
+            className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+          />
+          <label htmlFor="rememberMe" className="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">
+            记住我（30天内免登录）
+          </label>
+        </div>
+        
         <button
           type="submit"
-          className="w-full px-4 py-3 mt-2 font-medium text-white bg-blue-500 rounded-xl hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+          className="w-full px-4 py-3 mt-4 font-medium text-white bg-blue-500 rounded-xl hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
         >
           {t('continue')}
         </button>

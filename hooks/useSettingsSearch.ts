@@ -13,7 +13,9 @@ export const useSettingsSearch = (searchQuery: string) => {
     // General
     { id: 'language', section: 'general', texts: [t('language'), t('languageDesc'), translations.zh.language, translations.zh.languageDesc] },
     { id: 'theme', section: 'general', texts: [t('theme'), t('themeDesc'), translations.zh.theme, translations.zh.themeDesc] },
+    { id: 'defaultPersona', section: 'general', texts: [t('defaultPersona'), t('defaultPersonaDesc'), translations.zh.defaultPersona, translations.zh.defaultPersonaDesc] },
     { id: 'fontFamily', section: 'general', texts: [t('fontFamily'), t('fontFamilyDesc'), translations.zh.fontFamily, translations.zh.fontFamilyDesc] },
+    { id: 'password', section: 'general', texts: [t('password'), t('passwordDesc'), translations.zh.password, translations.zh.passwordDesc] },
     
     // Behavior
     { id: 'autoTitleGeneration', section: 'behavior', texts: [t('autoTitleGeneration'), t('autoTitleGenerationDesc'), translations.zh.autoTitleGeneration, translations.zh.autoTitleGenerationDesc] },

@@ -76,6 +76,8 @@ export const zh = {
     general: '通用',
     language: '语言',
     languageDesc: '设置应用的显示语言。',
+    defaultPersona: '默认角色',
+    defaultPersonaDesc: '为新对话选择默认角色。',
     english: '英语',
     chinese: '中文',
     appearance: '外观',
@@ -143,4 +145,8 @@ export const zh = {
     enter_password: '输入密码',
     incorrect_password: '密码不正确，哎哟你干嘛~',
     continue: '开始练习',
+    // Password Settings
+    password: '访问密码',
+    passwordDesc: '设置访问应用的密码，留空则不需要密码。',
+    passwordPlaceholder: '输入访问密码...',
 };

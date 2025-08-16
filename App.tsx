@@ -22,26 +22,31 @@ import { useToast } from './contexts/ToastContext';
 import { usePersonas } from './hooks/usePersonas';
 import { useTranslationHistory } from './hooks/useTranslationHistory';
 import { exportData, importData, clearAllData } from './services/storageService';
+import { authService } from './services/authService';
 import { ViewContainer } from './components/common/ViewContainer';
 
 type View = 'chat' | 'personas' | 'editor' | 'archive' | 'translate';
 
 const AppContainer = () => {
-  const VITE_ACCESS_PASSWORD = import.meta.env.VITE_ACCESS_PASSWORD;
-  const [isAuthenticated, setIsAuthenticated] = useState(() => !VITE_ACCESS_PASSWORD || localStorage.getItem('kchat-auth') === 'true');
+  // 不再使用环境变量，密码由用户在设置中配置
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    const settings = JSON.parse(localStorage.getItem('kchat-settings') || '{}');
+    return !settings.password || authService.isAuthenticated();
+  });
 
   const { settings, setSettings, availableModels, isStorageLoaded } = useSettings();
   const { chats, setChats, folders, setFolders, activeChatId, setActiveChatId, ...chatDataHandlers } = useChatData({ settings, isStorageLoaded });
-  const { personas, setPersonas, savePersonas } = usePersonas({ isStorageLoaded });
+  const { personas, setPersonas, savePersonas, deletePersona, error, clearError } = usePersonas({ isStorageLoaded });
   const { translationHistory, setTranslationHistory } = useTranslationHistory({ isStorageLoaded });
   const { addToast } = useToast();
   const { t } = useLocalization();
 
   useEffect(() => {
-    if (isAuthenticated && VITE_ACCESS_PASSWORD) {
-      localStorage.setItem('kchat-auth', 'true');
+    if (isAuthenticated) {
+      // 使用认证服务设置认证状态，默认记住登录状态
+      authService.setAuthenticated(true, authService.isRememberMeSet());
     }
-  }, [isAuthenticated, VITE_ACCESS_PASSWORD]);
+  }, [isAuthenticated]);
 
   useEffect(() => {
     console.log("哇真的是你啊");
@@ -76,23 +81,34 @@ const AppContainer = () => {
     setSettings(prev => ({ ...prev, ...newSettings }));
   }, [setSettings]);
 
-  const handleNewChat = useCallback((personaId?: string | null) => { 
-    const persona = personaId ? personas.find(p => p.id === personaId) : null;
+  const handleNewChat = useCallback((personaId?: string | null) => {
+    const selectedPersonaId = personaId ?? settings.defaultPersona;
+    const persona = selectedPersonaId ? personas.find(p => p && p.id === selectedPersonaId) : null;
+
     if (persona) {
-      const newChatSession: ChatSession = {
-        id: crypto.randomUUID(),
-        title: persona?.name || 'New Persona Chat',
-        icon: persona?.avatar.type === 'emoji' ? persona.avatar.value : '💬',
-        messages: [], createdAt: Date.now(), model: settings.defaultModel,
-        folderId: null, personaId: personaId, isStudyMode: isNextChatStudyMode,
-      };
-      setChats(prev => [newChatSession, ...prev]);
-      setActiveChatId(newChatSession.id);
-      setIsNextChatStudyMode(false);
-    } else { setActiveChatId(null); }
-    setSearchQuery(''); chatDataHandlers.setSuggestedReplies([]); 
-    setIsMobileSidebarOpen(false); setCurrentView('chat');
-  }, [setActiveChatId, chatDataHandlers.setSuggestedReplies, settings.defaultModel, setChats, personas, isNextChatStudyMode, setIsNextChatStudyMode]);
+        const newChatSession: ChatSession = {
+            id: crypto.randomUUID(),
+            title: persona.name || 'New Persona Chat',
+            icon: persona.avatar.type === 'emoji' ? persona.avatar.value : '💬',
+            messages: [],
+            createdAt: Date.now(),
+            model: settings.defaultModel,
+            folderId: null,
+            personaId: persona.id,
+            isStudyMode: isNextChatStudyMode,
+        };
+        setChats(prev => [newChatSession, ...prev]);
+        setActiveChatId(newChatSession.id);
+        setIsNextChatStudyMode(false);
+    } else {
+        setActiveChatId(null);
+    }
+
+    setSearchQuery('');
+    chatDataHandlers.setSuggestedReplies([]);
+    setIsMobileSidebarOpen(false);
+    setCurrentView('chat');
+}, [settings.defaultPersona, settings.defaultModel, personas, isNextChatStudyMode, setChats, setActiveChatId, setIsNextChatStudyMode, chatDataHandlers.setSuggestedReplies]);
 
   const handleSelectChat = useCallback((id: string) => { setActiveChatId(id); chatDataHandlers.setSuggestedReplies([]); setIsMobileSidebarOpen(false); setCurrentView('chat'); }, [setActiveChatId, chatDataHandlers.setSuggestedReplies]);
   
@@ -103,18 +119,25 @@ const AppContainer = () => {
   
   const handleOpenEditor = (persona: Persona | null) => { setEditingPersona(persona); setCurrentView('editor'); }
   const handleSavePersona = (personaToSave: Persona) => { savePersonas(personaToSave); setCurrentView('personas'); };
-  const handleDeletePersona = (id: string) => setPersonas(p => p.filter(persona => persona.id !== id));
+  const handleDeletePersona = (id: string) => {
+    deletePersona(id);
+  };
 
   const handleImport = (file: File) => {
     importData(file).then(({ settings, chats, folders, personas: importedPersonas }) => {
         if (settings) handleSettingsChange(settings);
         if (chats) setChats(chats);
         if (folders) setFolders(folders);
-        if (importedPersonas) setPersonas(p => [...p.filter(p => p.isDefault), ...importedPersonas]);
+        if (importedPersonas) {
+          // 确保不会重复添加角色
+          const existingPersonaIds = new Set(personas.map(p => p && p.id).filter(Boolean));
+          const newPersonas = importedPersonas.filter(p => p && !existingPersonaIds.has(p.id));
+          setPersonas(p => [...p.filter(p => p && p.isDefault), ...newPersonas]);
+        }
         addToast("Import successful!", 'success');
-    }).catch(err => { 
+    }).catch(err => {
         addToast("Invalid backup file.", 'error');
-        console.error(err); 
+        console.error(err);
     });
   };
 
@@ -123,11 +146,11 @@ const AppContainer = () => {
         title: t('clearHistory'),
         message: t('clearHistoryConfirm'),
         onConfirm: () => {
-            clearAllData(); 
-            setChats([]); 
-            setFolders([]); 
-            setPersonas(p => p.filter(p => p.isDefault)); 
-            setTranslationHistory([]); 
+            clearAllData();
+            setChats([]);
+            setFolders([]);
+            setPersonas(p => p.filter(p => p && p.isDefault));
+            setTranslationHistory([]);
             setActiveChatId(null);
             setConfirmation(null);
             addToast("All data cleared.", 'success');
@@ -135,8 +158,13 @@ const AppContainer = () => {
     });
   };
 
-  if (VITE_ACCESS_PASSWORD && !isAuthenticated) {
-    return <PasswordView onVerified={() => setIsAuthenticated(true)} />;
+  // 检查是否设置了密码
+  const hasPassword = settings.password && settings.password.trim() !== '';
+  if (hasPassword && !isAuthenticated) {
+    return <PasswordView onVerified={(rememberMe) => {
+      setIsAuthenticated(true);
+      authService.setAuthenticated(true, rememberMe);
+    }} />;
   }
   
   return (
@@ -150,7 +178,16 @@ const AppContainer = () => {
                 <ChatView chatSession={activeChat} personas={personas} onSendMessage={handleSendMessage} isLoading={isLoading} onCancelGeneration={handleCancel} currentModel={settings.defaultModel} onSetCurrentModel={(model) => handleSettingsChange({ defaultModel: model })} onSetModelForActiveChat={chatDataHandlers.handleSetModelForActiveChat} availableModels={availableModels} isSidebarCollapsed={isSidebarCollapsed} onToggleSidebar={() => setIsSidebarCollapsed(p => !p)} onToggleMobileSidebar={() => setIsMobileSidebarOpen(p => !p)} onNewChat={() => handleNewChat(null)} onImageClick={setLightboxImage} suggestedReplies={chatDataHandlers.suggestedReplies} settings={settings} onDeleteMessage={handleDeleteMessage} onUpdateMessageContent={handleUpdateMessageContent} onRegenerate={handleRegenerate} onEditAndResubmit={handleEditAndResubmit} onShowCitations={setCitationChunks} onDeleteChat={chatDataHandlers.handleDeleteChat} onEditChat={setEditingChat} onToggleStudyMode={chatDataHandlers.handleToggleStudyMode} isNextChatStudyMode={isNextChatStudyMode} onToggleNextChatStudyMode={setIsNextChatStudyMode} />
               </ViewContainer>
               <ViewContainer view="personas" activeView={currentView}>
-                <RolesView personas={personas} onStartChat={handleNewChat} onEditPersona={handleOpenEditor} onCreatePersona={() => handleOpenEditor(null)} onDeletePersona={handleDeletePersona} onClose={() => setCurrentView('chat')} />
+                <RolesView
+                  personas={personas}
+                  onStartChat={handleNewChat}
+                  onEditPersona={handleOpenEditor}
+                  onCreatePersona={() => handleOpenEditor(null)}
+                  onDeletePersona={handleDeletePersona}
+                  onClose={() => setCurrentView('chat')}
+                  error={error}
+                  clearError={clearError}
+                />
               </ViewContainer>
               <ViewContainer view="archive" activeView={currentView}>
                 <ArchiveView chats={chats} onSelectChat={handleSelectChat} onUnarchiveChat={(id) => chatDataHandlers.handleArchiveChat(id, false)} onDeleteChat={chatDataHandlers.handleDeleteChat} onEditChat={setEditingChat} onClose={() => setCurrentView('chat')} />
@@ -164,7 +201,7 @@ const AppContainer = () => {
           </div>
         </div>
         
-        {isSettingsOpen && <SettingsModal settings={settings} onClose={() => setIsSettingsOpen(false)} onSettingsChange={handleSettingsChange} onExportSettings={() => exportData({ settings })} onExportAll={() => exportData({ chats, folders, settings, personas: personas.filter(p => !p.isDefault) })} onImport={handleImport} onClearAll={handleClearAll} availableModels={availableModels} />}
+        {isSettingsOpen && <SettingsModal settings={settings} onClose={() => setIsSettingsOpen(false)} onSettingsChange={handleSettingsChange} onExportSettings={() => exportData({ settings })} onExportAll={() => exportData({ chats, folders, settings, personas: personas.filter(p => p && !p.isDefault) })} onImport={handleImport} onClearAll={handleClearAll} availableModels={availableModels} personas={personas} />}
         {editingChat && <EditChatModal chat={editingChat} onClose={() => setEditingChat(null)} onSave={chatDataHandlers.handleUpdateChatDetails} />}
         {editingFolder && <FolderActionModal folder={editingFolder === 'new' ? null : editingFolder} onClose={() => setEditingFolder(null)} onSave={editingFolder === 'new' ? chatDataHandlers.handleNewFolder : chatDataHandlers.handleUpdateFolder} />}
         {lightboxImage && <ImageLightbox src={lightboxImage} onClose={() => setLightboxImage(null)} />}
