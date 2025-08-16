@@ -49,7 +49,7 @@ export const ChatView: React.FC<ChatViewProps> = (props) => {
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [chatInput, setChatInput] = useState('');
 
-  const activePersona = chatSession?.personaId ? personas.find(p => p.id === chatSession.personaId) : null;
+  const activePersona = chatSession?.personaId ? personas.find(p => p && p.id === chatSession.personaId) : null;
 
   const getDefaultToolConfig = useCallback(() => ({ codeExecution: false, googleSearch: false, urlContext: false }), []);
   const [toolConfig, setToolConfig] = useState(getDefaultToolConfig());

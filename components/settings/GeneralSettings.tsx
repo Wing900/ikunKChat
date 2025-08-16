@@ -1,5 +1,5 @@
 import React from 'react';
-import { Settings } from '../../types';
+import { Settings, Persona } from '../../types';
 import { CustomSelect, SelectOption } from '../CustomSelect';
 import { SettingsItem } from '../SettingsItem';
 import { Icon } from '../Icon';
@@ -8,18 +8,25 @@ import { useLocalization } from '../../contexts/LocalizationContext';
 interface GeneralSettingsProps {
   settings: Settings;
   onSettingsChange: (newSettings: Partial<Settings>) => void;
+  personas: Persona[];
   visibleIds: Set<string>;
 }
 
-export const GeneralSettings: React.FC<GeneralSettingsProps> = ({ settings, onSettingsChange, visibleIds }) => {
+export const GeneralSettings: React.FC<GeneralSettingsProps> = ({ settings, onSettingsChange, personas, visibleIds }) => {
   const { t } = useLocalization();
   const languageOptions: SelectOption[] = [{ value: 'en', label: t('english') }, { value: 'zh', label: t('chinese') }];
+  const personaOptions: SelectOption[] = personas.filter(p => p).map(p => ({ value: p.id, label: p.name }));
   
   return (
     <>
       {visibleIds.has('language') && (
         <SettingsItem label={t('language')} description={t('languageDesc')}>
           <CustomSelect options={languageOptions} selectedValue={settings.language} onSelect={(value) => onSettingsChange({ language: value as 'en' | 'zh' })} className="w-36" />
+        </SettingsItem>
+      )}
+      {visibleIds.has('defaultPersona') && (
+        <SettingsItem label={t('defaultPersona')} description={t('defaultPersonaDesc')}>
+          <CustomSelect options={personaOptions} selectedValue={settings.defaultPersona} onSelect={(value) => onSettingsChange({ defaultPersona: value as string })} className="w-48" />
         </SettingsItem>
       )}
       {visibleIds.has('theme') && (
@@ -50,6 +57,17 @@ export const GeneralSettings: React.FC<GeneralSettingsProps> = ({ settings, onSe
             selectedValue={settings.fontFamily}
             onSelect={(value) => onSettingsChange({ fontFamily: value as any })}
             className="w-48"
+          />
+        </SettingsItem>
+      )}
+      {visibleIds.has('password') && (
+        <SettingsItem label={t('password')} description={t('passwordDesc')}>
+          <input
+            type="password"
+            value={settings.password || ''}
+            onChange={e => onSettingsChange({ password: e.target.value })}
+            placeholder={t('passwordPlaceholder')}
+            className="input-glass w-60"
           />
         </SettingsItem>
       )}

@@ -13,8 +13,8 @@ interface AdvancedSettingsProps {
   availableModels: string[];
 }
 
-const isApiKeySetByEnv = !!process.env.API_KEY;
-const isApiBaseUrlSetByEnv = !!process.env.API_BASE_URL;
+const isApiKeySetByEnv = false;
+const isApiBaseUrlSetByEnv = false;
 
 export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({ settings, onSettingsChange, visibleIds, availableModels }) => {
   const { t } = useLocalization();
