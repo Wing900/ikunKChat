@@ -60,17 +60,6 @@ export const GeneralSettings: React.FC<GeneralSettingsProps> = ({ settings, onSe
           />
         </SettingsItem>
       )}
-      {visibleIds.has('password') && (
-        <SettingsItem label={t('password')} description={t('passwordDesc')}>
-          <input
-            type="password"
-            value={settings.password || ''}
-            onChange={e => onSettingsChange({ password: e.target.value })}
-            placeholder={t('passwordPlaceholder')}
-            className="input-glass w-60"
-          />
-        </SettingsItem>
-      )}
     </>
   );
 };

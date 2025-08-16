@@ -139,9 +139,9 @@ class AuthService {
    * @returns 密码是否正确
    */
   verifyPassword(password: string): boolean {
-    // 不再使用环境变量，密码由用户在设置中配置
-    const settings = JSON.parse(localStorage.getItem('kchat-settings') || '{}');
-    return password === (settings.password || '');
+    // 只使用环境变量中的站长密码
+    const envPassword = (import.meta as any).env.VITE_ACCESS_PASSWORD;
+    return password === (envPassword || '');
   }
 
   /**

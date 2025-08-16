@@ -30,8 +30,14 @@ type View = 'chat' | 'personas' | 'editor' | 'archive' | 'translate';
 const AppContainer = () => {
   // 不再使用环境变量，密码由用户在设置中配置
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    const settings = JSON.parse(localStorage.getItem('kchat-settings') || '{}');
-    return !settings.password || authService.isAuthenticated();
+    // 检查是否设置了环境变量密码
+    const envPassword = (import.meta as any).env.VITE_ACCESS_PASSWORD;
+    if (envPassword && envPassword.trim() !== '') {
+      // 如果设置了环境变量密码，则必须验证
+      return authService.isAuthenticated();
+    }
+    // 如果没有设置环境变量密码，则直接进入
+    return true;
   });
 
   const { settings, setSettings, availableModels, isStorageLoaded } = useSettings();
@@ -158,8 +164,9 @@ const AppContainer = () => {
     });
   };
 
-  // 检查是否设置了密码
-  const hasPassword = settings.password && settings.password.trim() !== '';
+  // 检查是否设置了环境变量密码
+  const envPassword = (import.meta as any).env.VITE_ACCESS_PASSWORD;
+  const hasPassword = envPassword && envPassword.trim() !== '';
   if (hasPassword && !isAuthenticated) {
     return <PasswordView onVerified={(rememberMe) => {
       setIsAuthenticated(true);
