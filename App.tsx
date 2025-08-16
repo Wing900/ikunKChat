@@ -1,17 +1,19 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, lazy, Suspense } from 'react';
 import { Sidebar } from './components/sidebar/Sidebar';
 import { ChatView } from './components/ChatView';
 import { EditChatModal } from './components/EditChatModal';
 import { FolderActionModal } from './components/FolderActionModal';
-import { ImageLightbox } from './components/ImageLightbox';
-import { SettingsModal } from './components/settings/SettingsModal';
 import { CitationDrawer } from './components/CitationDrawer';
-import { RolesView } from './components/RolesView';
-import { PersonaEditor } from './components/persona/PersonaEditor';
-import { ArchiveView } from './components/ArchiveView';
-import TranslateView from './components/translator/TranslateView';
 import { ToastContainer } from './components/ToastContainer';
-import { ConfirmationModal } from './components/ConfirmationModal';
+
+// Lazy load components
+const ImageLightbox = lazy(() => import('./components/ImageLightbox').then(module => ({ default: module.ImageLightbox })));
+const SettingsModal = lazy(() => import('./components/settings/SettingsModal').then(module => ({ default: module.SettingsModal })));
+const RolesView = lazy(() => import('./components/RolesView').then(module => ({ default: module.RolesView })));
+const PersonaEditor = lazy(() => import('./components/persona/PersonaEditor').then(module => ({ default: module.PersonaEditor })));
+const ArchiveView = lazy(() => import('./components/ArchiveView').then(module => ({ default: module.ArchiveView })));
+const TranslateView = lazy(() => import('./components/translator/TranslateView')); // This is a default export
+const ConfirmationModal = lazy(() => import('./components/ConfirmationModal').then(module => ({ default: module.ConfirmationModal })));
 import PasswordView from './components/PasswordView';
 import { ChatSession, Folder, Settings, Persona } from './types';
 import { LocalizationProvider, useLocalization } from './contexts/LocalizationContext';
@@ -181,6 +183,7 @@ const AppContainer = () => {
         <Sidebar chats={chats} folders={folders} activeChatId={activeChatId} onNewChat={() => handleNewChat(null)} onSelectChat={handleSelectChat} onDeleteChat={chatDataHandlers.handleDeleteChat} onEditChat={setEditingChat} onArchiveChat={(id) => chatDataHandlers.handleArchiveChat(id, true)} onNewFolder={() => setEditingFolder('new')} onEditFolder={setEditingFolder} onDeleteFolder={chatDataHandlers.handleDeleteFolder} onMoveChatToFolder={chatDataHandlers.handleMoveChatToFolder} isCollapsed={isSidebarCollapsed} onToggleCollapse={() => setIsSidebarCollapsed(p => !p)} isMobileSidebarOpen={isMobileSidebarOpen} onToggleMobileSidebar={() => setIsMobileSidebarOpen(false)} searchQuery={searchQuery} onSetSearchQuery={setSearchQuery} onOpenSettings={() => setIsSettingsOpen(true)} onOpenPersonas={() => handleOpenView('personas')} onOpenArchive={() => handleOpenView('archive')} onOpenTranslate={() => handleOpenView('translate')} />
         <div className={`flex-1 flex flex-col h-full transition-all duration-300 ${isSidebarCollapsed ? 'p-3 pb-2' : 'p-3 pb-2 md:pl-0'}`}>
           <div className="view-wrapper">
+            <Suspense fallback={<div className="flex items-center justify-center h-full">Loading...</div>}>
               <ViewContainer view="chat" activeView={currentView}>
                 <ChatView chatSession={activeChat} personas={personas} onSendMessage={handleSendMessage} isLoading={isLoading} onCancelGeneration={handleCancel} currentModel={settings.defaultModel} onSetCurrentModel={(model) => handleSettingsChange({ defaultModel: model })} onSetModelForActiveChat={chatDataHandlers.handleSetModelForActiveChat} availableModels={availableModels} isSidebarCollapsed={isSidebarCollapsed} onToggleSidebar={() => setIsSidebarCollapsed(p => !p)} onToggleMobileSidebar={() => setIsMobileSidebarOpen(p => !p)} onNewChat={() => handleNewChat(null)} onImageClick={setLightboxImage} suggestedReplies={chatDataHandlers.suggestedReplies} settings={settings} onDeleteMessage={handleDeleteMessage} onUpdateMessageContent={handleUpdateMessageContent} onRegenerate={handleRegenerate} onEditAndResubmit={handleEditAndResubmit} onShowCitations={setCitationChunks} onDeleteChat={chatDataHandlers.handleDeleteChat} onEditChat={setEditingChat} onToggleStudyMode={chatDataHandlers.handleToggleStudyMode} isNextChatStudyMode={isNextChatStudyMode} onToggleNextChatStudyMode={setIsNextChatStudyMode} />
               </ViewContainer>
@@ -205,15 +208,20 @@ const AppContainer = () => {
                <ViewContainer view="translate" activeView={currentView}>
                 <TranslateView settings={settings} onClose={() => setCurrentView('chat')} history={translationHistory} setHistory={setTranslationHistory} />
               </ViewContainer>
+            </Suspense>
           </div>
         </div>
         
-        {isSettingsOpen && <SettingsModal settings={settings} onClose={() => setIsSettingsOpen(false)} onSettingsChange={handleSettingsChange} onExportSettings={() => exportData({ settings })} onExportAll={() => exportData({ chats, folders, settings, personas: personas.filter(p => p && !p.isDefault) })} onImport={handleImport} onClearAll={handleClearAll} availableModels={availableModels} personas={personas} />}
+        <Suspense fallback={null}>
+          {isSettingsOpen && <SettingsModal settings={settings} onClose={() => setIsSettingsOpen(false)} onSettingsChange={handleSettingsChange} onExportSettings={() => exportData({ settings })} onExportAll={() => exportData({ chats, folders, settings, personas: personas.filter(p => p && !p.isDefault) })} onImport={handleImport} onClearAll={handleClearAll} availableModels={availableModels} personas={personas} />}
+          {lightboxImage && <ImageLightbox src={lightboxImage} onClose={() => setLightboxImage(null)} />}
+          {confirmation && <ConfirmationModal {...confirmation} onClose={() => setConfirmation(null)} />}
+        </Suspense>
+
+        {/* These modals are small and frequently used, so they are not lazy-loaded */}
         {editingChat && <EditChatModal chat={editingChat} onClose={() => setEditingChat(null)} onSave={chatDataHandlers.handleUpdateChatDetails} />}
         {editingFolder && <FolderActionModal folder={editingFolder === 'new' ? null : editingFolder} onClose={() => setEditingFolder(null)} onSave={editingFolder === 'new' ? chatDataHandlers.handleNewFolder : chatDataHandlers.handleUpdateFolder} />}
-        {lightboxImage && <ImageLightbox src={lightboxImage} onClose={() => setLightboxImage(null)} />}
         {citationChunks && <CitationDrawer chunks={citationChunks} onClose={() => setCitationChunks(null)} />}
-        {confirmation && <ConfirmationModal {...confirmation} onClose={() => setConfirmation(null)} />}
     </div>
   );
 }
