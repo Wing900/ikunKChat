@@ -15,6 +15,8 @@ const ArchiveView = lazy(() => import('./components/ArchiveView').then(module =>
 const TranslateView = lazy(() => import('./components/translator/TranslateView')); // This is a default export
 const ConfirmationModal = lazy(() => import('./components/ConfirmationModal').then(module => ({ default: module.ConfirmationModal })));
 import PasswordView from './components/PasswordView';
+const PrivacyNoticeModal = lazy(() => import('./components/PrivacyNoticeModal').then(module => ({ default: module.PrivacyNoticeModal })));
+const UpdateNoticeModal = lazy(() => import('./components/UpdateNoticeModal').then(module => ({ default: module.UpdateNoticeModal })));
 import { ChatSession, Folder, Settings, Persona } from './types';
 import { LocalizationProvider, useLocalization } from './contexts/LocalizationContext';
 import { useSettings } from './hooks/useSettings';
@@ -22,14 +24,26 @@ import { useChatData } from './hooks/useChatData';
 import { useChatMessaging } from './hooks/useChatMessaging';
 import { useToast } from './contexts/ToastContext';
 import { usePersonas } from './hooks/usePersonas';
+import { usePersonaMemories } from './hooks/usePersonaMemories';
 import { useTranslationHistory } from './hooks/useTranslationHistory';
-import { exportData, importData, clearAllData } from './services/storageService';
+import { exportData, importData, clearAllData, loadPrivacyConsent, savePrivacyConsent, loadLastReadVersion, saveLastReadVersion } from './services/storageService';
 import { authService } from './services/authService';
 import { ViewContainer } from './components/common/ViewContainer';
 
 type View = 'chat' | 'personas' | 'editor' | 'archive' | 'translate';
 
 const AppContainer = () => {
+  const PRIVACY_STATEMENT_VERSION = '1.0.0'; // 声明版本号
+
+  const [versionInfo, setVersionInfo] = useState<any>(null);
+  const [updateAvailable, setUpdateAvailable] = useState(false);
+  const [showUpdateModal, setShowUpdateModal] = useState(false);
+
+  const [hasConsented, setHasConsented] = useState(() => {
+    const consent = loadPrivacyConsent();
+    return consent?.consented && consent.version === PRIVACY_STATEMENT_VERSION;
+  });
+
   // 不再使用环境变量，密码由用户在设置中配置
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     // 检查是否设置了环境变量密码
@@ -45,6 +59,7 @@ const AppContainer = () => {
   const { settings, setSettings, availableModels, isStorageLoaded } = useSettings();
   const { chats, setChats, folders, setFolders, activeChatId, setActiveChatId, ...chatDataHandlers } = useChatData({ settings, isStorageLoaded });
   const { personas, setPersonas, savePersonas, deletePersona, error, clearError } = usePersonas({ isStorageLoaded });
+  const { memories, getMemoriesForPersona, addMemory, updateMemory, deleteMemory } = usePersonaMemories({ isStorageLoaded });
   const { translationHistory, setTranslationHistory } = useTranslationHistory({ isStorageLoaded });
   const { addToast } = useToast();
   const { t } = useLocalization();
@@ -60,6 +75,23 @@ const AppContainer = () => {
     console.log("哇真的是你啊");
     console.log("多看一眼就会爆炸");
   }, []);
+
+  useEffect(() => {
+    const checkVersion = async () => {
+      try {
+        const res = await fetch('/version.json');
+        const data = await res.json();
+        setVersionInfo(data);
+        const lastReadVersion = loadLastReadVersion();
+        if (data.version !== lastReadVersion) {
+          setUpdateAvailable(true);
+        }
+      } catch (error) {
+        console.error("Failed to fetch version info:", error);
+      }
+    };
+    checkVersion();
+  }, []);
   
   const [currentView, setCurrentView] = useState<View>('chat');
   const [editingPersona, setEditingPersona] = useState<Persona | null>(null);
@@ -69,9 +101,9 @@ const AppContainer = () => {
   const activeChat = chats.find(c => c.id === activeChatId) || null;
   const { 
     isLoading, handleSendMessage, handleCancel, handleDeleteMessage, 
-    handleUpdateMessageContent, handleRegenerate, handleEditAndResubmit 
-  } = useChatMessaging({ 
-    settings, activeChat, personas, setChats, 
+    handleUpdateMessageContent, handleRegenerate, handleEditAndResubmit
+  } = useChatMessaging({
+    settings, activeChat, personas, memories, setChats,
     setSuggestedReplies: chatDataHandlers.setSuggestedReplies, setActiveChatId, addToast,
     isNextChatStudyMode, setIsNextChatStudyMode
   });
@@ -100,7 +132,7 @@ const AppContainer = () => {
             icon: persona.avatar.type === 'emoji' ? persona.avatar.value : '💬',
             messages: [],
             createdAt: Date.now(),
-            model: settings.defaultModel,
+            model: persona.model ?? settings.defaultModel,
             folderId: null,
             personaId: persona.id,
             isStudyMode: isNextChatStudyMode,
@@ -132,7 +164,7 @@ const AppContainer = () => {
   };
 
   const handleImport = (file: File) => {
-    importData(file).then(({ settings, chats, folders, personas: importedPersonas }) => {
+    importData(file).then(({ settings, chats, folders, personas: importedPersonas, memories: importedMemories }) => {
         if (settings) handleSettingsChange(settings);
         if (chats) setChats(chats);
         if (folders) setFolders(folders);
@@ -141,6 +173,13 @@ const AppContainer = () => {
           const existingPersonaIds = new Set(personas.map(p => p && p.id).filter(Boolean));
           const newPersonas = importedPersonas.filter(p => p && !existingPersonaIds.has(p.id));
           setPersonas(p => [...p.filter(p => p && p.isDefault), ...newPersonas]);
+        }
+        if (importedMemories) {
+          // This will overwrite existing memories, which is the intended behavior for an import.
+          // A more sophisticated merge could be implemented if needed.
+          Object.keys(importedMemories).forEach(personaId => {
+            importedMemories[personaId].forEach(mem => addMemory(personaId, mem.content));
+          });
         }
         addToast("Import successful!", 'success');
     }).catch(err => {
@@ -175,12 +214,23 @@ const AppContainer = () => {
       authService.setAuthenticated(true, rememberMe);
     }} />;
   }
+
+  if (!hasConsented) {
+    return (
+      <Suspense fallback={<div className="flex items-center justify-center h-full">Loading...</div>}>
+        <PrivacyNoticeModal onConfirm={() => {
+          savePrivacyConsent(PRIVACY_STATEMENT_VERSION);
+          setHasConsented(true);
+        }} />
+      </Suspense>
+    );
+  }
   
   return (
     <div className="h-dvh-screen w-screen flex bg-[var(--bg-image)] text-[var(--text-color)] overflow-hidden">
         <ToastContainer />
         {isMobileSidebarOpen && <div className="fixed inset-0 bg-black/30 z-30 md:hidden" onClick={() => setIsMobileSidebarOpen(false)} aria-hidden="true"/>}
-        <Sidebar chats={chats} folders={folders} activeChatId={activeChatId} onNewChat={() => handleNewChat(null)} onSelectChat={handleSelectChat} onDeleteChat={chatDataHandlers.handleDeleteChat} onEditChat={setEditingChat} onArchiveChat={(id) => chatDataHandlers.handleArchiveChat(id, true)} onNewFolder={() => setEditingFolder('new')} onEditFolder={setEditingFolder} onDeleteFolder={chatDataHandlers.handleDeleteFolder} onMoveChatToFolder={chatDataHandlers.handleMoveChatToFolder} isCollapsed={isSidebarCollapsed} onToggleCollapse={() => setIsSidebarCollapsed(p => !p)} isMobileSidebarOpen={isMobileSidebarOpen} onToggleMobileSidebar={() => setIsMobileSidebarOpen(false)} searchQuery={searchQuery} onSetSearchQuery={setSearchQuery} onOpenSettings={() => setIsSettingsOpen(true)} onOpenPersonas={() => handleOpenView('personas')} onOpenArchive={() => handleOpenView('archive')} onOpenTranslate={() => handleOpenView('translate')} />
+        <Sidebar showUpdateNotice={updateAvailable} onOpenUpdateNotice={() => setShowUpdateModal(true)} chats={chats} folders={folders} activeChatId={activeChatId} onNewChat={() => handleNewChat(null)} onSelectChat={handleSelectChat} onDeleteChat={chatDataHandlers.handleDeleteChat} onEditChat={setEditingChat} onArchiveChat={(id) => chatDataHandlers.handleArchiveChat(id, true)} onNewFolder={() => setEditingFolder('new')} onEditFolder={setEditingFolder} onDeleteFolder={chatDataHandlers.handleDeleteFolder} onMoveChatToFolder={chatDataHandlers.handleMoveChatToFolder} isCollapsed={isSidebarCollapsed} onToggleCollapse={() => setIsSidebarCollapsed(p => !p)} isMobileSidebarOpen={isMobileSidebarOpen} onToggleMobileSidebar={() => setIsMobileSidebarOpen(false)} searchQuery={searchQuery} onSetSearchQuery={setSearchQuery} onOpenSettings={() => setIsSettingsOpen(true)} onOpenPersonas={() => handleOpenView('personas')} onOpenArchive={() => handleOpenView('archive')} onOpenTranslate={() => handleOpenView('translate')} />
         <div className={`flex-1 flex flex-col h-full transition-all duration-300 ${isSidebarCollapsed ? 'p-3 pb-2' : 'p-3 pb-2 md:pl-0'}`}>
           <div className="view-wrapper">
             <Suspense fallback={<div className="flex items-center justify-center h-full">Loading...</div>}>
@@ -203,7 +253,17 @@ const AppContainer = () => {
                 <ArchiveView chats={chats} onSelectChat={handleSelectChat} onUnarchiveChat={(id) => chatDataHandlers.handleArchiveChat(id, false)} onDeleteChat={chatDataHandlers.handleDeleteChat} onEditChat={setEditingChat} onClose={() => setCurrentView('chat')} />
               </ViewContainer>
               <ViewContainer view="editor" activeView={currentView}>
-                <PersonaEditor personaToEdit={editingPersona} settings={settings} onSave={handleSavePersona} onClose={() => setCurrentView('personas')} />
+                <PersonaEditor
+                  personaToEdit={editingPersona}
+                  settings={settings}
+                  onSave={handleSavePersona}
+                  onClose={() => setCurrentView('personas')}
+                  availableModels={availableModels}
+                  memories={editingPersona ? getMemoriesForPersona(editingPersona.id) : []}
+                  onAddMemory={addMemory}
+                  onUpdateMemory={updateMemory}
+                  onDeleteMemory={deleteMemory}
+                />
               </ViewContainer>
                <ViewContainer view="translate" activeView={currentView}>
                 <TranslateView settings={settings} onClose={() => setCurrentView('chat')} history={translationHistory} setHistory={setTranslationHistory} />
@@ -213,9 +273,13 @@ const AppContainer = () => {
         </div>
         
         <Suspense fallback={null}>
-          {isSettingsOpen && <SettingsModal settings={settings} onClose={() => setIsSettingsOpen(false)} onSettingsChange={handleSettingsChange} onExportSettings={() => exportData({ settings })} onExportAll={() => exportData({ chats, folders, settings, personas: personas.filter(p => p && !p.isDefault) })} onImport={handleImport} onClearAll={handleClearAll} availableModels={availableModels} personas={personas} />}
+          {isSettingsOpen && <SettingsModal settings={settings} onClose={() => setIsSettingsOpen(false)} onSettingsChange={handleSettingsChange} onExportSettings={() => exportData({ settings })} onExportAll={() => exportData({ chats, folders, settings, personas: personas.filter(p => p && !p.isDefault), memories })} onImport={handleImport} onClearAll={handleClearAll} availableModels={availableModels} personas={personas} />}
           {lightboxImage && <ImageLightbox src={lightboxImage} onClose={() => setLightboxImage(null)} />}
           {confirmation && <ConfirmationModal {...confirmation} onClose={() => setConfirmation(null)} />}
+          {showUpdateModal && versionInfo && <UpdateNoticeModal versionInfo={versionInfo} onClose={() => {
+            setShowUpdateModal(false);
+            saveLastReadVersion(versionInfo.version);
+          }} />}
         </Suspense>
 
         {/* These modals are small and frequently used, so they are not lazy-loaded */}

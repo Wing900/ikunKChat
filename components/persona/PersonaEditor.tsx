@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Persona, Settings } from '../../types';
+import { Persona, Settings, PersonaMemory } from '../../types';
 import { Icon } from '../Icon';
 import { useLocalization } from '../../contexts/LocalizationContext';
 import { fileToData } from '../../utils/fileUtils';
@@ -7,6 +7,9 @@ import { Switch } from '../Switch';
 import { useToast } from '../../contexts/ToastContext';
 import { PersonaAvatar } from '../common/PersonaAvatar';
 import { AIBuilder } from './AIBuilder';
+import { MemoryManager } from './MemoryManager';
+import { CustomSelect, SelectOption } from '../CustomSelect';
+import { formatModelName } from '../../utils/textUtils';
 
 const newPersonaTemplate: Persona = {
   id: '',
@@ -23,9 +26,14 @@ interface PersonaEditorProps {
   onSave: (persona: Persona) => void;
   onClose: () => void;
   settings: Settings;
+  availableModels: string[];
+  memories: PersonaMemory[];
+  onAddMemory: (personaId: string, content: string) => void;
+  onUpdateMemory: (personaId: string, memoryId: string, content: string) => void;
+  onDeleteMemory: (personaId: string, memoryId: string) => void;
 }
 
-export const PersonaEditor: React.FC<PersonaEditorProps> = ({ personaToEdit, onSave, onClose, settings }) => {
+export const PersonaEditor: React.FC<PersonaEditorProps> = ({ personaToEdit, onSave, onClose, settings, availableModels, memories, onAddMemory, onUpdateMemory, onDeleteMemory }) => {
   const { t } = useLocalization();
   const { addToast } = useToast();
   const [persona, setPersona] = useState<Persona>(personaToEdit || newPersonaTemplate);
@@ -113,11 +121,20 @@ export const PersonaEditor: React.FC<PersonaEditorProps> = ({ personaToEdit, onS
                         <div className="flex justify-between items-center"><label className="font-medium">{t('googleSearch')}</label><Switch size="sm" checked={persona.tools.googleSearch} onChange={e => handleUpdate({tools: {...persona.tools, googleSearch: e.target.checked}})} /></div>
                         <div className="flex justify-between items-center"><label className="font-medium">{t('codeExecution')}</label><Switch size="sm" checked={persona.tools.codeExecution} onChange={e => handleUpdate({tools: { ...persona.tools, codeExecution: e.target.checked }})} /></div>
                         <div className="flex justify-between items-center"><label className="font-medium">{t('urlContext')}</label><Switch size="sm" checked={persona.tools.urlContext} onChange={e => handleUpdate({tools: { ...persona.tools, urlContext: e.target.checked }})} /></div>
+                      </div>
                     </div>
-                </div>
-                <div className="form-group">
-                    <label>{t('modelParameters')}</label>
-                    <div className="p-4 rounded-[var(--radius-2xl)] glass-pane flex flex-col gap-4">
+                    <div className="form-group">
+                      <label>{t('modelParameters')}</label>
+                      <div className="p-4 rounded-[var(--radius-2xl)] glass-pane flex flex-col gap-4">
+                        <div className="flex justify-between items-center">
+                          <label className="font-medium">{t('model')}</label>
+                          <CustomSelect
+                            options={availableModels.map(m => ({ value: m, label: formatModelName(m) }))}
+                            selectedValue={persona.model ?? settings.defaultModel}
+                            onSelect={value => handleUpdate({ model: value })}
+                            className="w-48"
+                          />
+                        </div>
                         <div className="flex justify-between items-center">
                             <label className="font-medium">{t('temperature')}</label>
                             <div className="flex items-center gap-4 w-40">
@@ -135,6 +152,21 @@ export const PersonaEditor: React.FC<PersonaEditorProps> = ({ personaToEdit, onS
                         </div>
                     </div>
                 </div>
+               <div className="form-group">
+                   <div className="flex justify-between items-center">
+                       <label className="font-medium">{t('personaMemory')}</label>
+                       <Switch size="sm" checked={persona.memoryEnabled ?? false} onChange={e => handleUpdate({ memoryEnabled: e.target.checked })} />
+                   </div>
+               </div>
+               {persona.memoryEnabled && persona.id && (
+                   <MemoryManager
+                       personaId={persona.id}
+                       memories={memories}
+                       onAddMemory={onAddMemory}
+                       onUpdateMemory={onUpdateMemory}
+                       onDeleteMemory={onDeleteMemory}
+                   />
+               )}
             </div>
         </div>
         <div className="persona-editor-builder-pane w-full md:w-auto h-96 md:h-auto">

@@ -27,10 +27,12 @@ interface SidebarProps {
   onOpenPersonas: () => void;
   onOpenArchive: () => void;
   onOpenTranslate: () => void;
+  showUpdateNotice: boolean;
+  onOpenUpdateNotice: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = (props) => {
-  const { chats, folders, activeChatId, onSelectChat, onNewChat, onDeleteChat, onEditChat, onArchiveChat, isCollapsed, onToggleCollapse, isMobileSidebarOpen, onToggleMobileSidebar, searchQuery, onSetSearchQuery, onNewFolder, onEditFolder, onDeleteFolder, onMoveChatToFolder, onOpenSettings, onOpenPersonas, onOpenArchive, onOpenTranslate } = props;
+  const { chats, folders, activeChatId, onSelectChat, onNewChat, onDeleteChat, onEditChat, onArchiveChat, isCollapsed, onToggleCollapse, isMobileSidebarOpen, onToggleMobileSidebar, searchQuery, onSetSearchQuery, onNewFolder, onEditFolder, onDeleteFolder, onMoveChatToFolder, onOpenSettings, onOpenPersonas, onOpenArchive, onOpenTranslate, showUpdateNotice, onOpenUpdateNotice } = props;
   const { t } = useLocalization();
   
   const [deletingFolderId, setDeletingFolderId] = useState<string | null>(null);
@@ -177,12 +179,19 @@ export const Sidebar: React.FC<SidebarProps> = (props) => {
                 <Icon icon="archive" className="w-5 h-5" />
                 <span className="font-semibold">{t('archive')}</span>
             </button>
+            {showUpdateNotice && (
+              <button onClick={onOpenUpdateNotice} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-[var(--radius-2xl)] text-[var(--text-color)] hover:bg-black/10 dark:hover:bg-white/10 relative" data-tooltip={t('updateAvailable')} data-tooltip-placement="right">
+                  <Icon icon="gift" className="w-5 h-5" />
+                  <span className="font-semibold">{t('updateAvailable')}</span>
+                  <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-[var(--glass-bg)]"></span>
+              </button>
+            )}
             <button onClick={onOpenSettings} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-[var(--radius-2xl)] text-[var(--text-color)] hover:bg-black/10 dark:hover:bg-white/10" data-tooltip={t('settings')} data-tooltip-placement="right">
                 <Icon icon="settings" className="w-5 h-5" />
                 <span className="font-semibold">{t('settings')}</span>
             </button>
-        </div>
-      </div>
-    </aside>
-  );
-};
+          </div>
+          </div>
+          </aside>
+          );
+          };

@@ -1,4 +1,4 @@
-import { ChatSession, Folder, Settings, Persona, TranslationHistoryItem } from '../types';
+import { ChatSession, Folder, Settings, Persona, TranslationHistoryItem, PersonaMemory } from '../types';
 
 const CHATS_KEY = 'kchat-sessions';
 const FOLDERS_KEY = 'kchat-folders';
@@ -6,8 +6,11 @@ const SETTINGS_KEY = 'kchat-settings';
 const ROLES_KEY = 'kchat-roles';
 const TRANSLATION_HISTORY_KEY = 'kchat-translation-history';
 const CUSTOM_LANGUAGES_KEY = 'kchat-custom-languages';
+const PERSONA_MEMORIES_KEY = 'kchat-persona-memories';
 const DATA_VERSION_KEY = 'kchat-data-version';
-const CURRENT_DATA_VERSION = '1.1.0'; // 数据版本号，用于数据迁移
+const CURRENT_DATA_VERSION = '1.2.0'; // 数据版本号，用于数据迁移
+const PRIVACY_CONSENT_KEY = 'kchat-privacy-consent';
+const LAST_READ_VERSION_KEY = 'kchat-last-read-version';
 
 // --- Loaders ---
 export const loadChats = (): ChatSession[] => {
@@ -258,6 +261,15 @@ export const loadCustomLanguages = (): { code: string, name: string }[] => {
     }
 };
 
+export const loadPersonaMemories = (): Record<string, PersonaMemory[]> => {
+    try {
+        const saved = localStorage.getItem(PERSONA_MEMORIES_KEY);
+        return saved ? JSON.parse(saved) : {};
+    } catch (error) {
+        console.error("Failed to load persona memories from localStorage", error);
+        return {};
+    }
+};
 
 // --- Savers ---
 export const saveChats = (chats: ChatSession[]) => {
@@ -370,10 +382,22 @@ export const saveCustomLanguages = (languages: { code: string, name: string }[])
     }
 };
 
+export const savePersonaMemories = (memories: Record<string, PersonaMemory[]>) => {
+    try {
+        localStorage.setItem(PERSONA_MEMORIES_KEY, JSON.stringify(memories));
+    } catch (error) {
+        console.error("Failed to save persona memories to localStorage", error);
+    }
+};
+
 // --- Data Management ---
-export const exportData = (data: { chats?: ChatSession[], folders?: Folder[], settings?: Settings, personas?: Persona[] }) => {
+export const exportData = (data: { chats?: ChatSession[], folders?: Folder[], settings?: Settings, personas?: Persona[], memories?: Record<string, PersonaMemory[]> }) => {
     const isFullExport = !!data.chats;
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const dataToExport = { ...data };
+    if (data.memories) {
+        dataToExport.memories = data.memories;
+    }
+    const blob = new Blob([JSON.stringify(dataToExport, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -382,14 +406,14 @@ export const exportData = (data: { chats?: ChatSession[], folders?: Folder[], se
     URL.revokeObjectURL(url);
 };
 
-export const importData = (file: File): Promise<{ chats?: ChatSession[], folders?: Folder[], settings?: Settings, personas?: Persona[] }> => {
+export const importData = (file: File): Promise<{ chats?: ChatSession[], folders?: Folder[], settings?: Settings, personas?: Persona[], memories?: Record<string, PersonaMemory[]> }> => {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = (e) => {
             try {
                 const data = JSON.parse(e.target?.result as string);
                 // Basic validation
-                if (typeof data === 'object' && data !== null && (data.settings || data.chats || data.folders || data.personas)) {
+                if (typeof data === 'object' && data !== null && (data.settings || data.chats || data.folders || data.personas || data.memories)) {
                     resolve(data);
                 } else {
                     reject(new Error("Invalid file structure."));
@@ -410,4 +434,48 @@ export const clearAllData = () => {
     localStorage.removeItem(ROLES_KEY);
     localStorage.removeItem(TRANSLATION_HISTORY_KEY);
     localStorage.removeItem(CUSTOM_LANGUAGES_KEY);
+    localStorage.removeItem(PERSONA_MEMORIES_KEY);
+    // We don't clear privacy consent here, as it should persist
+};
+
+// --- Privacy Consent ---
+export const loadPrivacyConsent = (): { consented: boolean; version: string } | null => {
+    try {
+        const saved = localStorage.getItem(PRIVACY_CONSENT_KEY);
+        return saved ? JSON.parse(saved) : null;
+    } catch (error) {
+        console.error("Failed to load privacy consent from localStorage", error);
+        return null;
+    }
+};
+
+export const savePrivacyConsent = (version: string) => {
+    try {
+        const consent = {
+            consented: true,
+            version: version,
+            timestamp: Date.now()
+        };
+        localStorage.setItem(PRIVACY_CONSENT_KEY, JSON.stringify(consent));
+    } catch (error) {
+        console.error("Failed to save privacy consent to localStorage", error);
+    }
+};
+
+// --- Update Notification ---
+export const loadLastReadVersion = (): string | null => {
+    try {
+        return localStorage.getItem(LAST_READ_VERSION_KEY);
+    } catch (error) {
+        console.error("Failed to load last read version from localStorage", error);
+        return null;
+    }
+};
+
+export const saveLastReadVersion = (version: string) => {
+    try {
+        localStorage.setItem(LAST_READ_VERSION_KEY, version);
+    } catch (error) {
+        console.error("Failed to save last read version to localStorage", error);
+    }
 };
