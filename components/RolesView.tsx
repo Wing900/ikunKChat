@@ -163,7 +163,7 @@ export const RolesView: React.FC<RolesViewProps> = ({
               className={`p-2 rounded-full hover:bg-black/10 dark:hover:bg-white/10 ${showFilters ? 'bg-blue-100 dark:bg-blue-900' : ''}`}
               title="过滤器"
             >
-              <Icon icon="filter" className="w-5 h-5"/>
+              <Icon icon="settings" className="w-5 h-5"/>
             </button>
             <button onClick={onClose} className="p-2 rounded-full hover:bg-black/10 dark:hover:bg-white/10 -mr-2">
                 <Icon icon="close" className="w-5 h-5"/>

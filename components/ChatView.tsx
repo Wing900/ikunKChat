@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { ChatSession, Message, Settings, Persona } from '../types';
 import { Icon } from './Icon';
 import { WelcomeView } from './WelcomeView';
@@ -49,7 +49,9 @@ export const ChatView: React.FC<ChatViewProps> = (props) => {
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [chatInput, setChatInput] = useState('');
 
-  const activePersona = chatSession?.personaId ? personas.find(p => p && p.id === chatSession.personaId) : null;
+  const activePersona = useMemo(() =>
+    chatSession?.personaId ? personas.find(p => p && p.id === chatSession.personaId) : null
+  , [chatSession?.personaId, personas]);
 
   const getDefaultToolConfig = useCallback(() => ({ codeExecution: false, googleSearch: false, urlContext: false }), []);
   const [toolConfig, setToolConfig] = useState(getDefaultToolConfig());
@@ -72,14 +74,22 @@ export const ChatView: React.FC<ChatViewProps> = (props) => {
   const handleSendMessageWithTools = (message: string, files: File[]) => { onSendMessage(message, files, toolConfig); setChatInput(''); };
   const handleSendSuggestion = (suggestion: string) => onSendMessage(suggestion, [], { ...getDefaultToolConfig(), googleSearch: settings.defaultSearch });
 
-  const handleSaveEdit = (message: Message, newContent: string) => {
+  const handleSaveEdit = useCallback((message: Message, newContent: string) => {
     if (message.role === 'user') {
       props.onEditAndResubmit(message.id, newContent);
     } else {
       props.onUpdateMessageContent(message.id, newContent);
     }
     setEditingMessageId(null);
-  }
+  }, [props.onEditAndResubmit, props.onUpdateMessageContent]);
+
+  const handleCancelEdit = useCallback(() => {
+    setEditingMessageId(null);
+  }, []);
+
+  const handleCopy = useCallback((content: string) => {
+    navigator.clipboard.writeText(content);
+  }, []);
   
   const handleToggleStudyMode = (enabled: boolean) => {
     if (chatSession) {
@@ -136,7 +146,7 @@ export const ChatView: React.FC<ChatViewProps> = (props) => {
             <InternalView active={!!chatSession}>
               <div className="flex-grow overflow-y-auto p-4">
                   {(chatSession?.messages || []).map((msg, index) => (
-                    <MessageBubble key={msg.id} message={msg} index={index} onImageClick={props.onImageClick} settings={settings} persona={activePersona} isLastMessageLoading={isLoading && index === chatSession!.messages.length - 1} isEditing={editingMessageId === msg.id} onEditRequest={() => setEditingMessageId(msg.id)} onCancelEdit={() => setEditingMessageId(null)} onSaveEdit={handleSaveEdit} onDelete={props.onDeleteMessage} onRegenerate={props.onRegenerate} onCopy={(c) => navigator.clipboard.writeText(c)} onShowCitations={props.onShowCitations} />
+                    <MessageBubble key={msg.id} message={msg} index={index} onImageClick={props.onImageClick} settings={settings} persona={activePersona} isLastMessageLoading={isLoading && index === chatSession!.messages.length - 1} isEditing={editingMessageId === msg.id} onEditRequest={() => setEditingMessageId(msg.id)} onCancelEdit={handleCancelEdit} onSaveEdit={handleSaveEdit} onDelete={props.onDeleteMessage} onRegenerate={props.onRegenerate} onCopy={handleCopy} onShowCitations={props.onShowCitations} />
                   ))}
                   <div ref={messagesEndRef} />
               </div>

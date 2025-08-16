@@ -23,7 +23,7 @@ interface MessageBubbleProps {
     onShowCitations: (chunks: any[]) => void;
 }
 
-export const MessageBubble: React.FC<MessageBubbleProps> = (props) => {
+export const MessageBubble: React.FC<MessageBubbleProps> = React.memo((props) => {
   const { message, index, onImageClick, settings, persona, isEditing, onEditRequest, onCancelEdit, onSaveEdit, onDelete, onRegenerate, onCopy, onShowCitations } = props;
   const { t } = useLocalization();
   const isUser = message.role === MessageRole.USER;
@@ -141,4 +141,4 @@ export const MessageBubble: React.FC<MessageBubbleProps> = (props) => {
        {isUser && <div className="w-8 h-8 flex-shrink-0 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center text-[var(--text-color-secondary)]"><Icon icon="user" className="w-5 h-5"/></div>}
     </div>
   );
-};
+});
