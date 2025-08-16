@@ -85,6 +85,7 @@ const AppContainer = () => {
         const lastReadVersion = loadLastReadVersion();
         if (data.version !== lastReadVersion) {
           setUpdateAvailable(true);
+          setShowUpdateModal(true);
         }
       } catch (error) {
         console.error("Failed to fetch version info:", error);
@@ -278,6 +279,7 @@ const AppContainer = () => {
           {confirmation && <ConfirmationModal {...confirmation} onClose={() => setConfirmation(null)} />}
           {showUpdateModal && versionInfo && <UpdateNoticeModal versionInfo={versionInfo} onClose={() => {
             setShowUpdateModal(false);
+            setUpdateAvailable(false);
             saveLastReadVersion(versionInfo.version);
           }} />}
         </Suspense>
