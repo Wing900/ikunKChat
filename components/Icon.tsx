@@ -6,7 +6,7 @@ import { iconSet4 } from './icons/iconSet4';
 import { iconSet5 } from './icons/iconSet5';
 import { iconSet6 } from './icons/iconSet6';
 
-export type IconName = 'send' | 'plus' | 'chat' | 'user' | 'kchat' | 'sun' | 'moon' | 'chip' | 'chevron-down' | 'edit' | 'delete' | 'search' | 'menu' | 'panel-left-close' | 'folder' | 'folder-plus' | 'paperclip' | 'close' | 'file' | 'settings' | 'download' | 'upload' | 'language' | 'tools' | 'code' | 'link' | 'stop' | 'brain' | 'copy' | 'regenerate' | 'users' | 'archive' | 'unarchive' | 'eye' | 'volume-2' | 'clipboard' | 'arrow-left-right' | 'history' | 'translate-logo' | 'swap-horizontal' | 'info' | 'check-circle' | 'alert-circle' | 'graduation-cap';
+export type IconName = 'send' | 'plus' | 'chat' | 'user' | 'kchat' | 'sun' | 'moon' | 'chip' | 'chevron-down' | 'edit' | 'delete' | 'search' | 'menu' | 'panel-left-close' | 'folder' | 'folder-plus' | 'paperclip' | 'close' | 'file' | 'settings' | 'download' | 'upload' | 'language' | 'tools' | 'code' | 'link' | 'stop' | 'brain' | 'copy' | 'regenerate' | 'users' | 'archive' | 'unarchive' | 'eye' | 'volume-2' | 'clipboard' | 'arrow-left-right' | 'history' | 'translate-logo' | 'swap-horizontal' | 'info' | 'check-circle' | 'alert-circle' | 'graduation-cap' | 'gift' | 'bug' | 'message-square' | 'github';
 
 interface IconProps extends React.SVGProps<SVGSVGElement> {
   icon: IconName;

@@ -27,12 +27,11 @@ interface SidebarProps {
   onOpenPersonas: () => void;
   onOpenArchive: () => void;
   onOpenTranslate: () => void;
-  showUpdateNotice: boolean;
-  onOpenUpdateNotice: () => void;
+  children?: React.ReactNode;
 }
 
 export const Sidebar: React.FC<SidebarProps> = (props) => {
-  const { chats, folders, activeChatId, onSelectChat, onNewChat, onDeleteChat, onEditChat, onArchiveChat, isCollapsed, onToggleCollapse, isMobileSidebarOpen, onToggleMobileSidebar, searchQuery, onSetSearchQuery, onNewFolder, onEditFolder, onDeleteFolder, onMoveChatToFolder, onOpenSettings, onOpenPersonas, onOpenArchive, onOpenTranslate, showUpdateNotice, onOpenUpdateNotice } = props;
+  const { chats, folders, activeChatId, onSelectChat, onNewChat, onDeleteChat, onEditChat, onArchiveChat, isCollapsed, onToggleCollapse, isMobileSidebarOpen, onToggleMobileSidebar, searchQuery, onSetSearchQuery, onNewFolder, onEditFolder, onDeleteFolder, onMoveChatToFolder, onOpenSettings, onOpenPersonas, onOpenArchive, onOpenTranslate, children } = props;
   const { t } = useLocalization();
   
   const [deletingFolderId, setDeletingFolderId] = useState<string | null>(null);
@@ -136,7 +135,7 @@ export const Sidebar: React.FC<SidebarProps> = (props) => {
             <button onClick={onToggleCollapse} className="p-2 rounded-full hover:bg-black/10 dark:hover:bg-white/10 -mr-2 hidden md:block" aria-label={t('collapseSidebar')} data-tooltip={t('collapseSidebar')} data-tooltip-placement="left"><Icon icon="panel-left-close" className="w-5 h-5" /></button>
             <button onClick={onToggleMobileSidebar} className="p-2 rounded-full hover:bg-black/10 dark:hover:bg-white/10 -mr-2 md:hidden" aria-label={t('collapseSidebar')} data-tooltip={t('collapseSidebar')} data-tooltip-placement="left"><Icon icon="panel-left-close" className="w-5 h-5" /></button>
         </div>
-        <button onClick={onNewChat} className="w-full flex items-center justify-center gap-2 px-4 py-3 mb-4 text-lg font-semibold bg-[var(--accent-color)] text-white rounded-[var(--radius-2xl)] transition-transform hover:scale-105 active:scale-100"><Icon icon="plus" className="w-6 h-6" />{t('newChat')}</button>
+        <button onClick={() => onNewChat()} className="w-full flex items-center justify-center gap-2 px-4 py-3 mb-4 text-lg font-semibold bg-[var(--accent-color)] text-white rounded-[var(--radius-2xl)] transition-transform hover:scale-105 active:scale-100"><Icon icon="plus" className="w-6 h-6" />{t('newChat')}</button>
         <div className="sidebar-search-wrapper mb-2"><Icon icon="search" className="sidebar-search-icon w-5 h-5" /><input type="text" placeholder={t('searchHistory')} className="sidebar-search-input" value={searchQuery} onChange={(e) => onSetSearchQuery(e.target.value)} /></div>
 
         <div className="flex-grow overflow-y-auto -mr-2 pr-2 pt-2">
@@ -179,13 +178,7 @@ export const Sidebar: React.FC<SidebarProps> = (props) => {
                 <Icon icon="archive" className="w-5 h-5" />
                 <span className="font-semibold">{t('archive')}</span>
             </button>
-            {showUpdateNotice && (
-              <button onClick={onOpenUpdateNotice} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-[var(--radius-2xl)] text-[var(--text-color)] hover:bg-black/10 dark:hover:bg-white/10 relative" data-tooltip={t('updateAvailable')} data-tooltip-placement="right">
-                  <Icon icon="gift" className="w-5 h-5" />
-                  <span className="font-semibold">{t('updateAvailable')}</span>
-                  <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-[var(--glass-bg)]"></span>
-              </button>
-            )}
+            {children}
             <button onClick={onOpenSettings} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-[var(--radius-2xl)] text-[var(--text-color)] hover:bg-black/10 dark:hover:bg-white/10" data-tooltip={t('settings')} data-tooltip-placement="right">
                 <Icon icon="settings" className="w-5 h-5" />
                 <span className="font-semibold">{t('settings')}</span>

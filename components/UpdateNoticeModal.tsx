@@ -39,7 +39,7 @@ export const UpdateNoticeModal: React.FC<UpdateNoticeModalProps> = ({ versionInf
   return (
     <>
       <div className={`modal-backdrop ${isVisible ? 'visible' : ''}`} onClick={handleClose}></div>
-      <div className={`modal-dialog ${isVisible ? 'visible' : ''} glass-pane rounded-[var(--radius-2xl)] p-6 flex flex-col max-w-md`}>
+      <div className={`modal-dialog modal-dialog-md ${isVisible ? 'visible' : ''} glass-pane rounded-[var(--radius-2xl)] p-6 flex flex-col`}>
         <div className="flex items-center justify-center mb-4 flex-shrink-0 text-center">
           <div className="flex flex-col items-center">
             <div className="p-3 bg-green-500/20 rounded-full mb-2">

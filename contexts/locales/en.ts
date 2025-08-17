@@ -170,8 +170,30 @@ export const en = {
     updateAvailable: 'New Version Available',
     releaseNotes: 'Release Notes',
     gotIt: 'Got it!',
+    
+    // Update Menu
+    update: 'Update',
+    checkForUpdate: 'Check for Update',
+    checkingUpdate: 'Checking for update...',
+    upToDate: 'Up to date',
+switchModel: 'Switch Model',
+    updateNow: 'Update Now',
+    updateDetails: 'View Update Details',
+    
+    // Common
+    close: 'Close',
 
     // Persona Memory
     personaMemory: 'Persona Memory',
     addMemoryPlaceholder: 'Add a new memory...',
+
+    // About Settings
+    about: 'About',
+    versionInfo: 'Version Information',
+    version: 'Version',
+    usefulLinks: 'Useful Links',
+    sourceCode: 'Source Code',
+    reportBug: 'Report a Bug',
+    discussions: 'Discussions',
+    currentVersion: 'Current Version',
 };
