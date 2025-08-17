@@ -80,6 +80,24 @@ const AppContainer = () => {
     }
   }, [isAuthenticated]);
 
+  // 检查URL中是否有临时访问令牌
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const tempToken = urlParams.get('temp_token');
+    
+    if (tempToken) {
+      // 验证临时访问令牌
+      if (authService.verifyTempAccessToken(tempToken)) {
+        authService.setTempAccessToken(tempToken);
+        setIsAuthenticated(true);
+        
+        // 从URL中移除临时访问令牌参数
+        const newUrl = window.location.pathname + window.location.search.replace(/[?&]temp_token=[^&]*/, '');
+        window.history.replaceState({}, document.title, newUrl);
+      }
+    }
+  }, []);
+
   useEffect(() => {
     console.log("哇真的是你啊");
     console.log("多看一眼就会爆炸");
@@ -467,6 +485,11 @@ const handleSelectChat = useCallback((id: string) => { setActiveChatId(id); chat
             updateAvailable={updateAvailable}
           />
         )}
+        
+        {/* 全局页脚 */}
+        <footer className="py-4 text-center text-sm text-gray-500 dark:text-gray-400">
+          © 2025 ikunKChat
+        </footer>
     </div>
   );
 }

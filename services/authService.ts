@@ -15,6 +15,8 @@ class AuthService {
   private readonly REMEMBER_ME_KEY = 'kchat-remember-me';
   private readonly AUTH_TIMESTAMP_KEY = 'kchat-auth-timestamp';
   private readonly AUTH_EXPIRY_DAYS = 30; // 认证状态有效期30天
+  private readonly TEMP_ACCESS_TOKEN_KEY = 'kchat-temp-access-token';
+  private readonly TEMP_ACCESS_TOKEN_PARAM = 'temp_token';
   
   // 存储策略列表，按优先级排序
   private storageStrategies: AuthStorage[] = [
@@ -43,6 +45,12 @@ class AuthService {
    * 使用多重存储策略，确保在任何情况下都能正确获取认证状态
    */
   isAuthenticated(): boolean {
+    // 首先检查临时访问令牌
+    const tempToken = sessionStorage.getItem(this.TEMP_ACCESS_TOKEN_KEY);
+    if (tempToken === 'true') {
+      return true;
+    }
+    
     // 检查所有存储策略
     for (const storage of this.storageStrategies) {
       try {
@@ -128,8 +136,9 @@ class AuthService {
     
     try {
       localStorage.removeItem(this.REMEMBER_ME_KEY);
+      this.clearTempAccessToken();
     } catch (error) {
-      console.error('Failed to clear remember me flag:', error);
+      console.error('Failed to clear remember me flag or temp access token:', error);
     }
   }
 
@@ -142,6 +151,33 @@ class AuthService {
     // 只使用环境变量中的站长密码
     const envPassword = (import.meta as any).env.VITE_ACCESS_PASSWORD;
     return password === (envPassword || '');
+  }
+
+  /**
+   * 验证临时访问令牌
+   * @param token 临时访问令牌
+   * @returns 令牌是否正确
+   */
+  verifyTempAccessToken(token: string): boolean {
+    const envToken = (import.meta as any).env.VITE_TEMP_ACCESS_TOKEN;
+    return token === envToken;
+  }
+
+  /**
+   * 设置临时访问令牌
+   * @param token 临时访问令牌
+   */
+  setTempAccessToken(token: string): void {
+    if (this.verifyTempAccessToken(token)) {
+      sessionStorage.setItem(this.TEMP_ACCESS_TOKEN_KEY, 'true');
+    }
+  }
+
+  /**
+   * 清除临时访问令牌
+   */
+  clearTempAccessToken(): void {
+    sessionStorage.removeItem(this.TEMP_ACCESS_TOKEN_KEY);
   }
 
   /**

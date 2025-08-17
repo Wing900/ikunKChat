@@ -58,6 +58,10 @@ const PasswordView: React.FC<PasswordViewProps> = ({ onVerified }) => {
         
         {error && <p className="mt-2 text-sm text-center text-red-500">{error}</p>}
         
+        <div className="mt-4 text-center text-sm text-gray-600 dark:text-gray-400">
+          ikunKChat是一个个人开发的web聊天项目, 用于学习和展示
+        </div>
+        
         <div className="flex items-center mt-4">
           <input
             type="checkbox"
