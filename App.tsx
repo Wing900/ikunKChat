@@ -500,7 +500,6 @@ const handleSelectChat = useCallback((id: string) => { setActiveChatId(id); chat
         
         {/* 全局页脚 */}
         <footer className="py-4 text-center text-sm text-gray-500 dark:text-gray-400">
-          ikunKChat是一个个人开发的web聊天项目, 用于学习和展示
         </footer>
     </div>
   );
