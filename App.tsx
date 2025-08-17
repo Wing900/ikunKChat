@@ -48,16 +48,28 @@ const AppContainer = () => {
     return consent?.consented && consent.version === PRIVACY_STATEMENT_VERSION;
   });
 
-  // 不再使用环境变量，密码由用户在设置中配置
+  // 初始化认证状态
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     // 检查是否设置了环境变量密码
     const envPassword = (import.meta as any).env.VITE_ACCESS_PASSWORD;
+    
+    // 检查是否有临时访问令牌
+    const urlParams = new URLSearchParams(window.location.search);
+    const tempToken = urlParams.get('temp_token');
+    
+    if (tempToken && authService.verifyTempAccessToken(tempToken)) {
+      // 如果有有效的临时访问令牌，则允许访问
+      authService.setTempAccessToken(tempToken);
+      return true;
+    }
+    
     if (envPassword && envPassword.trim() !== '') {
-      // 如果设置了环境变量密码，则必须验证
+      // 如果设置了环境变量密码，则必须验证密码
       return authService.isAuthenticated();
     }
-    // 如果没有设置环境变量密码，则直接进入
-    return true;
+    
+    // 如果没有设置环境变量密码且没有有效的临时令牌，则不允许访问
+    return false;
   });
 
   const { settings, setSettings, availableModels, isStorageLoaded } = useSettings();
