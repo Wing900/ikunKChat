@@ -171,8 +171,30 @@ export const zh = {
     updateAvailable: '有新版本可用',
     releaseNotes: '更新日志',
     gotIt: '我知道了',
+    
+    // Update Menu
+    update: '更新',
+    checkForUpdate: '检查更新',
+    checkingUpdate: '正在检查更新...',
+switchModel: '切换模型',
+    upToDate: '已是最新版本',
+    updateNow: '立即更新',
+    updateDetails: '查看更新详情',
+    
+    // Common
+    close: '关闭',
 
     // Persona Memory
     personaMemory: '角色记忆',
     addMemoryPlaceholder: '添加一条新记忆...',
+
+    // About Settings
+    about: '关于',
+    versionInfo: '版本信息',
+    version: '版本',
+    usefulLinks: '相关链接',
+    sourceCode: '源代码',
+    reportBug: '报告问题',
+    discussions: '参与讨论',
+    currentVersion: '当前版本',
 };

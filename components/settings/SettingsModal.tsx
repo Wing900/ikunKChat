@@ -8,6 +8,7 @@ import { GeneralSettings } from './GeneralSettings';
 import { BehaviorSettings } from './BehaviorSettings';
 import { AdvancedSettings } from './AdvancedSettings';
 import { DataManagement } from './DataManagement';
+import { AboutSettings } from './AboutSettings';
 
 interface SettingsModalProps {
   settings: Settings;
@@ -19,13 +20,14 @@ interface SettingsModalProps {
   onClearAll: () => void;
   availableModels: string[];
   personas: Persona[];
+  versionInfo: { version: string } | null;
 }
 
-export const SettingsModal: React.FC<SettingsModalProps> = (props) => {
+export const SettingsModal: React.FC<SettingsModalProps> = ({ versionInfo, ...props }) => {
   const { t } = useLocalization();
   const [isVisible, setIsVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState<'general' | 'behavior' | 'advanced' | 'data'>('general');
+  const [activeTab, setActiveTab] = useState<'general' | 'behavior' | 'advanced' | 'data' | 'about'>('general');
   const { visibleSettingIds, sectionVisibility } = useSettingsSearch(searchQuery);
 
   const handleClose = () => { setIsVisible(false); setTimeout(props.onClose, 300); };
@@ -80,6 +82,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = (props) => {
             >
               {t('dataManagement')}
             </button>
+            <button
+              className={`px-4 py-2 font-medium text-sm ${activeTab === 'about' ? 'text-[var(--accent-color)] border-b-2 border-[var(--accent-color)]' : 'text-[var(--text-color-secondary)] hover:text-[var(--text-color)]'}`}
+              onClick={() => setActiveTab('about')}
+            >
+              {t('about')}
+            </button>
           </div>
         )}
         
@@ -105,6 +113,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = (props) => {
           {showAllSections || activeTab === 'data' ? (
             <SettingsSection title={t('dataManagement')} isVisible={showAllSections || sectionVisibility.data}>
               <DataManagement {...props} visibleIds={visibleSettingIds} />
+            </SettingsSection>
+          ) : null}
+
+          {activeTab === 'about' && !showAllSections ? (
+            <SettingsSection title={t('about')} isVisible={true}>
+              <AboutSettings versionInfo={versionInfo} />
             </SettingsSection>
           ) : null}
         </div>

@@ -3,6 +3,7 @@ import { Settings } from '../types';
 import { useLocalization } from '../contexts/LocalizationContext';
 import { getAvailableModels } from '../services/modelService';
 import { loadSettings, saveSettings } from '../services/storageService';
+import { defaultPersonas } from '../data/defaultPersonas';
 
 const defaultSettings: Settings = {
   theme: 'apple-light',

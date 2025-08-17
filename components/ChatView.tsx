@@ -22,7 +22,7 @@ interface ChatViewProps {
   isSidebarCollapsed: boolean;
   onToggleSidebar: () => void;
   onToggleMobileSidebar: () => void;
-  onNewChat: () => void;
+  onNewChat: (personaId?: string) => void;
   onImageClick: (src: string) => void;
   suggestedReplies: string[];
   settings: Settings;
@@ -153,13 +153,20 @@ export const ChatView: React.FC<ChatViewProps> = (props) => {
             </InternalView>
 
             <InternalView active={!chatSession}>
-              <WelcomeView currentModel={props.currentModel} onSetCurrentModel={props.onSetCurrentModel} availableModels={props.availableModels} />
+              <WelcomeView
+                currentModel={props.currentModel}
+                onSetCurrentModel={props.onSetCurrentModel}
+                availableModels={props.availableModels}
+                personas={props.personas}
+                onStartChat={props.onNewChat}
+                settings={props.settings}
+              />
             </InternalView>
         </div>
         
         {!isLoading && props.suggestedReplies.length > 0 && !editingMessageId && !chatInput && <SuggestedReplies suggestions={props.suggestedReplies} onSendSuggestion={handleSendSuggestion} />}
 
-        <ChatInput ref={chatInputRef} onSendMessage={handleSendMessageWithTools} isLoading={isLoading} onCancel={props.onCancelGeneration} toolConfig={toolConfig} onToolConfigChange={setToolConfig} input={chatInput} setInput={setChatInput} chatSession={chatSession} onToggleStudyMode={handleToggleStudyMode} isNextChatStudyMode={props.isNextChatStudyMode}/>
+        <ChatInput ref={chatInputRef} onSendMessage={handleSendMessageWithTools} isLoading={isLoading} onCancel={props.onCancelGeneration} toolConfig={toolConfig} onToolConfigChange={setToolConfig} input={chatInput} setInput={setChatInput} chatSession={chatSession} onToggleStudyMode={handleToggleStudyMode} isNextChatStudyMode={props.isNextChatStudyMode} availableModels={props.availableModels} currentModel={props.currentModel} onSetModelForActiveChat={props.onSetModelForActiveChat} />
     </main>
   );
 };

@@ -5,9 +5,10 @@ import { loadChats, loadFolders, saveChats, saveFolders } from '../services/stor
 interface UseChatDataProps {
   settings: Settings;
   isStorageLoaded: boolean;
+  onSettingsChange: (newSettings: Partial<Settings>) => void;
 }
 
-export const useChatData = ({ settings, isStorageLoaded }: UseChatDataProps) => {
+export const useChatData = ({ settings, isStorageLoaded, onSettingsChange }: UseChatDataProps) => {
   const [chats, setChats] = useState<ChatSession[]>([]);
   const [folders, setFolders] = useState<Folder[]>([]);
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
@@ -73,7 +74,8 @@ export const useChatData = ({ settings, isStorageLoaded }: UseChatDataProps) => 
     if (activeChatId) {
       setChats(p => p.map(c => c.id === activeChatId ? { ...c, model } : c));
     }
-  }, [activeChatId]);
+    onSettingsChange({ defaultModel: model });
+  }, [activeChatId, onSettingsChange]);
 
   // This function is now handled by a callback passed from App.tsx to ChatView
   const handleSetCurrentModel = useCallback((model: string) => {}, []);

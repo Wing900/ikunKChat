@@ -23,6 +23,9 @@ interface ChatInputProps {
   chatSession: ChatSession | null;
   onToggleStudyMode: (enabled: boolean) => void;
   isNextChatStudyMode: boolean;
+  availableModels: string[];
+  currentModel: string;
+  onSetModelForActiveChat: (model: string) => void;
 }
 
 export interface FileWithId {
@@ -30,16 +33,18 @@ export interface FileWithId {
   id: string;
 }
 
-export const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(({ onSendMessage, isLoading, onCancel, toolConfig, onToolConfigChange, input, setInput, chatSession, onToggleStudyMode, isNextChatStudyMode }, ref) => {
+export const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(({ onSendMessage, isLoading, onCancel, toolConfig, onToolConfigChange, input, setInput, chatSession, onToggleStudyMode, isNextChatStudyMode, availableModels, currentModel, onSetModelForActiveChat }, ref) => {
   const { t } = useLocalization();
   const { addToast } = useToast();
   const [files, setFiles] = useState<FileWithId[]>([]);
   const [isToolsOpen, setIsToolsOpen] = useState(false);
+  const [isMobileModelSelectorOpen, setIsMobileModelSelectorOpen] = useState(false);
   
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const toolsWrapperRef = useRef<HTMLDivElement>(null);
   const toolsButtonRef = useRef<HTMLButtonElement>(null);
+  const mobileModelSelectorRef = useRef<HTMLDivElement>(null);
   const [isMobileView, setIsMobileView] = useState(window.innerWidth < 768);
 
   const isStudyModeActive = chatSession ? !!chatSession.isStudyMode : isNextChatStudyMode;
@@ -58,6 +63,9 @@ export const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(({ onSendMessa
     const handleClickOutside = (event: MouseEvent) => {
       if (toolsWrapperRef.current && !toolsWrapperRef.current.contains(event.target as Node) && toolsButtonRef.current && !toolsButtonRef.current.contains(event.target as Node)) {
         setIsToolsOpen(false);
+      }
+      if (mobileModelSelectorRef.current && !mobileModelSelectorRef.current.contains(event.target as Node)) {
+        setIsMobileModelSelectorOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -109,6 +117,15 @@ export const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(({ onSendMessa
       else if (tool === 'codeExecution' && value) newConfig.urlContext = false;
       onToolConfigChange(newConfig);
   }
+
+  const toggleMobileModelSelector = () => {
+    setIsMobileModelSelectorOpen(prev => !prev);
+  };
+
+  const handleMobileModelSelect = (model: string) => {
+    onSetModelForActiveChat(model);
+    setIsMobileModelSelectorOpen(false);
+  };
 
   return (
     <form onSubmit={handleSubmit} className="p-2 pt-0 flex flex-col relative">

@@ -126,15 +126,17 @@ export const useChatMessaging = ({ settings, activeChat, personas, memories, set
       : (process.env.API_KEY ? [process.env.API_KEY] : []);
 
     if (!currentChatId) {
-      currentPersonaId = null;
+      currentPersonaId = settings.defaultPersona;
       currentIsStudyMode = isNextChatStudyMode;
-      const newChat: ChatSession = { id: crypto.randomUUID(), title: content.substring(0, 40) || "New Chat", icon: "💬", messages: [userMessage], createdAt: Date.now(), model: settings.defaultModel, folderId: null, personaId: null, isStudyMode: currentIsStudyMode };
+      const persona = personas.find(p => p.id === currentPersonaId);
+      const newChat: ChatSession = { id: crypto.randomUUID(), title: persona?.name || content.substring(0, 40) || "New Chat", icon: (persona?.avatar?.type === 'emoji' ? persona.avatar.value : '👤') || "💬", messages: [userMessage], createdAt: Date.now(), model: persona?.model || settings.defaultModel, folderId: null, personaId: currentPersonaId, isStudyMode: currentIsStudyMode };
       currentChatId = newChat.id;
       history = newChat.messages;
       setChats(prev => [newChat, ...prev]);
       setActiveChatId(newChat.id);
       setIsNextChatStudyMode(false);
-      if (settings.autoTitleGeneration && content) {
+      // 仅当未使用角色时才生成标题
+      if (settings.autoTitleGeneration && content && !persona) {
         if(apiKeys.length > 0) generateChatDetails(apiKeys, content, settings.titleGenerationModel, settings).then(({ title, icon }) => {
           setChats(p => p.map(c => c.id === currentChatId ? { ...c, title, icon } : c))
         });
@@ -144,7 +146,7 @@ export const useChatMessaging = ({ settings, activeChat, personas, memories, set
       setChats(prev => prev.map(c => c.id === currentChatId ? { ...c, messages: [...c.messages, userMessage] } : c));
     }
     await _initiateStream(currentChatId, history, toolConfig, currentPersonaId, currentIsStudyMode);
-  }, [activeChat, settings, setChats, setActiveChatId, _initiateStream, isNextChatStudyMode, setIsNextChatStudyMode]);
+  }, [activeChat, settings, setChats, setActiveChatId, _initiateStream, isNextChatStudyMode, setIsNextChatStudyMode, personas]);
 
   const handleDeleteMessage = useCallback((messageId: string) => {
     if (!activeChat?.id) return;

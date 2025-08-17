@@ -31,7 +31,8 @@ export const usePersonas = ({ isStorageLoaded }: UsePersonasProps) => {
         // 确保不会重复添加默认角色
         const customPersonaIds = new Set(customPersonas.map(p => p.id));
         const filteredDefaultPersonas = defaultPersonas.filter(p => !customPersonaIds.has(p.id));
-        setPersonas([...filteredDefaultPersonas, ...customPersonas]);
+        const finalPersonas = [...filteredDefaultPersonas, ...customPersonas];
+        setPersonas(finalPersonas);
         setError(null);
       } catch (err) {
         console.error('Failed to load personas:', err);
