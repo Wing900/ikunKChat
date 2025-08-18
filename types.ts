@@ -108,4 +108,6 @@ export interface Settings {
   maxOutputTokens: number;
   contextLength: number;
   password?: string;
+  streamInactivityTimeout?: number;
+  pdfQuality?: 'sd' | 'hd' | 'uhd';
 }

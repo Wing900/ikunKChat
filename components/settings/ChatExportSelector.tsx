@@ -1,19 +1,20 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { ChatSession, Folder } from '../../types';
+import { ChatSession, Folder, Settings } from '../../types';
 import { Icon } from '../Icon';
 import { useLocalization } from '../../contexts/LocalizationContext';
+import { exportChatsToJson, exportChatsToPdf } from '../../services/exportService';
 
 interface ChatExportSelectorProps {
   chats: ChatSession[];
   folders: Folder[];
-  onExport: (selectedChatIds: string[]) => void;
+  settings: Settings;
   onClose: () => void;
 }
 
 export const ChatExportSelector: React.FC<ChatExportSelectorProps> = ({
   chats,
   folders,
-  onExport,
+  settings,
   onClose
 }) => {
   const { t } = useLocalization();
@@ -77,9 +78,19 @@ export const ChatExportSelector: React.FC<ChatExportSelectorProps> = ({
     setSelectedChatIds(newSelected);
   };
 
-  const handleExport = () => {
+  const getSelectedChats = () => {
+    return chats.filter(chat => selectedChatIds.has(chat.id));
+  };
+
+  const handleExportJson = () => {
     if (selectedChatIds.size > 0) {
-      onExport(Array.from(selectedChatIds));
+      exportChatsToJson(getSelectedChats());
+    }
+  };
+
+  const handleExportPdf = () => {
+    if (selectedChatIds.size > 0) {
+      exportChatsToPdf(getSelectedChats(), settings.pdfQuality);
     }
   };
 
@@ -183,20 +194,29 @@ export const ChatExportSelector: React.FC<ChatExportSelectorProps> = ({
         </div>
         
         {/* 操作按钮 */}
-        <div className="flex justify-end gap-3">
+        <div className="flex items-center justify-end gap-3">
           <button
             onClick={handleClose}
             className="btn-outline"
           >
             {t('cancel')}
           </button>
+
           <button
-            onClick={handleExport}
+            onClick={handleExportPdf}
+            disabled={selectedChatIds.size === 0}
+            className="btn-secondary flex items-center gap-2"
+          >
+            <Icon icon="file" className="w-4 h-4" />
+            {t('exportPdf')}
+          </button>
+          <button
+            onClick={handleExportJson}
             disabled={selectedChatIds.size === 0}
             className="btn-primary flex items-center gap-2"
           >
             <Icon icon="download" className="w-4 h-4" />
-            {t('exportChats')}
+            {t('exportJson')}
           </button>
         </div>
       </div>

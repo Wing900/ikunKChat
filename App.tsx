@@ -112,15 +112,11 @@ const AppContainer = () => {
     }
   }, []);
 
+
   useEffect(() => {
     console.log("哇真的是你啊");
     console.log("多看一眼就会爆炸");
   }, []);
-
-  // 监听 showChatExportSelector 的变化
-  useEffect(() => {
-    console.log('App: showChatExportSelector 变为', showChatExportSelector);
-  }, [showChatExportSelector]);
 
   useEffect(() => {
     const checkVersion = async () => {
@@ -485,11 +481,7 @@ const handleSelectChat = useCallback((id: string) => { setActiveChatId(id); chat
         </div>
         
         <Suspense fallback={null}>
-          {isSettingsOpen && <SettingsModal settings={settings} onClose={() => setIsSettingsOpen(false)} onSettingsChange={handleSettingsChange} onExportSettings={() => exportData({ settings })} onExportAll={() => exportData({ chats, folders, settings, personas: personas.filter(p => p && !p.isDefault), memories })} onExportSelectedChats={() => {
-            console.log('App: 准备打开聊天导出选择器');
-            setShowChatExportSelector(true);
-            console.log('App: showChatExportSelector 设置为 true');
-          }} onImport={handleImport} onClearAll={handleClearAll} availableModels={availableModels} personas={personas} versionInfo={versionInfo} />}
+          {isSettingsOpen && <SettingsModal settings={settings} onClose={() => setIsSettingsOpen(false)} onSettingsChange={handleSettingsChange} onExportSettings={() => exportData({ settings })} onExportAll={() => exportData({ chats, folders, settings, personas: personas.filter(p => p && !p.isDefault), memories })} onExportSelectedChats={() => setShowChatExportSelector(true)} onImport={handleImport} onClearAll={handleClearAll} availableModels={availableModels} personas={personas} versionInfo={versionInfo} />}
           {lightboxImage && <ImageLightbox src={lightboxImage} onClose={() => setLightboxImage(null)} />}
           {confirmation && <ConfirmationModal {...confirmation} onClose={() => setConfirmation(null)} />}
           {showUpdateModal && versionInfo && <UpdateNoticeModal versionInfo={versionInfo} onClose={() => {
@@ -522,8 +514,8 @@ const handleSelectChat = useCallback((id: string) => { setActiveChatId(id); chat
             <ChatExportSelector
               chats={chats}
               folders={folders}
+              settings={settings}
               onClose={() => setShowChatExportSelector(false)}
-              onExport={handleExportSelectedChats}
             />
           </Suspense>
         )}

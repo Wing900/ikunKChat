@@ -114,6 +114,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ versionInfo, ...pr
           {showAllSections || activeTab === 'data' ? (
             <SettingsSection title={t('dataManagement')} isVisible={showAllSections || sectionVisibility.data}>
               <DataManagement
+                settings={props.settings}
+                onSettingsChange={props.onSettingsChange}
                 onExportSettings={props.onExportSettings}
                 onExportAll={props.onExportAll}
                 onExportSelected={() => {

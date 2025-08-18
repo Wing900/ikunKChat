@@ -64,8 +64,6 @@ export function prepareChatPayload(history: Message[], settings: Settings, toolC
   if (isStudyMode) systemInstructionParts.push(STUDY_MODE_PROMPT);
   if (persona?.systemPrompt) systemInstructionParts.push(persona.systemPrompt);
   if (settings.enableGlobalSystemPrompt && settings.globalSystemPrompt.trim()) systemInstructionParts.push(settings.globalSystemPrompt.trim());
-  if (settings.optimizeFormatting) systemInstructionParts.push(OPTIMIZE_FORMATTING_PROMPT);
-  if (settings.thinkDeeper) systemInstructionParts.push(THINK_DEEPER_PROMPT);
 
   const useGoogleSearch = persona?.tools.googleSearch || settings.defaultSearch;
   const useCodeExecution = toolConfig.codeExecution || persona?.tools.codeExecution;

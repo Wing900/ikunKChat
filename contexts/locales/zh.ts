@@ -130,6 +130,8 @@ export const zh = {
     noChatsSelected: '未选择任何聊天',
     selectedChatsCount: '已选择 {count} 个聊天',
     exportChats: '导出聊天',
+    exportPdf: '导出为 PDF',
+    exportJson: '导出为 JSON',
     searchChats: '搜索聊天',
     filterByFolder: '按文件夹筛选',
     clearHistory: '清除所有数据',
@@ -148,6 +150,8 @@ export const zh = {
     contextLengthDesc: '发送过去的旧消息数量。0代表无限。',
     maxOutputTokens: '最大输出字符',
     maxOutputTokensDesc: '限制模型在单个回复中生成的最大字符数。',
+    streamInactivityTimeout: '流响应超时（秒）',
+    streamInactivityTimeoutDesc: '如果在此期间未收到任何数据，则中止请求。防止在需要长时间思考的模型上卡住。',
     // Password View
     password_required: '访问密码',
     password_prompt: '请输入密码以访问ikunKChat',
