@@ -1,14 +1,14 @@
 {
-  "version": "1.2.1",
-  "releaseDate": "2025-08-17",
+  "version": "1.2.2",
+  "releaseDate": "2025-08-18",
   "notes": {
     "zh": [
-      "🚀 新增了检查更新功能。",
-      "🤖 调整所有聊天角色默认模型为 gemini-2.5pro。"
+      "📤 新增了对话导出功能。",
+      "🐛 修复了已知的Bug，提升了应用的稳定性。"
     ],
     "en": [
-      "🚀 Added update check feature.",
-      "🤖 Adjusted the default model for all chat personas to gemini-2.5pro."
+      "📤 Added chat export feature.",
+      "🐛 Fixed known bugs and improved app stability."
     ]
   }
 }
