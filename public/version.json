@@ -1,14 +1,14 @@
 {
-  "version": "1.3.0",
-  "releaseDate": "2025-08-19",
+  "version": "1.3.1",
+  "releaseDate": "2025-08-18",
   "notes": {
     "zh": [
-      "📤 新增了对话PDF导出功能。",
-      "🐛 修复了已知的Bug，提升了应用的稳定性。"
+      "🎨 优化了AI思考过程中的UI动画效果。",
+      "🔧 增强了对Google AI响应中断问题的处理和日志记录。"
     ],
     "en": [
-      "📤 Added chat export feature.",
-      "🐛 Fixed known bugs and improved app stability."
+      "🎨 Improved UI animation for AI thinking process.",
+      "🔧 Enhanced handling and logging for Google AI response interruptions."
     ]
   }
 }

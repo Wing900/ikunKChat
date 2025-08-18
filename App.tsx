@@ -7,6 +7,7 @@ import { CitationDrawer } from './components/CitationDrawer';
 import { ToastContainer } from './components/ToastContainer';
 import { UpdateIndicator } from './components/UpdateIndicator';
 import { UpdateSettings } from './components/settings/UpdateSettings';
+import { usePWAUpdate } from './hooks/usePWAUpdate';
 
 // Lazy load components
 const ImageLightbox = lazy(() => import('./components/ImageLightbox').then(module => ({ default: module.ImageLightbox })));
@@ -39,11 +40,9 @@ const AppContainer = () => {
   const PRIVACY_STATEMENT_VERSION = '1.0.0'; // 声明版本号
 
   const [versionInfo, setVersionInfo] = useState<any>(null);
-  const [updateAvailable, setUpdateAvailable] = useState(false);
-  const [showUpdateModal, setShowUpdateModal] = useState(false);
-  const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
   const [showUpdateSettings, setShowUpdateSettings] = useState(false);
   const [showChatExportSelector, setShowChatExportSelector] = useState(false);
+  const { needRefresh, updateServiceWorker } = usePWAUpdate();
 
   const [hasConsented, setHasConsented] = useState(() => {
     const consent = loadPrivacyConsent();
@@ -113,106 +112,53 @@ const AppContainer = () => {
   }, []);
 
 
-  useEffect(() => {
-    console.log("哇真的是你啊");
-    console.log("多看一眼就会爆炸");
-  }, []);
+  // useEffect(() => {
+  //   console.log("哇真的是你啊");
+  //   console.log("多看一眼就会爆炸");
+  // }, []);
 
   useEffect(() => {
-    const checkVersion = async () => {
+    const fetchVersionInfo = async () => {
       try {
         const res = await fetch('/version.json');
         const data = await res.json();
         setVersionInfo(data);
-        const lastReadVersion = loadLastReadVersion();
-        if (data.version !== lastReadVersion) {
-          setUpdateAvailable(true);
-          setShowUpdateModal(true);
-        }
       } catch (error) {
         console.error("Failed to fetch version info:", error);
       }
     };
-    checkVersion();
+    fetchVersionInfo();
   }, []);
 
-  // 手动检查更新
-  const checkForUpdates = async () => {
-    setIsCheckingUpdate(true);
-    try {
-      // 添加时间戳防止缓存
-      const res = await fetch('/version.json?t=' + Date.now());
-      const data = await res.json();
-      setVersionInfo(data);
-      const lastReadVersion = loadLastReadVersion();
-      
-      if (data.version !== lastReadVersion) {
-        setUpdateAvailable(true);
-        addToast(t('updateAvailable'), 'success');
-      } else {
-        addToast(t('upToDate'), 'info');
-      }
-    } catch (error) {
-      console.error("Failed to check for updates:", error);
-      addToast("检查更新失败", 'error');
-    } finally {
-      setIsCheckingUpdate(false);
-    }
+  const handleUpdateNow = () => {
+    updateServiceWorker();
   };
 
-  // 立即更新
-  const updateNow = () => {
-    // 对于PWA，尝试通过Service Worker更新
+  const handleCheckForUpdates = async () => {
+    console.log('[App] Manually checking for updates...');
     if ('serviceWorker' in navigator) {
-      addToast("正在检查更新...", 'info');
-      
-      // 先检查是否有新版本
-      fetch('/version.json?t=' + Date.now())
-        .then(res => res.json())
-        .then(data => {
-          const lastReadVersion = loadLastReadVersion();
-          
-          if (data.version !== lastReadVersion) {
-            // 有新版本，尝试更新Service Worker
-            navigator.serviceWorker.getRegistrations().then(registrations => {
-              if (registrations.length > 0) {
-                // 强制更新Service Worker
-                registrations[0].update().then(() => {
-                  addToast("发现新版本，正在下载更新...", 'success');
-                  
-                  // 监听Service Worker的更新状态
-                  navigator.serviceWorker.addEventListener('controllerchange', () => {
-                    addToast("更新已完成，正在刷新页面...", 'success');
-                    setTimeout(() => {
-                      window.location.reload();
-                    }, 1000);
-                  });
-                  
-                  // 如果5秒内没有更新，强制刷新
-                  setTimeout(() => {
-                    saveLastReadVersion(data.version);
-                    setUpdateAvailable(false);
-                    window.location.reload();
-                  }, 5000);
-                });
-              } else {
-                // 没有Service Worker，直接刷新
-                saveLastReadVersion(data.version);
-                setUpdateAvailable(false);
-                window.location.reload();
-              }
-            });
-          } else {
-            addToast("已经是最新版本", 'info');
-          }
-        })
-        .catch(error => {
-          console.error("Failed to check for updates:", error);
-          addToast("检查更新失败", 'error');
-        });
+      const registration = await navigator.serviceWorker.getRegistration();
+      if (registration) {
+        try {
+          await registration.update();
+          addToast('正在检查更新...', 'info');
+          // In dev mode, onNeedRefresh might not fire reliably.
+          // We can add a timeout to check if needRefresh becomes true.
+          // If not, we can inform the user.
+          setTimeout(() => {
+            if (!needRefresh) {
+              addToast('当前已是最新版本', 'info');
+            }
+          }, 3000); // Wait 3 seconds to see if needRefresh is triggered
+        } catch (error) {
+          console.error('[App] Failed to check for updates:', error);
+          addToast('检查更新失败', 'error');
+        }
+      } else {
+        addToast('Service Worker 未注册', 'error');
+      }
     } else {
-      // 非PWA环境，直接刷新
-      window.location.reload();
+      addToast('浏览器不支持 Service Worker', 'error');
     }
   };
 
@@ -438,8 +384,8 @@ const handleSelectChat = useCallback((id: string) => { setActiveChatId(id); chat
           onOpenTranslate={() => handleOpenView('translate')}
         >
           <UpdateIndicator
-            updateAvailable={updateAvailable}
-            isCheckingUpdate={isCheckingUpdate}
+            updateAvailable={needRefresh}
+            isCheckingUpdate={false} // No longer needed
             onClick={openUpdateSettings}
           />
         </Sidebar>
@@ -488,11 +434,6 @@ const handleSelectChat = useCallback((id: string) => { setActiveChatId(id); chat
           {isSettingsOpen && <SettingsModal settings={settings} onClose={() => setIsSettingsOpen(false)} onSettingsChange={handleSettingsChange} onExportSettings={() => exportData({ settings })} onExportAll={() => exportData({ chats, folders, settings, personas: personas.filter(p => p && !p.isDefault), memories })} onExportSelectedChats={() => setShowChatExportSelector(true)} onImport={handleImport} onClearAll={handleClearAll} availableModels={availableModels} personas={personas} versionInfo={versionInfo} />}
           {lightboxImage && <ImageLightbox src={lightboxImage} onClose={() => setLightboxImage(null)} />}
           {confirmation && <ConfirmationModal {...confirmation} onClose={() => setConfirmation(null)} />}
-          {showUpdateModal && versionInfo && <UpdateNoticeModal versionInfo={versionInfo} onClose={() => {
-            setShowUpdateModal(false);
-            setUpdateAvailable(false);
-            saveLastReadVersion(versionInfo.version);
-          }} />}
         </Suspense>
 
         {/* These modals are small and frequently used, so they are not lazy-loaded */}
@@ -505,10 +446,10 @@ const handleSelectChat = useCallback((id: string) => { setActiveChatId(id); chat
           <UpdateSettings
             versionInfo={versionInfo}
             onClose={closeUpdateSettings}
-            onCheckUpdate={checkForUpdates}
-            onUpdateNow={updateNow}
-            isCheckingUpdate={isCheckingUpdate}
-            updateAvailable={updateAvailable}
+            onCheckUpdate={handleCheckForUpdates}
+            onUpdateNow={handleUpdateNow}
+            isCheckingUpdate={false} // No longer needed
+            updateAvailable={needRefresh}
           />
         )}
         

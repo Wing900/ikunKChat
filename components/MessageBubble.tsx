@@ -1,10 +1,62 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Message, MessageRole, Settings, Persona } from '../types';
 import { Icon } from './Icon';
 import { MarkdownRenderer } from './MarkdownRenderer';
 import { useLocalization } from '../contexts/LocalizationContext';
 import { PersonaAvatar } from './common/PersonaAvatar';
 import { MessageActions } from './MessageActions';
+
+const TypingIndicator: React.FC<{ thoughts?: string | null }> = ({ thoughts }) => {
+  const [text, setText] = useState('');
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+
+    if (thoughts && thoughts.trim().length > 0) {
+      // Stage 2: Typewriter effect for "唱、跳、rap..." with static prefix
+      const baseText = 'AI 正在';
+      const animatedText = '唱、跳、rap...';
+      let currentIndex = 0;
+      let isPaused = false;
+
+      interval = setInterval(() => {
+        if (isPaused) return;
+
+        if (currentIndex < animatedText.length) {
+          setText(baseText + animatedText.substring(0, currentIndex + 1));
+          currentIndex++;
+        } else {
+          // Pause at the end of the line before restarting
+          isPaused = true;
+          setTimeout(() => {
+            currentIndex = 0;
+            setText(baseText); // Reset to just the base text
+            isPaused = false;
+          }, 500); // Hold the full text for 500ms
+        }
+      }, 150); // Adjust typing speed here
+    } else {
+      // Stage 1: "..." animation
+      const dots = ['\u00A0', '.', '..', '...'];
+      let dotIndex = 0;
+
+      interval = setInterval(() => {
+        setText(dots[dotIndex]);
+        dotIndex = (dotIndex + 1) % dots.length;
+      }, 500);
+    }
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, [thoughts]);
+
+  return (
+    <div className="whitespace-pre-wrap">
+      {text}
+    </div>
+  );
+};
 
 interface MessageBubbleProps {
     message: Message;
@@ -24,12 +76,11 @@ interface MessageBubbleProps {
 }
 
 export const MessageBubble: React.FC<MessageBubbleProps> = React.memo((props) => {
-  const { message, index, onImageClick, settings, persona, isEditing, onEditRequest, onCancelEdit, onSaveEdit, onDelete, onRegenerate, onCopy, onShowCitations } = props;
+  const { message, index, onImageClick, settings, persona, isEditing, onEditRequest, onCancelEdit, onSaveEdit, onDelete, onRegenerate, onCopy, onShowCitations, isLastMessageLoading } = props;
   const { t } = useLocalization();
   const isUser = message.role === MessageRole.USER;
   const hasContent = message.content && message.content !== '...';
   const hasThoughts = message.thoughts && message.thoughts.trim().length > 0;
-  const isPulsing = message.content === '...';
 
   const [isThoughtsOpen, setIsThoughtsOpen] = useState(false);
   const hasCitations = message.groundingMetadata?.groundingChunks?.length > 0;
@@ -78,7 +129,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = React.memo((props) =>
                       </div>
                   </div>
               )}
-              <div className={`p-4 ${isPulsing ? 'animate-pulse' : ''} ${isUser ? '' : 'text-[var(--text-color)]'}`}>
+              <div className={`p-4 ${isUser ? '' : 'text-[var(--text-color)]'}`}>
                   {message.attachments && message.attachments.length > 0 && (
                     <div className="mb-2 flex flex-wrap gap-2">
                       {message.attachments.map((att, i) => (
@@ -97,23 +148,26 @@ export const MessageBubble: React.FC<MessageBubbleProps> = React.memo((props) =>
                       ))}
                     </div>
                   )}
-                  {hasContent && (
-                    <div className="grid items-start">
-                      {/* Rendered View */}
-                      <div className={`col-start-1 row-start-1 grid transition-all duration-300 ease-in-out ${isRawView ? 'grid-rows-[0fr] opacity-0' : 'grid-rows-[1fr] opacity-100'}`} aria-hidden={isRawView}>
-                        <div className="overflow-hidden">
-                            <MarkdownRenderer content={message.content} theme={settings.theme} />
+                  {isLastMessageLoading ? (
+                    <TypingIndicator thoughts={message.thoughts} />
+                  ) : (
+                    hasContent && (
+                      <div className="grid items-start">
+                        {/* Rendered View */}
+                        <div className={`col-start-1 row-start-1 grid transition-all duration-300 ease-in-out ${isRawView ? 'grid-rows-[0fr] opacity-0' : 'grid-rows-[1fr] opacity-100'}`} aria-hidden={isRawView}>
+                          <div className="overflow-hidden">
+                              <MarkdownRenderer content={message.content} theme={settings.theme} />
+                          </div>
+                        </div>
+                        {/* Raw View */}
+                        <div className={`col-start-1 row-start-1 grid transition-all duration-300 ease-in-out ${isRawView ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`} aria-hidden={!isRawView}>
+                          <div className="overflow-hidden">
+                              <pre className="raw-text-view"><code>{message.content}</code></pre>
+                          </div>
                         </div>
                       </div>
-                      {/* Raw View */}
-                      <div className={`col-start-1 row-start-1 grid transition-all duration-300 ease-in-out ${isRawView ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`} aria-hidden={!isRawView}>
-                        <div className="overflow-hidden">
-                            <pre className="raw-text-view"><code>{message.content}</code></pre>
-                        </div>
-                      </div>
-                    </div>
+                    )
                   )}
-                  {isPulsing && <div className="whitespace-pre-wrap">{message.content}</div>}
               </div>
               {hasCitations && (
                   <div className="border-t border-[var(--glass-border)] mt-2 mx-2 mb-2 pt-2">
