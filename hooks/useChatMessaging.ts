@@ -101,17 +101,45 @@ export const useChatMessaging = ({ settings, activeChat, personas, memories, set
 
       resetInactivityTimer();
 
+      console.log(`[STREAM_ANALYSIS] Starting to process stream for chat ${chatId} at ${new Date().toISOString()}`);
+      let chunkCount = 0;
+
       for await (const chunk of stream) {
-        if (isCancelledRef.current) break;
+        if (isCancelledRef.current) {
+          console.log(`[STREAM_ANALYSIS] Stream cancelled by user at chunk ${chunkCount}.`);
+          break;
+        }
         resetInactivityTimer();
+        chunkCount++;
+        const chunkSize = JSON.stringify(chunk).length;
+        const chunkContentPreview = chunk.text ? `"${chunk.text.substring(0, 50)}..."` : "no text content";
+        console.log(`[STREAM_ANALYSIS] Received chunk #${chunkCount} at ${new Date().toISOString()}. Size: ${chunkSize} bytes. Content preview: ${chunkContentPreview}`);
 
         if (chunk.text?.startsWith("Error:")) {
           streamHadError = true;
           fullResponse = chunk.text;
+          console.error(`[STREAM_ANALYSIS] Stream error reported in chunk: ${chunk.text}`);
           break;
         }
 
         const candidate = chunk.candidates?.[0];
+        if (candidate?.finishReason) {
+          const reason = candidate.finishReason;
+          console.log(`[STREAM_ANALYSIS] Received finish reason: "${reason}" at chunk #${chunkCount}.`);
+
+          if (reason === 'SAFETY') {
+            streamHadError = true;
+            fullResponse = "Google Cut It for Safety";
+            addToast("Google Cut It for Safety", 'error');
+            console.log(`[STREAM_ANALYSIS] Identified as a "Google Cut It" event. Reason: ${reason}`);
+          } else if (reason === 'MAX_TOKENS') {
+            streamHadError = true;
+            fullResponse = "Google Cut It for Max Length";
+            addToast("Google Cut It for Max Length", 'error');
+            console.log(`[STREAM_ANALYSIS] Identified as a "Google Cut It" event. Reason: ${reason}`);
+          }
+        }
+
         if (candidate?.content?.parts) {
           for (const part of candidate.content.parts) {
             if ((part as any).thought) {
@@ -126,12 +154,20 @@ export const useChatMessaging = ({ settings, activeChat, personas, memories, set
         
         needsUpdate = true; // Signal that an update is ready for the next animation frame
       }
+      console.log(`[STREAM_ANALYSIS] Stream processing finished for chat ${chatId} at ${new Date().toISOString()}. Total chunks: ${chunkCount}.`);
       
       clearTimeout(inactivityTimer);
       if (animationFrameId) cancelAnimationFrame(animationFrameId);
 
       // Final, immediate update for the complete response
       if (!isCancelledRef.current) {
+        // Final check for empty response after a "STOP" reason, which can indicate a silent refusal to answer.
+        if (!streamHadError && fullResponse.trim().length === 0) {
+          streamHadError = true; // Also treat this as an error so suggestions don't generate
+          fullResponse = "Google Cut It for Unknown Reason";
+          addToast("Google Cut It for Unknown Reason", 'error');
+          console.log(`[STREAM_ANALYSIS] Identified as a "Google Cut It" event. Reason: Empty response on normal stop.`);
+        }
         setChats(prev => prev.map(c => c.id === chatId ? { ...c, messages: c.messages.map(m => m.id === modelMessage.id ? { ...m, content: fullResponse || '...', thoughts: settings.showThoughts ? accumulatedThoughts : undefined, groundingMetadata: finalGroundingMetadata } : m) } : c));
       }
     } catch(e) {
