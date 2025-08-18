@@ -324,6 +324,10 @@ useEffect(() => {
 
 const handleSelectChat = useCallback((id: string) => { setActiveChatId(id); chatDataHandlers.setSuggestedReplies([]); setIsMobileSidebarOpen(false); setCurrentView('chat'); }, [setActiveChatId, chatDataHandlers.setSuggestedReplies]);
   
+  const handleNewChatSidebar = useCallback(() => {
+    handleNewChat(null);
+  }, [handleNewChat]);
+  
   const handleOpenView = (view: View) => {
     setIsMobileSidebarOpen(false);
     setCurrentView(view);
@@ -413,7 +417,7 @@ const handleSelectChat = useCallback((id: string) => { setActiveChatId(id); chat
           chats={chats}
           folders={folders}
           activeChatId={activeChatId}
-          onNewChat={useCallback(() => handleNewChat(null), [handleNewChat])}
+          onNewChat={handleNewChatSidebar}
           onSelectChat={handleSelectChat}
           onDeleteChat={chatDataHandlers.handleDeleteChat}
           onEditChat={setEditingChat}
