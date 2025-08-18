@@ -11,8 +11,9 @@ const TypingIndicator: React.FC<{ thoughts?: string | null }> = ({ thoughts }) =
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
+    const hasThoughts = thoughts && thoughts.trim().length > 0;
 
-    if (thoughts && thoughts.trim().length > 0) {
+    if (hasThoughts) {
       // Stage 2: Typewriter effect for "唱、跳、rap..." with static prefix
       const baseText = 'AI 正在';
       const animatedText = '唱、跳、rap...';
@@ -49,7 +50,7 @@ const TypingIndicator: React.FC<{ thoughts?: string | null }> = ({ thoughts }) =
     return () => {
       clearInterval(interval);
     };
-  }, [thoughts]);
+  }, [thoughts && thoughts.trim().length > 0]);
 
   return (
     <div className="whitespace-pre-wrap">
