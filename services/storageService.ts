@@ -406,6 +406,26 @@ export const exportData = (data: { chats?: ChatSession[], folders?: Folder[], se
     URL.revokeObjectURL(url);
 };
 
+export const exportSelectedChats = (selectedChatIds: string[], allChats: ChatSession[]) => {
+    // 筛选出选中的聊天
+    const selectedChats = allChats.filter(chat => selectedChatIds.includes(chat.id));
+    
+    const dataToExport = {
+        chats: selectedChats,
+        exportType: 'selected-chats',
+        exportDate: new Date().toISOString(),
+        count: selectedChats.length
+    };
+    
+    const blob = new Blob([JSON.stringify(dataToExport, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `kchat_selected_chats_${Date.now()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+};
+
 export const importData = (file: File): Promise<{ chats?: ChatSession[], folders?: Folder[], settings?: Settings, personas?: Persona[], memories?: Record<string, PersonaMemory[]> }> => {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();

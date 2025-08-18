@@ -16,6 +16,7 @@ interface SettingsModalProps {
   onSettingsChange: (newSettings: Partial<Settings>) => void;
   onExportSettings: () => void;
   onExportAll: () => void;
+  onExportSelectedChats: () => void;
   onImport: (file: File) => void;
   onClearAll: () => void;
   availableModels: string[];
@@ -112,7 +113,17 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ versionInfo, ...pr
           
           {showAllSections || activeTab === 'data' ? (
             <SettingsSection title={t('dataManagement')} isVisible={showAllSections || sectionVisibility.data}>
-              <DataManagement {...props} visibleIds={visibleSettingIds} />
+              <DataManagement
+                onExportSettings={props.onExportSettings}
+                onExportAll={props.onExportAll}
+                onExportSelected={() => {
+                  console.log('SettingsModal: 调用 onExportSelectedChats');
+                  props.onExportSelectedChats();
+                }}
+                onImport={props.onImport}
+                onClearAll={props.onClearAll}
+                visibleIds={visibleSettingIds}
+              />
             </SettingsSection>
           ) : null}
 
