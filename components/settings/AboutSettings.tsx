@@ -29,6 +29,31 @@ export const AboutSettings: React.FC<AboutSettingsProps> = ({ versionInfo }) => 
       </div>
 
       <div className="border-t border-[var(--glass-border)] pt-6 space-y-4">
+        <h3 className="font-bold text-lg text-[var(--text-color)]">{t('webmaster')}</h3>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold overflow-hidden">
+            <img
+              src="/webmaster-avatar.png"
+              alt="Webmaster Avatar"
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.style.display = 'none';
+                const parent = target.parentElement;
+                if (parent) {
+                  parent.innerHTML = '<span class="text-white font-bold">bin</span>';
+                }
+              }}
+            />
+          </div>
+          <div>
+            <p className="font-medium text-[var(--text-color)]">{t('webmasterName')}: bin</p>
+            <p className="text-[var(--text-color-secondary)]">{t('webmasterDesc')}</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="border-t border-[var(--glass-border)] pt-6 space-y-4">
         <h3 className="font-bold text-lg text-[var(--text-color)]">{t('usefulLinks')}</h3>
         <div className="flex flex-wrap gap-4">
           <a href="https://github.com/Wing900/KChat" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-[var(--accent-color)] hover:underline">
