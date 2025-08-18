@@ -18,9 +18,29 @@ export function prepareChatPayload(history: Message[], settings: Settings, toolC
   };
 
   // 2. Slice history based on context length
-  const slicedHistory = settingsSource.contextLength > 0
-    ? history.slice(-settingsSource.contextLength)
-    : history;
+  // New, smarter truncation logic based on character count
+  const MAX_CONTEXT_CHARS = 65536; // Increased to a safer, larger limit (~64k chars)
+  const historyToConsider = settingsSource.contextLength > 0
+      ? history.slice(-settingsSource.contextLength)
+      : history;
+
+  let slicedHistory: Message[] = [];
+  let currentChars = 0;
+
+  // Iterate backwards from the most recent message
+  for (let i = historyToConsider.length - 1; i >= 0; i--) {
+      const message = historyToConsider[i];
+      // Estimate message size by stringifying it
+      const messageLength = JSON.stringify(message).length;
+
+      if (currentChars + messageLength > MAX_CONTEXT_CHARS) {
+          // Stop if adding the next message would exceed the limit
+          break;
+      }
+      // Add the message to the beginning of our new array to maintain order
+      slicedHistory.unshift(message);
+      currentChars += messageLength;
+  }
 
   const formattedHistory = slicedHistory.map(msg => {
     const parts: Part[] = [];

@@ -28,7 +28,7 @@ export default defineConfig(({ mode }) => {
             name: 'ikunKChat',
             short_name: 'KChat',
             description: 'A chat application powered by Gemini',
-            theme_color: '#4F46E5',
+            theme_color: '#F8F9FA',
             background_color: '#FFFFFF',
             display: 'standalone',
             start_url: '/',

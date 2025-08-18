@@ -19,6 +19,7 @@ const ConfirmationModal = lazy(() => import('./components/ConfirmationModal').th
 import PasswordView from './components/PasswordView';
 const PrivacyNoticeModal = lazy(() => import('./components/PrivacyNoticeModal').then(module => ({ default: module.PrivacyNoticeModal })));
 const UpdateNoticeModal = lazy(() => import('./components/UpdateNoticeModal').then(module => ({ default: module.UpdateNoticeModal })));
+const ChatExportSelector = lazy(() => import('./components/settings/ChatExportSelector').then(module => ({ default: module.ChatExportSelector })));
 import { ChatSession, Folder, Settings, Persona } from './types';
 import { LocalizationProvider, useLocalization } from './contexts/LocalizationContext';
 import { useSettings } from './hooks/useSettings';
@@ -28,7 +29,7 @@ import { useToast } from './contexts/ToastContext';
 import { usePersonas } from './hooks/usePersonas';
 import { usePersonaMemories } from './hooks/usePersonaMemories';
 import { useTranslationHistory } from './hooks/useTranslationHistory';
-import { exportData, importData, clearAllData, loadPrivacyConsent, savePrivacyConsent, loadLastReadVersion, saveLastReadVersion } from './services/storageService';
+import { exportData, importData, clearAllData, loadPrivacyConsent, savePrivacyConsent, loadLastReadVersion, saveLastReadVersion, exportSelectedChats } from './services/storageService';
 import { authService } from './services/authService';
 import { ViewContainer } from './components/common/ViewContainer';
 
@@ -42,6 +43,7 @@ const AppContainer = () => {
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
   const [showUpdateSettings, setShowUpdateSettings] = useState(false);
+  const [showChatExportSelector, setShowChatExportSelector] = useState(false);
 
   const [hasConsented, setHasConsented] = useState(() => {
     const consent = loadPrivacyConsent();
@@ -114,6 +116,11 @@ const AppContainer = () => {
     console.log("哇真的是你啊");
     console.log("多看一眼就会爆炸");
   }, []);
+
+  // 监听 showChatExportSelector 的变化
+  useEffect(() => {
+    console.log('App: showChatExportSelector 变为', showChatExportSelector);
+  }, [showChatExportSelector]);
 
   useEffect(() => {
     const checkVersion = async () => {
@@ -374,6 +381,13 @@ const handleSelectChat = useCallback((id: string) => { setActiveChatId(id); chat
     });
   };
 
+  // 处理导出选中的聊天
+  const handleExportSelectedChats = (selectedChatIds: string[]) => {
+    exportSelectedChats(selectedChatIds, chats);
+    setShowChatExportSelector(false);
+    addToast("Selected chats exported successfully", 'success');
+  };
+
   // 检查是否设置了环境变量密码
   const envPassword = (import.meta as any).env.VITE_ACCESS_PASSWORD;
   const hasPassword = envPassword && envPassword.trim() !== '';
@@ -471,7 +485,11 @@ const handleSelectChat = useCallback((id: string) => { setActiveChatId(id); chat
         </div>
         
         <Suspense fallback={null}>
-          {isSettingsOpen && <SettingsModal settings={settings} onClose={() => setIsSettingsOpen(false)} onSettingsChange={handleSettingsChange} onExportSettings={() => exportData({ settings })} onExportAll={() => exportData({ chats, folders, settings, personas: personas.filter(p => p && !p.isDefault), memories })} onImport={handleImport} onClearAll={handleClearAll} availableModels={availableModels} personas={personas} versionInfo={versionInfo} />}
+          {isSettingsOpen && <SettingsModal settings={settings} onClose={() => setIsSettingsOpen(false)} onSettingsChange={handleSettingsChange} onExportSettings={() => exportData({ settings })} onExportAll={() => exportData({ chats, folders, settings, personas: personas.filter(p => p && !p.isDefault), memories })} onExportSelectedChats={() => {
+            console.log('App: 准备打开聊天导出选择器');
+            setShowChatExportSelector(true);
+            console.log('App: showChatExportSelector 设置为 true');
+          }} onImport={handleImport} onClearAll={handleClearAll} availableModels={availableModels} personas={personas} versionInfo={versionInfo} />}
           {lightboxImage && <ImageLightbox src={lightboxImage} onClose={() => setLightboxImage(null)} />}
           {confirmation && <ConfirmationModal {...confirmation} onClose={() => setConfirmation(null)} />}
           {showUpdateModal && versionInfo && <UpdateNoticeModal versionInfo={versionInfo} onClose={() => {
@@ -496,6 +514,18 @@ const handleSelectChat = useCallback((id: string) => { setActiveChatId(id); chat
             isCheckingUpdate={isCheckingUpdate}
             updateAvailable={updateAvailable}
           />
+        )}
+        
+        {/* 聊天导出选择器 */}
+        {showChatExportSelector && (
+          <Suspense fallback={null}>
+            <ChatExportSelector
+              chats={chats}
+              folders={folders}
+              onClose={() => setShowChatExportSelector(false)}
+              onExport={handleExportSelectedChats}
+            />
+          </Suspense>
         )}
         
         {/* 全局页脚 */}
