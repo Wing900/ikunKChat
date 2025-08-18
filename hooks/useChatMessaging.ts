@@ -19,7 +19,6 @@ interface UseChatMessagingProps {
 export const useChatMessaging = ({ settings, activeChat, personas, memories, setChats, setSuggestedReplies, setActiveChatId, addToast, isNextChatStudyMode, setIsNextChatStudyMode }: UseChatMessagingProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const isCancelledRef = useRef(false);
-  const lastUpdateTime = useRef<number | null>(null); // For throttling UI updates
   let inactivityTimer: NodeJS.Timeout; // For stream watchdog
 
   const handleCancel = useCallback(() => {
@@ -66,8 +65,24 @@ export const useChatMessaging = ({ settings, activeChat, personas, memories, set
       const effectiveToolConfig = { ...toolConfig, showThoughts: settings.showThoughts };
       const stream = sendMessageStream(apiKeys, historyForAPI.slice(0, -1), promptContent, promptAttachments, currentModel, settings, effectiveToolConfig, activePersona, chatSession.isStudyMode, personaMemories);
       
-      // Stream Watchdog: Timeout if no data is received for 30 seconds
-      const INACTIVITY_TIMEOUT_MS = 30000;
+      // --- UI Update Logic using requestAnimationFrame ---
+      let animationFrameId: number | null = null;
+      let needsUpdate = false;
+
+      const updateUI = () => {
+        if (needsUpdate) {
+          setChats(prev => prev.map(c => c.id === chatId ? { ...c, messages: c.messages.map(m => m.id === modelMessage.id ? { ...m, content: fullResponse || 'AI 正在唱、跳、rap...', thoughts: settings.showThoughts ? accumulatedThoughts : undefined } : m) } : c));
+          needsUpdate = false;
+        }
+        if (!isCancelledRef.current && !streamHadError) {
+          animationFrameId = requestAnimationFrame(updateUI);
+        }
+      };
+      
+      animationFrameId = requestAnimationFrame(updateUI);
+
+      // --- Stream Watchdog ---
+      const INACTIVITY_TIMEOUT_MS = (settings.streamInactivityTimeout || 60) * 1000;
       let inactivityTimer: NodeJS.Timeout;
 
       const resetInactivityTimer = () => {
@@ -75,53 +90,47 @@ export const useChatMessaging = ({ settings, activeChat, personas, memories, set
         inactivityTimer = setTimeout(() => {
           if (!isCancelledRef.current) {
             console.warn("Stream inactivity timeout reached. Aborting.");
-            isCancelledRef.current = true; // Signal to stop processing
+            isCancelledRef.current = true;
             streamHadError = true;
             fullResponse = "请求超时，模型响应时间过长或连接中断。";
-            // Update UI immediately to show the timeout message
             setChats(p => p.map(c => c.id === chatId ? { ...c, messages: c.messages.map(m => m.id === modelMessage.id ? { ...m, content: fullResponse } : m) } : c));
             addToast(fullResponse, 'error');
           }
         }, INACTIVITY_TIMEOUT_MS);
       };
 
-      resetInactivityTimer(); // Start the timer
+      resetInactivityTimer();
 
       for await (const chunk of stream) {
-        if(isCancelledRef.current) break;
+        if (isCancelledRef.current) break;
+        resetInactivityTimer();
 
-        resetInactivityTimer(); // Reset timer on every chunk
-
-        // Check for error messages yielded from the stream wrapper
         if (chunk.text?.startsWith("Error:")) {
-            streamHadError = true;
-            fullResponse = chunk.text;
-            break;
+          streamHadError = true;
+          fullResponse = chunk.text;
+          break;
         }
 
         const candidate = chunk.candidates?.[0];
         if (candidate?.content?.parts) {
-            for (const part of candidate.content.parts) {
-                if ((part as any).thought) {
-                    if (settings.showThoughts && part.text) { accumulatedThoughts += part.text; }
-                } else {
-                    if (part.text) { fullResponse += part.text; }
-                }
+          for (const part of candidate.content.parts) {
+            if ((part as any).thought) {
+              if (settings.showThoughts && part.text) { accumulatedThoughts += part.text; }
+            } else {
+              if (part.text) { fullResponse += part.text; }
             }
+          }
         }
         
         if (candidate?.groundingMetadata) { finalGroundingMetadata = candidate.groundingMetadata; }
-
-        // Throttled UI update to prevent lag
-        const now = Date.now();
-        if (!lastUpdateTime.current || now - lastUpdateTime.current > 100) { // Update every 100ms
-          setChats(prev => prev.map(c => c.id === chatId ? { ...c, messages: c.messages.map(m => m.id === modelMessage.id ? { ...m, content: fullResponse || 'AI 正在唱、跳、rap...', thoughts: settings.showThoughts ? accumulatedThoughts : undefined } : m) } : c));
-          lastUpdateTime.current = now;
-        }
+        
+        needsUpdate = true; // Signal that an update is ready for the next animation frame
       }
-      clearTimeout(inactivityTimer); // Clear timer after loop ends
+      
+      clearTimeout(inactivityTimer);
+      if (animationFrameId) cancelAnimationFrame(animationFrameId);
 
-      // Final update to ensure the last chunk is rendered and metadata is applied
+      // Final, immediate update for the complete response
       if (!isCancelledRef.current) {
         setChats(prev => prev.map(c => c.id === chatId ? { ...c, messages: c.messages.map(m => m.id === modelMessage.id ? { ...m, content: fullResponse || '...', thoughts: settings.showThoughts ? accumulatedThoughts : undefined, groundingMetadata: finalGroundingMetadata } : m) } : c));
       }

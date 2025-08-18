@@ -2,7 +2,13 @@ import React, { useRef } from 'react';
 import { Icon } from '../Icon';
 import { useLocalization } from '../../contexts/LocalizationContext';
 
+import { Settings } from '../../types';
+import { SettingsItem } from '../SettingsItem';
+import { CustomSelect } from '../CustomSelect';
+
 interface DataManagementProps {
+  settings: Settings;
+  onSettingsChange: (newSettings: Partial<Settings>) => void;
   onExportSettings: () => void;
   onExportAll: () => void;
   onExportSelected: () => void;
@@ -12,6 +18,8 @@ interface DataManagementProps {
 }
 
 export const DataManagement: React.FC<DataManagementProps> = ({
+  settings,
+  onSettingsChange,
   onExportSettings,
   onExportAll,
   onExportSelected,
@@ -31,10 +39,29 @@ export const DataManagement: React.FC<DataManagementProps> = ({
 
   return (
     <div className="space-y-4">
-      {/* 导出功能区域 */}
+      {/* 导出设置 */}
       <div className="space-y-3">
         <h4 className="text-sm font-medium text-[var(--text-color-secondary)] uppercase tracking-wider">
-          {t('exportData')}
+          导出设置
+        </h4>
+        <SettingsItem label="PDF 导出清晰度">
+          <CustomSelect
+            options={[
+              { value: 'sd', label: '标准' },
+              { value: 'hd', label: '高清' },
+              { value: 'uhd', label: '超清' },
+            ]}
+            selectedValue={settings.pdfQuality || 'hd'}
+            onSelect={(value) => onSettingsChange({ pdfQuality: value as any })}
+            className="w-48"
+          />
+        </SettingsItem>
+      </div>
+
+      {/* 导入/导出数据 */}
+      <div className="space-y-3">
+        <h4 className="text-sm font-medium text-[var(--text-color-secondary)] uppercase tracking-wider">
+          导入/导出数据
         </h4>
         <div className="grid grid-cols-1 gap-3">
           <button

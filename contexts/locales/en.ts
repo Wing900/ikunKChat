@@ -129,6 +129,8 @@ export const en = {
     noChatsSelected: 'No chats selected',
     selectedChatsCount: '{count} chats selected',
     exportChats: 'Export Chats',
+    exportPdf: 'Export as PDF',
+    exportJson: 'Export as JSON',
     searchChats: 'Search chats',
     filterByFolder: 'Filter by folder',
     clearHistory: 'Clear All Data',
@@ -147,6 +149,8 @@ export const en = {
     contextLengthDesc: 'Number of past messages to send. 0 for infinite.',
     maxOutputTokens: 'Max Output Tokens',
     maxOutputTokensDesc: 'The maximum number of tokens to generate in a response.',
+    streamInactivityTimeout: 'Stream Timeout (seconds)',
+    streamInactivityTimeoutDesc: 'Abort the request if no data is received for this duration. Prevents getting stuck on long-thinking models.',
     // Password View
     password_required: 'Password Required',
     password_prompt: 'Please enter the password to access ikunKChat',

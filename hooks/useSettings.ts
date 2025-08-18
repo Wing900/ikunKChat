@@ -26,9 +26,11 @@ const defaultSettings: Settings = {
   thinkDeeper: false,
   apiBaseUrl: '',
   temperature: 0.7,
-  maxOutputTokens: 4096,
-  contextLength: 10,
+  maxOutputTokens: 8192,
+  contextLength: 50,
   password: undefined,
+  streamInactivityTimeout: 60,
+  pdfQuality: 'hd',
 };
 
 export const useSettings = () => {

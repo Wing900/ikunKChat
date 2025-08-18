@@ -95,6 +95,20 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({ settings, on
           </div>
         </SettingsItem>
       )}
+      {visibleIds.has('streamInactivityTimeout') && (
+        <SettingsItem label={t('streamInactivityTimeout')} description={t('streamInactivityTimeoutDesc')}>
+          <div className="flex items-center gap-2">
+            <input
+              type="number"
+              min="10"
+              step="1"
+              value={settings.streamInactivityTimeout || 60}
+              onChange={e => onSettingsChange({ streamInactivityTimeout: parseInt(e.target.value, 10) })}
+              className="input-glass w-24"
+            />
+          </div>
+        </SettingsItem>
+      )}
       {visibleIds.has('globalSystemPrompt') && (
         <div className="flex flex-col">
             <SettingsItem label={t('globalSystemPrompt')} description={t('globalSystemPromptDesc')}>
@@ -106,16 +120,6 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({ settings, on
                 </div>
             </div>
           </div>
-      )}
-      {visibleIds.has('optimizeFormatting') && (
-        <SettingsItem label={t('optimizeFormatting')} description={t('optimizeFormattingDesc')}>
-          <Switch size="sm" checked={settings.optimizeFormatting} onChange={e => onSettingsChange({ optimizeFormatting: e.target.checked })} />
-        </SettingsItem>
-      )}
-      {visibleIds.has('thinkDeeper') && (
-        <SettingsItem label={t('thinkDeeper')} description={t('thinkDeeperDesc')}>
-          <Switch size="sm" checked={settings.thinkDeeper} onChange={e => onSettingsChange({ thinkDeeper: e.target.checked })} />
-        </SettingsItem>
       )}
       {visibleIds.has('langDetectModel') && (
         <SettingsItem label={t('langDetectModel')} description={t('langDetectModelDesc')}>
