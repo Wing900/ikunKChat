@@ -209,4 +209,7 @@ switchModel: 'Switch Model',
     reportBug: 'Report a Bug',
     discussions: 'Discussions',
     currentVersion: 'Current Version',
+    webmaster: 'Webmaster Information',
+    webmasterName: 'Webmaster',
+    webmasterDesc: 'This site is developed and maintained by webmaster bin',
 };
