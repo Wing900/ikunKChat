@@ -19,6 +19,7 @@ export interface Message {
   attachments?: FileAttachment[];
   groundingMetadata?: any;
   thoughts?: string;
+  thinkingTime?: number;
 }
 
 export interface Folder {

@@ -251,7 +251,7 @@ body.theme-blue-sky .markdown-content .code-block-wrapper {
 
 .model-selector-options::-webkit-scrollbar,
 .tool-selector-options::-webkit-scrollbar {
-  display: none; /* Chrome, Safari, Opera */
+  /* display: none; */ /* Allow scrollbar on mobile */
 }
 .model-selector-options.header-selector {
   /* Header override: Right-aligned below trigger */

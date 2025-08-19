@@ -60,6 +60,9 @@ export const useChatMessaging = ({ settings, activeChat, personas, memories, set
     let finalGroundingMetadata: any = null;
     let streamHadError = false;
 
+    let thinkingTime: number | undefined = undefined;
+    const thinkingStartTime = Date.now();
+
     try {
       const currentModel = chatSession.model;
       const effectiveToolConfig = { ...toolConfig, showThoughts: settings.showThoughts };
@@ -71,7 +74,7 @@ export const useChatMessaging = ({ settings, activeChat, personas, memories, set
 
       const updateUI = () => {
         if (needsUpdate) {
-          setChats(prev => prev.map(c => c.id === chatId ? { ...c, messages: c.messages.map(m => m.id === modelMessage.id ? { ...m, content: fullResponse || 'AI 正在唱、跳、rap...', thoughts: settings.showThoughts ? accumulatedThoughts : undefined } : m) } : c));
+          setChats(prev => prev.map(c => c.id === chatId ? { ...c, messages: c.messages.map(m => m.id === modelMessage.id ? { ...m, content: fullResponse || '...', thoughts: settings.showThoughts ? accumulatedThoughts : undefined, thinkingTime } : m) } : c));
           needsUpdate = false;
         }
         if (!isCancelledRef.current && !streamHadError) {
@@ -140,16 +143,24 @@ export const useChatMessaging = ({ settings, activeChat, personas, memories, set
           }
         }
 
+        let hasNewContent = false;
         if (candidate?.content?.parts) {
           for (const part of candidate.content.parts) {
             if ((part as any).thought) {
               if (settings.showThoughts && part.text) { accumulatedThoughts += part.text; }
             } else {
-              if (part.text) { fullResponse += part.text; }
+              if (part.text) {
+                fullResponse += part.text;
+                hasNewContent = true;
+              }
             }
           }
         }
         
+        if (hasNewContent && thinkingTime === undefined) {
+          thinkingTime = (Date.now() - thinkingStartTime) / 1000;
+        }
+
         if (candidate?.groundingMetadata) { finalGroundingMetadata = candidate.groundingMetadata; }
         
         needsUpdate = true; // Signal that an update is ready for the next animation frame

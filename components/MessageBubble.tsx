@@ -8,6 +8,14 @@ import { MessageActions } from './MessageActions';
 
 const TypingIndicator: React.FC<{ thoughts?: string | null }> = ({ thoughts }) => {
   const [text, setText] = useState('');
+  const [elapsedTime, setElapsedTime] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setElapsedTime(prev => prev + 0.1);
+    }, 100);
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -53,8 +61,9 @@ const TypingIndicator: React.FC<{ thoughts?: string | null }> = ({ thoughts }) =
   }, [thoughts && thoughts.trim().length > 0]);
 
   return (
-    <div className="whitespace-pre-wrap">
-      {text}
+    <div className="whitespace-pre-wrap flex items-center gap-2">
+      <span>{text}</span>
+      <span className="text-xs text-[var(--text-color-secondary)]">({elapsedTime.toFixed(1)}s)</span>
     </div>
   );
 };
@@ -123,6 +132,9 @@ export const MessageBubble: React.FC<MessageBubbleProps> = React.memo((props) =>
                       <button onClick={() => setIsThoughtsOpen(!isThoughtsOpen)} className="thoughts-expander-header">
                           <Icon icon="brain" className="w-4 h-4" />
                           <span>{t('thoughts')}</span>
+                          {message.thinkingTime && (
+                            <span className="ml-2 text-xs text-[var(--text-color-secondary)]">({message.thinkingTime.toFixed(2)}s)</span>
+                          )}
                           <Icon icon="chevron-down" className={`w-4 h-4 transition-transform duration-200 ml-auto ${isThoughtsOpen ? 'rotate-180' : ''}`} />
                       </button>
                       <div className={`thoughts-expander-content ${isThoughtsOpen ? 'expanded' : ''}`}>
@@ -149,7 +161,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = React.memo((props) =>
                       ))}
                     </div>
                   )}
-                  {isLastMessageLoading ? (
+                  {(isLastMessageLoading && !hasContent) ? (
                     <TypingIndicator thoughts={message.thoughts} />
                   ) : (
                     hasContent && (
@@ -190,7 +202,9 @@ export const MessageBubble: React.FC<MessageBubbleProps> = React.memo((props) =>
             </div>
           </div>
         </div>
-        <MessageActions message={message} isModelResponse={!isUser} onCopy={() => onCopy(message.content)} onEdit={onEditRequest} onDelete={handleDelete} onRegenerate={onRegenerate} onToggleRawView={() => setIsRawView(p => !p)} isRawView={isRawView} />
+        <div className="flex items-center gap-2">
+          <MessageActions message={message} isModelResponse={!isUser} onCopy={() => onCopy(message.content)} onEdit={onEditRequest} onDelete={handleDelete} onRegenerate={onRegenerate} onToggleRawView={() => setIsRawView(p => !p)} isRawView={isRawView} />
+        </div>
       </div>
 
        {isUser && <div className="w-8 h-8 flex-shrink-0 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center text-[var(--text-color-secondary)]"><Icon icon="user" className="w-5 h-5"/></div>}
