@@ -184,6 +184,7 @@ export const zh = {
     updateAvailable: '有新版本可用',
     releaseNotes: '更新日志',
     gotIt: '我知道了',
+    updatePrompt: '如需更新可以使用 Ctrl+Shift+R 强制刷新页面。',
     
     // Update Menu
     update: '更新',

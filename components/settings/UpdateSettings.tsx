@@ -52,6 +52,10 @@ export const UpdateSettings: React.FC<UpdateSettingsProps> = ({
               <Icon icon="download" className={`w-5 h-5 ${isCheckingUpdate ? 'animate-spin' : ''}`} />
               <span>{isCheckingUpdate ? t('checkingUpdate') : t('checkForUpdate')}</span>
             </button>
+            
+            <p className="text-xs text-[var(--text-color-secondary)] px-4 text-center">
+              {t('updatePrompt')}
+            </p>
 
             {updateAvailable && (
               <button
