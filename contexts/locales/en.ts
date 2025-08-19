@@ -183,6 +183,7 @@ export const en = {
     updateAvailable: 'New Version Available',
     releaseNotes: 'Release Notes',
     gotIt: 'Got it!',
+    updatePrompt: 'For the update to take effect, please perform a hard refresh using Ctrl+Shift+R.',
     
     // Update Menu
     update: 'Update',
