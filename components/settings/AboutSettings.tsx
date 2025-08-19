@@ -68,6 +68,10 @@ export const AboutSettings: React.FC<AboutSettingsProps> = ({ versionInfo }) => 
             <Icon icon="message-square" className="w-4 h-4" />
             <span>{t('discussions')}</span>
           </a>
+          <a href="https://iambin.qzz.io" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-[var(--accent-color)] hover:underline">
+            <Icon icon="chicken" className="w-4 h-4" />
+            <span>iambin.qzz.io</span>
+          </a>
         </div>
       </div>
     </div>

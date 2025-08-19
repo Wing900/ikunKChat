@@ -110,7 +110,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = React.memo((props) =>
     >
       {!isUser && (
         <div className="w-8 h-8 flex-shrink-0 rounded-full bg-[var(--accent-color)] flex items-center justify-center text-white overflow-hidden">
-          {persona ? <PersonaAvatar avatar={persona.avatar} className="text-xl"/> : <Icon icon="kchat" className="w-5 h-5"/>}
+          {persona ? <PersonaAvatar avatar={persona.avatar} className="text-xl"/> : <Icon icon="ikunchat.svg" className="w-5 h-5"/>}
         </div>
       )}
       
