@@ -1,14 +1,12 @@
 {
-  "version": "1.3.3",
-  "releaseDate": "2025-08-19",
+  "version": "1.3.5",
+  "releaseDate": "2025-08-21",
   "notes": {
     "zh": [
-      "🔧 优化反向代理以防止响应被截断。",
-      "✨ 新增支持从剪贴板粘贴图片上传的功能。"
+      "✨ 新增“微信大学活动通知助手”角色。"
     ],
     "en": [
-      "🔧 Optimized reverse proxy to prevent response truncation.",
-      "✨ Added support for pasting images from the clipboard to upload."
+      "✨ Added 'WeChat University Event Notification Assistant' persona."
     ]
   }
 }
