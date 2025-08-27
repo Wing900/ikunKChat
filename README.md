@@ -17,20 +17,16 @@
 
 ### ✨ 应用预览
 
-![ikunKChat 主界面](<img width="2559" height="1348" alt="image" src="https://github.com/user-attachments/assets/55512487-783c-4eed-87b0-0c88e860c9f2" />
-)
 
-|                         粉色海洋主题                         |                         苹果深色主题                         |
-| :----------------------------------------------------------: | :----------------------------------------------------------: |
-| <img src="<img width="2559" height="1348" alt="image" src="https://github.com/user-attachments/assets/c4449692-41b1-4db5-a324-6caa3e9ea0d4" />
-" alt="Pink Ocean Theme" style="zoom: 50%;" /> | <img src="<img width="2559" height="1348" alt="image" src="https://github.com/user-attachments/assets/592619e0-5a65-4e38-a6c6-6a87424f9185" />
-" alt="image-20250827191416575" style="zoom:50%;" /> |
+![ikunKChat 主界面](https://github.com/user-attachments/assets/55512487-783c-4eed-87b0-0c88e860c9f2)
 
-|                         蓝色天空主题                         |                         苹果浅色主题                         |
-| :----------------------------------------------------------: | :----------------------------------------------------------: |
-| <img src="<img width="2559" height="1348" alt="image" src="https://github.com/user-attachments/assets/308b3fc5-55eb-4734-8e41-952f09f65541" />
-" alt="image-20250827191828630" style="zoom:50%;" /> | <img src="<img width="2559" height="1348" alt="image" src="https://github.com/user-attachments/assets/8ef907ef-2980-481e-a7d7-e6843e6038f3" />
-" alt="image-20250827191931142" style="zoom:50%;" /> |
+| 粉色海洋主题 | 苹果深色主题 |
+| :---: | :---: |
+| <img src="https://github.com/user-attachments/assets/c4449692-41b1-4db5-a324-6caa3e9ea0d4" alt="Pink Ocean Theme" width="400" /> | <img src="https://github.com/user-attachments/assets/592619e0-5a65-4e38-a6c6-6a87424f9185" alt="Apple Dark Theme" width="400" /> |
+
+| 蓝色天空主题 | 苹果浅色主题 |
+| :---: | :---: |
+| <img src="https://github.com/user-attachments/assets/308b3fc5-55eb-4734-8e41-952f09f65541" alt="Blue Sky Theme" width="400" /> | <img src="https://github.com/user-attachments/assets/8ef907ef-2980-481e-a7d7-e6843e6038f3" alt="Apple Light Theme" width="400" /> |
 
 ## 🌟 功能特性
 
@@ -63,8 +59,7 @@
 - **密码保护**: 可设置访问密码，保护你的应用不被他人随意访问。
 - **临时访问令牌**: 支持通过 URL 参数生成临时访问链接，安全地分享给朋友限时使用。
 
-![image-20250827192112122](<img width="2559" height="1348" alt="image" src="https://github.com/user-attachments/assets/46fe161c-aa4f-46ea-adfc-15f528058725" />
-)
+![image-20250827192112122](https://github.com/user-attachments/assets/46fe161c-aa4f-46ea-adfc-15f528058725)
 
 ---
 
