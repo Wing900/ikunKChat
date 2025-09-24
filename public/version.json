@@ -1,12 +1,14 @@
 {
-  "version": "1.3.5",
-  "releaseDate": "2025-08-21",
+  "version": "1.3.6",
+  "releaseDate": "2025-09-24",
   "notes": {
     "zh": [
-      "✨ 新增“微信大学活动通知助手”角色。"
+      "✨ 新增“数学助手”角色，专业的数学问题解答助手。",
+      "🔄 将默认角色从“默认助手”切换为“数学助手”。"
     ],
     "en": [
-      "✨ Added 'WeChat University Event Notification Assistant' persona."
+      "✨ Added 'Math Assistant' persona, a professional helper for mathematical problems.",
+      "🔄 Switched default persona from 'Default Assistant' to 'Math Assistant'."
     ]
   }
 }
