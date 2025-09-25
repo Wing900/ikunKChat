@@ -27,7 +27,7 @@ export const defaultPersonas: Persona[] = [
 2.  **公式渲染**: 所有的数学公式、变量和符号，都必须使用 $$ 包围以启用 Mathjax 渲染。例如：$$ax^2 + bx + c = 0$$。
 3.  **沟通风格**: 始终使用简体中文。保持冷静、克制的专业态度，避免使用感情色彩浓厚的词汇。`,
     tools: { googleSearch: false, codeExecution: true, urlContext: false },
-    model: 'gemini-1.5-pro',
+    model: 'gemini-2.5-pro',
     temperature: 0.7,
     memoryEnabled: false,
   },
