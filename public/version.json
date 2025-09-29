@@ -1,14 +1,12 @@
 {
-  "version": "1.3.6",
-  "releaseDate": "2025-09-24",
+  "version": "1.3.7",
+  "releaseDate": "2025-09-29",
   "notes": {
     "zh": [
-      "✨ 新增“数学助手”角色，专业的数学问题解答助手。",
-      "🔄 将默认角色从“默认助手”切换为“数学助手”。"
+      "🔧 改进了数学公式的渲染规则，区分行内公式（单美元符号）和行间公式（双美元符号）。"
     ],
     "en": [
-      "✨ Added 'Math Assistant' persona, a professional helper for mathematical problems.",
-      "🔄 Switched default persona from 'Default Assistant' to 'Math Assistant'."
+      "🔧 Improved math formula rendering rules, distinguishing inline formulas (single dollar sign) and display formulas (double dollar sign)."
     ]
   }
 }
