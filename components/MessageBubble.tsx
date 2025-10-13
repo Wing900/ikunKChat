@@ -114,17 +114,35 @@ export const MessageBubble: React.FC<MessageBubbleProps> = React.memo((props) =>
 
   return (
     <div
-      className={`message-row group flex items-start gap-3 mt-4 relative ${isUser ? 'justify-end' : 'justify-start'} ${isBeingDeleted ? 'deleting' : ''}`}
+      className={`flex ${isUser ? 'justify-end' : 'justify-start'} mt-4 ${isBeingDeleted ? 'deleting' : ''}`}
       style={{ animationDelay: `${Math.min(index * 100, 500)}ms` }}
     >
-      {!isUser && (
-        <div className="w-8 h-8 flex-shrink-0 rounded-full bg-[var(--accent-color)] flex items-center justify-center text-white overflow-hidden">
-          {persona ? <PersonaAvatar avatar={persona.avatar} className="text-xl"/> : <Icon icon="ikunchat.svg" className="w-5 h-5"/>}
+      {/* 垂直堆叠容器：头像和气泡对齐到同一边缘 */}
+      <div className={`flex flex-col gap-2 group relative ${isUser ? 'items-end' : 'items-start'}`}>
+
+        {/* 头像 + 名称 */}
+        <div className="flex items-center gap-2">
+          {!isUser && (
+            <>
+              <div className="w-8 h-8 flex-shrink-0 rounded-full bg-[var(--accent-color)] flex items-center justify-center text-white overflow-hidden">
+                {persona ? <PersonaAvatar avatar={persona.avatar} className="text-xl"/> : <Icon icon="ikunchat.svg" className="w-5 h-5"/>}
+              </div>
+              <span className="text-sm font-medium text-[var(--text-color-secondary)]">{persona?.name || '默认助手'}</span>
+            </>
+          )}
+
+          {isUser && (
+            <>
+              <span className="text-sm font-medium text-[var(--text-color-secondary)]">用户</span>
+              <div className="w-8 h-8 flex-shrink-0 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center text-[var(--text-color-secondary)]">
+                <Icon icon="user" className="w-5 h-5"/>
+              </div>
+            </>
+          )}
         </div>
-      )}
-      
-      <div className={`flex flex-col ${isUser ? 'items-end' : 'items-start'}`}>
-        <div className={`max-w-xl text-base flex flex-col relative transition-all duration-300 ${isUser ? 'bg-[var(--accent-color)] text-white rounded-[var(--radius-2xl)] rounded-br-lg' : 'model-bubble rounded-[var(--radius-2xl)] rounded-bl-lg'}`}>
+
+        {/* 消息气泡 */}
+        <div className={`w-fit max-w-[85%] text-base flex flex-col relative transition-all duration-300 ${isUser ? 'bg-[var(--accent-color)] text-white rounded-lg' : 'bg-transparent rounded-[var(--radius-2xl)]'}`}>
           <div className={`grid transition-all duration-300 ease-in-out ${isEditing ? 'grid-rows-[0fr] opacity-0' : 'grid-rows-[1fr] opacity-100'}`}>
             <div className="overflow-hidden">
               {hasThoughts && (
@@ -142,7 +160,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = React.memo((props) =>
                       </div>
                   </div>
               )}
-              <div className={`p-4 ${isUser ? '' : 'text-[var(--text-color)]'}`}>
+              <div className={`p-4 w-fit ${isUser ? '' : 'text-[var(--text-color)]'}`}>
                   {message.attachments && message.attachments.length > 0 && (
                     <div className="mb-2 flex flex-wrap gap-2">
                       {message.attachments.map((att, i) => (
@@ -202,12 +220,10 @@ export const MessageBubble: React.FC<MessageBubbleProps> = React.memo((props) =>
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <MessageActions message={message} isModelResponse={!isUser} onCopy={() => onCopy(message.content)} onEdit={onEditRequest} onDelete={handleDelete} onRegenerate={onRegenerate} onToggleRawView={() => setIsRawView(p => !p)} isRawView={isRawView} />
-        </div>
-      </div>
 
-       {isUser && <div className="w-8 h-8 flex-shrink-0 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center text-[var(--text-color-secondary)]"><Icon icon="user" className="w-5 h-5"/></div>}
+        {/* 操作按钮 */}
+        <MessageActions message={message} isModelResponse={!isUser} onCopy={() => onCopy(message.content)} onEdit={onEditRequest} onDelete={handleDelete} onRegenerate={onRegenerate} onToggleRawView={() => setIsRawView(p => !p)} isRawView={isRawView} />
+      </div>
     </div>
   );
 });

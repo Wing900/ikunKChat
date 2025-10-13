@@ -191,9 +191,29 @@ body.theme-blue-sky .markdown-content .code-block-wrapper {
 }
 
 .model-bubble {
-  background-color: var(--model-bubble-bg);
+  background-color: transparent; /* 移除助手气泡背景色，保持透明 */
   color: var(--text-color);
   overflow: hidden; /* Ensure rounded corners clip children */
+}
+
+/* 助手气泡的圆角边框也去掉，让它更自然 */
+.model-bubble {
+  border-radius: 0;
+  border: none;
+  box-shadow: none;
+}
+
+/* 确保思考过程区域保持原有样式和背景 */
+.thoughts-container {
+    border-bottom: 1px solid var(--glass-border);
+    background-color: color-mix(in srgb, var(--text-color) 3%, transparent);
+    border-radius: var(--radius-2xl) var(--radius-2xl) 0 0;
+    /* 保持原有的圆角和背景色 */
+}
+
+.thoughts-expander-header {
+    background-color: color-mix(in srgb, var(--text-color) 3%, transparent);
+    /* 保持思考过程头部的背景 */
 }
 
 /* Model Selector & Tool Selector Styles */
@@ -1776,6 +1796,82 @@ body:not(.dark-mode) .hljs-link { text-decoration: underline; }
 }
 .toast-close-btn:hover {
   opacity: 1;
+}
+
+/* 新的消息布局样式：头部+内容垂直布局 */
+.message-row {
+  display: flex;
+  flex-direction: column;
+  margin-top: 1rem;
+}
+
+.message-row.justify-start {
+  align-items: flex-start;
+}
+
+.message-row.justify-end {
+  align-items: flex-end;
+}
+
+/* 消息头部：头像+名称水平排列 */
+.message-header {
+  display: flex;
+  align-items: center;
+  gap: 10px; /* 增加间距提升视觉效果 */
+  margin-bottom: 8px; /* 增加与气泡的间距 */
+}
+
+/* 助手消息：头像在前，名称在后 */
+.message-row.justify-start .message-header {
+  flex-direction: row;
+}
+
+/* 用户消息：头像在外侧（右侧），名称在左侧 */
+.message-row.justify-end .message-header {
+  flex-direction: row;
+}
+
+/* 头像样式 - 消息头部中的小头像，调整为20px更协调 */
+.message-header .w-8 {
+  width: 20px !important;
+  height: 20px !important;
+}
+
+/* 发送者名称样式，保持原有字体大小 */
+.sender-name {
+  font-size: 1rem; /* 使用默认字体大小 */
+  font-weight: 500;
+  color: var(--text-color-secondary);
+  white-space: nowrap;
+}
+
+/* 消息行：响应式对齐 */
+.message-row {
+  display: flex;
+  flex-direction: column;
+  margin-top: 1rem;
+  align-items: flex-start; /* 默认左对齐（手机端） */
+}
+
+/* 电脑端：用户消息右对齐 */
+@media (min-width: 768px) {
+  .message-row.justify-end {
+    align-items: flex-end;
+  }
+}
+
+/* Markdown内容永远左对齐 */
+.markdown-content p,
+.markdown-content div {
+  text-align: left !important;
+}
+
+/* 响应式调整：手机端 */
+@media (max-width: 640px) {
+  .message-header {
+    gap: 8px;
+    margin-bottom: 6px;
+  }
 }
 
 /* --- Translation History Modal --- */
