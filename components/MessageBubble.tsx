@@ -142,7 +142,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = React.memo((props) =>
         </div>
 
         {/* 消息气泡 */}
-        <div className={`w-fit max-w-[85%] text-base flex flex-col relative transition-all duration-300 ${isUser ? 'bg-[var(--accent-color)] text-white rounded-lg' : 'bg-transparent rounded-[var(--radius-2xl)]'}`}>
+        <div className={`max-w-full lg:max-w-[85%] text-base flex flex-col relative transition-all duration-300 ${isUser ? 'bg-[var(--accent-color)] text-white rounded-lg' : 'bg-transparent rounded-[var(--radius-2xl)]'}`}>
           <div className={`grid transition-all duration-300 ease-in-out ${isEditing ? 'grid-rows-[0fr] opacity-0' : 'grid-rows-[1fr] opacity-100'}`}>
             <div className="overflow-hidden">
               {hasThoughts && (
@@ -160,7 +160,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = React.memo((props) =>
                       </div>
                   </div>
               )}
-              <div className={`p-4 w-fit ${isUser ? '' : 'text-[var(--text-color)]'}`}>
+              <div className={`p-2 ${isUser ? '' : 'text-[var(--text-color)]'}`}>
                   {message.attachments && message.attachments.length > 0 && (
                     <div className="mb-2 flex flex-wrap gap-2">
                       {message.attachments.map((att, i) => (
@@ -186,7 +186,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = React.memo((props) =>
                       <div className="grid items-start">
                         {/* Rendered View */}
                         <div className={`col-start-1 row-start-1 grid transition-all duration-300 ease-in-out ${isRawView ? 'grid-rows-[0fr] opacity-0' : 'grid-rows-[1fr] opacity-100'}`} aria-hidden={isRawView}>
-                          <div className="overflow-hidden">
+                          <div className="overflow-hidden break-words text-justify">
                               <MarkdownRenderer content={message.content} theme={settings.theme} />
                           </div>
                         </div>
@@ -210,7 +210,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = React.memo((props) =>
             </div>
           </div>
           
-          <div className={`grid transition-all duration-300 ease-in-out ${isEditing ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
+          <div className={`transition-all duration-300 ease-in-out ${isEditing ? 'grid grid-rows-[1fr] opacity-100' : 'hidden'}`}>
             <div className="overflow-hidden p-2 w-full">
               <textarea value={editedContent} onChange={(e) => setEditedContent(e.target.value)} onKeyDown={handleKeyDown} className="message-edit-textarea" autoFocus={isEditing} />
               <div className="message-edit-actions">

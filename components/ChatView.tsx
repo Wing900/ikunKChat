@@ -144,11 +144,13 @@ export const ChatView: React.FC<ChatViewProps> = (props) => {
         
         <div className="flex-grow flex flex-col relative min-h-0">
             <InternalView active={!!chatSession}>
-              <div className="flex-grow overflow-y-auto p-4">
+              <div className="flex-grow overflow-y-auto py-4">
+                <div className="w-full lg:max-w-4xl lg:mx-auto px-2">
                   {(chatSession?.messages || []).map((msg, index) => (
                     <MessageBubble key={msg.id} message={msg} index={index} onImageClick={props.onImageClick} settings={settings} persona={activePersona} isLastMessageLoading={isLoading && index === chatSession!.messages.length - 1} isEditing={editingMessageId === msg.id} onEditRequest={() => setEditingMessageId(msg.id)} onCancelEdit={handleCancelEdit} onSaveEdit={handleSaveEdit} onDelete={props.onDeleteMessage} onRegenerate={props.onRegenerate} onCopy={handleCopy} onShowCitations={props.onShowCitations} />
                   ))}
                   <div ref={messagesEndRef} />
+                </div>
               </div>
             </InternalView>
 
