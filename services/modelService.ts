@@ -1,5 +1,5 @@
 export async function getAvailableModels(apiKeys: string[], apiBaseUrl?: string): Promise<string[]> {
-  const defaultModelList = ['gemini-2.5-pro', 'gemini-2.5-flash'];
+  const defaultModelList = ['gemini-2.5-pro-preview-05-06-maxthinking', 'gemini-2.5-pro', 'gemini-2.5-flash'];
 
   if (!apiKeys || apiKeys.length === 0) {
     return defaultModelList;
@@ -23,21 +23,21 @@ export async function getAvailableModels(apiKeys: string[], apiBaseUrl?: string)
       
       if (!response.ok) {
         // Don't throw an error, just log and try the next key
-        let errorDetails = `API call failed with status: ${response.status}`;
+        let errorDetails = `API 调用失败，状态码：${response.status}`;
         try {
           const errorData = await response.json();
           if (errorData?.error?.message) {
             errorDetails += `: ${errorData.error.message}`;
           }
         } catch (e) { /* Response was not JSON */ }
-        console.warn(`Failed to fetch models with key ending in ...${sanitizedApiKey.slice(-4)}: ${errorDetails}`);
+        console.warn(`使用 API 密钥 ...${sanitizedApiKey.slice(-4)} 获取模型列表失败: ${errorDetails}`);
         continue;
       }
 
       const data = await response.json();
       
       if (!data.models || !Array.isArray(data.models)) {
-          console.warn("Invalid response structure from models API with one key, trying next.");
+          console.warn("API 响应结构无效，尝试下一个密钥。");
           continue;
       }
 
@@ -55,11 +55,11 @@ export async function getAvailableModels(apiKeys: string[], apiBaseUrl?: string)
         return finalModels; // Return on first success
       }
     } catch (error) {
-      console.warn(`Error fetching models with key ending in ...${sanitizedApiKey.slice(-4)}:`, error);
+      console.warn(`使用 API 密钥 ...${sanitizedApiKey.slice(-4)} 获取模型时出错:`, error);
       // Continue to the next key
     }
   }
 
-  console.error("All API keys failed to fetch the model list. Using default list.");
+  console.error("所有 API 密钥都失败了，使用默认模型列表。如问题持续，请联系站长。");
   return defaultModelList;
 }

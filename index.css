@@ -190,6 +190,29 @@ body.theme-blue-sky .markdown-content .code-block-wrapper {
   background-color: var(--accent-color);
 }
 
+/* 用户气泡：Apple Messages 风格 */
+.user-bubble {
+  background: rgba(0, 0, 0, 0.04);
+  border-radius: var(--radius-2xl);
+  color: var(--text-color);
+}
+
+body.theme-dark .user-bubble {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+body.theme-apple-dark .user-bubble {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+body.theme-pink-ocean .user-bubble {
+  background: rgba(200, 162, 200, 0.12);
+}
+
+body.theme-blue-sky .user-bubble {
+  background: rgba(56, 189, 248, 0.08);
+}
+
 .model-bubble {
   background-color: transparent; /* 移除助手气泡背景色，保持透明 */
   color: var(--text-color);

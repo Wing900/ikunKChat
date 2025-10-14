@@ -12,7 +12,7 @@ export async function executeWithKeyRotation<T>(
 ): Promise<T> {
     const keyManager = new KeyManager(apiKeys);
     if (keyManager.getTotalKeys() === 0) {
-        throw new Error("No API keys provided.");
+        throw new Error("未提供 API 密钥。请联系站长获取。");
     }
 
     const originalFetch = window.fetch;
@@ -38,7 +38,7 @@ export async function executeWithKeyRotation<T>(
                 return originalFetch(urlString, init);
             };
         } catch (e) {
-            console.error("Invalid API Base URL provided:", trimmedApiEndpoint, e);
+            console.error("提供的 API Base URL 无效:", trimmedApiEndpoint, e);
         }
     }
     
@@ -53,14 +53,14 @@ export async function executeWithKeyRotation<T>(
                 keyManager.saveSuccessIndex();
                 return result;
             } catch (error) {
-                console.warn(`API call failed with key ending in ...${key.slice(-4)}. Trying next key. Error:`, error);
+                console.warn(`API 调用失败，密钥 ...${key.slice(-4)}，尝试下一个密钥。错误:`, error);
                 if (i === keyManager.getTotalKeys() - 1) {
-                    console.error("All API keys failed.");
+                    console.error("所有 API 密钥都失败了。如问题持续，请联系站长。");
                     throw error;
                 }
             }
         }
-        throw new Error("All API keys failed.");
+        throw new Error("所有 API 密钥都失败了。如问题持续，请联系站长。");
     } finally {
         if (proxyActive) {
             window.fetch = originalFetch;
@@ -80,7 +80,7 @@ export async function* executeStreamWithKeyRotation<T extends GenerateContentRes
 ): AsyncGenerator<T> {
     const keyManager = new KeyManager(apiKeys);
     if (keyManager.getTotalKeys() === 0) {
-        yield { text: "Error: No API keys provided." } as T;
+        yield { text: "错误：未提供 API 密钥。请联系站长获取。" } as T;
         return;
     }
 
@@ -107,7 +107,7 @@ export async function* executeStreamWithKeyRotation<T extends GenerateContentRes
                 return originalFetch(urlString, init);
             };
         } catch (e) {
-            console.error("Invalid API Base URL provided:", trimmedApiEndpoint, e);
+            console.error("提供的 API Base URL 无效:", trimmedApiEndpoint, e);
         }
     }
 
@@ -127,13 +127,13 @@ export async function* executeStreamWithKeyRotation<T extends GenerateContentRes
                 break; 
             } catch (error) {
                 lastError = error;
-                console.warn(`API stream failed for key ending in ...${key.slice(-4)}. Trying next key. Error:`, error);
+                console.warn(`API 流式调用失败，密钥 ...${key.slice(-4)}，尝试下一个密钥。错误:`, error);
             }
         }
-        
+
         if (!success) {
-            console.error("All API keys failed for streaming operation.");
-            yield { text: "Error: All API keys failed. " + (lastError?.message || "") } as T;
+            console.error("流式操作所有 API 密钥都失败了。如问题持续，请联系站长。");
+            yield { text: "错误：所有 API 密钥都失败了。请联系站长。" + (lastError?.message || "") } as T;
         }
 
     } finally {
