@@ -142,7 +142,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = React.memo((props) =>
         </div>
 
         {/* 消息气泡 */}
-        <div className={`max-w-full lg:max-w-[85%] text-base flex flex-col relative transition-all duration-300 ${isUser ? 'bg-[var(--accent-color)] text-white rounded-lg' : 'bg-transparent rounded-[var(--radius-2xl)]'}`}>
+        <div className={`max-w-full lg:max-w-[85%] text-base flex flex-col relative transition-all duration-300 ${isUser ? 'user-bubble' : 'bg-transparent rounded-[var(--radius-2xl)]'}`}>
           <div className={`grid transition-all duration-300 ease-in-out ${isEditing ? 'grid-rows-[0fr] opacity-0' : 'grid-rows-[1fr] opacity-100'}`}>
             <div className="overflow-hidden">
               {hasThoughts && (

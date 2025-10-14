@@ -11,8 +11,8 @@ const defaultSettings: Settings = {
   fontFamily: 'lxgw',
   apiKey: [],
   showSuggestions: false,
-  defaultModel: 'gemini-2.5-pro',
-  defaultPersona: 'default-assistant',
+  defaultModel: 'gemini-2.5-pro-preview-05-06-maxthinking',
+  defaultPersona: 'default-math-assistant',
   suggestionModel: 'gemini-2.5-flash',
   autoTitleGeneration: true,
   titleGenerationModel: 'gemini-2.5-flash',
@@ -29,13 +29,13 @@ const defaultSettings: Settings = {
   maxOutputTokens: 8192,
   contextLength: 50,
   password: undefined,
-  streamInactivityTimeout: 60,
+  streamInactivityTimeout: 300,
   pdfQuality: 'hd',
 };
 
 export const useSettings = () => {
   const [settings, setSettings] = useState<Settings>(defaultSettings);
-  const [availableModels, setAvailableModels] = useState<string[]>(['gemini-2.5-pro', 'gemini-2.5-flash']);
+  const [availableModels, setAvailableModels] = useState<string[]>(['gemini-2.5-pro-preview-05-06-maxthinking', 'gemini-2.5-pro', 'gemini-2.5-flash']);
   const [isStorageLoaded, setIsStorageLoaded] = useState(false);
   const { setLanguage } = useLocalization();
 
