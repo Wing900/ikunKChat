@@ -1,14 +1,16 @@
 {
-  "version": "1.3.10",
-  "releaseDate": "2025-10-13",
+  "version": "1.4.0",
+  "releaseDate": "2025-10-14",
   "notes": {
     "zh": [
       "🎨 优化了UI",
-      "✨ 优化聊天气泡布局，提升响应式体验和文本对齐"
+      "🚨 优化了报错体验",
+      "⚙️ 优化了默认设置"
     ],
     "en": [
       "🎨 Optimized the UI",
-      "✨ Refined chat bubble layout for better responsiveness and text alignment"
+      "🚨 Improved error handling experience",
+      "⚙️ Enhanced default settings"
     ]
   }
 }
