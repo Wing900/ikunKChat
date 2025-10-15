@@ -1897,7 +1897,65 @@ body:not(.dark-mode) .hljs-link { text-decoration: underline; }
   }
 }
 
-/* --- Translation History Modal --- */
+/* KaTeX数学公式样式隔离 */
+.katex-container {
+  /* 不设置字体族，让KaTeX使用自己的字体 */
+}
+
+.katex-container .katex {
+  /* 确保KaTeX使用自己的字体，不覆盖 */
+  font-size: 1em !important;
+}
+
+.katex-container .katex-display {
+  /* 显示公式样式 */
+  display: block;
+  text-align: center;
+  margin: 1em 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0.5rem 0;
+}
+
+.katex-container .katex-html {
+  /* 确保HTML部分渲染正常 */
+  display: block;
+}
+
+.katex-container .katex-mathml {
+  /* 隐藏MathML部分但不影响布局 */
+  position: absolute;
+  clip: rect(1px, 1px, 1px, 1px);
+  padding: 0;
+  border: 0;
+  height: 1px;
+  width: 1px;
+  overflow: hidden;
+}
+
+/* 确保KaTeX的颜色与主题一致 */
+body.theme-dark .katex-container .katex,
+body.theme-apple-dark .katex-container .katex {
+  color: var(--text-color) !important;
+}
+
+/* KaTeX错误状态样式 */
+.katex-container .katex-error {
+  color: #cc0000 !important;
+}
+
+/* 行内公式样式 */
+.katex-container .katex:not(.katex-display) {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+/* 确保KaTeX的边框和背景在深色主题下正常显示 */
+.katex-container .katex > .katex-html::before {
+  border-color: currentColor;
+}
+
+/* Translation History Modal */
 @keyframes translation-item-out {
   from { opacity: 1; transform: translateY(0) scale(1); max-height: 100px; }
   to { opacity: 0; transform: translateY(10px) scale(0.95); max-height: 0; padding-top: 0; padding-bottom: 0; margin-top:0; margin-bottom:0; }

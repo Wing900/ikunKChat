@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { ChatSession, Folder, Settings } from '../types';
-import { loadChats, loadFolders, saveChats, saveFolders } from '../services/storageService';
+import { loadChats, loadFolders, saveChats, saveFolders, loadActiveChatId, saveActiveChatId } from '../services/storageService';
 
 interface UseChatDataProps {
   settings: Settings;
@@ -18,6 +18,11 @@ export const useChatData = ({ settings, isStorageLoaded, onSettingsChange }: Use
     if (isStorageLoaded) {
       setChats(loadChats());
       setFolders(loadFolders());
+      // 恢复当前活跃的聊天
+      const savedActiveChatId = loadActiveChatId();
+      if (savedActiveChatId) {
+        setActiveChatId(savedActiveChatId);
+      }
     }
   }, [isStorageLoaded]);
 
@@ -32,6 +37,12 @@ export const useChatData = ({ settings, isStorageLoaded, onSettingsChange }: Use
       saveFolders(folders);
     }
   }, [folders, isStorageLoaded]);
+
+  useEffect(() => {
+    if (isStorageLoaded) {
+      saveActiveChatId(activeChatId);
+    }
+  }, [activeChatId, isStorageLoaded]);
 
   const handleDeleteChat = useCallback((id: string) => {
     setChats(p => p.filter(c => c.id !== id));

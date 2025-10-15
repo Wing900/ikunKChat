@@ -19,6 +19,7 @@ interface SettingsModalProps {
   onExportSelectedChats: () => void;
   onImport: (file: File) => void;
   onClearAll: () => void;
+  onClearChatHistory: () => void;
   availableModels: string[];
   personas: Persona[];
   versionInfo: { version: string } | null;
@@ -124,6 +125,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ versionInfo, ...pr
                 }}
                 onImport={props.onImport}
                 onClearAll={props.onClearAll}
+                onClearChatHistory={props.onClearChatHistory}
                 visibleIds={visibleSettingIds}
               />
             </SettingsSection>

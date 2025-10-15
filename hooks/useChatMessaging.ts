@@ -103,43 +103,33 @@ export const useChatMessaging = ({ settings, activeChat, personas, memories, set
       };
 
       resetInactivityTimer();
-
-      console.log(`[STREAM_ANALYSIS] Starting to process stream for chat ${chatId} at ${new Date().toISOString()}`);
       let chunkCount = 0;
 
       for await (const chunk of stream) {
         if (isCancelledRef.current) {
-          console.log(`[STREAM_ANALYSIS] Stream cancelled by user at chunk ${chunkCount}.`);
           break;
         }
         resetInactivityTimer();
         chunkCount++;
-        const chunkSize = JSON.stringify(chunk).length;
-        const chunkContentPreview = chunk.text ? `"${chunk.text.substring(0, 50)}..."` : "no text content";
-        console.log(`[STREAM_ANALYSIS] Received chunk #${chunkCount} at ${new Date().toISOString()}. Size: ${chunkSize} bytes. Content preview: ${chunkContentPreview}`);
 
         if (chunk.text?.startsWith("Error:")) {
           streamHadError = true;
           fullResponse = chunk.text;
-          console.error(`[STREAM_ANALYSIS] Stream error reported in chunk: ${chunk.text}`);
           break;
         }
 
         const candidate = chunk.candidates?.[0];
         if (candidate?.finishReason) {
           const reason = candidate.finishReason;
-          console.log(`[STREAM_ANALYSIS] Received finish reason: "${reason}" at chunk #${chunkCount}.`);
 
           if (reason === 'SAFETY') {
             streamHadError = true;
             fullResponse = "Google Cut It for Safety";
             addToast("Google Cut It for Safety", 'error');
-            console.log(`[STREAM_ANALYSIS] Identified as a "Google Cut It" event. Reason: ${reason}`);
           } else if (reason === 'MAX_TOKENS') {
             streamHadError = true;
             fullResponse = "Google Cut It for Max Length";
             addToast("Google Cut It for Max Length", 'error');
-            console.log(`[STREAM_ANALYSIS] Identified as a "Google Cut It" event. Reason: ${reason}`);
           }
         }
 
@@ -162,11 +152,10 @@ export const useChatMessaging = ({ settings, activeChat, personas, memories, set
         }
 
         if (candidate?.groundingMetadata) { finalGroundingMetadata = candidate.groundingMetadata; }
-        
+  
         needsUpdate = true; // Signal that an update is ready for the next animation frame
       }
-      console.log(`[STREAM_ANALYSIS] Stream processing finished for chat ${chatId} at ${new Date().toISOString()}. Total chunks: ${chunkCount}.`);
-      
+
       clearTimeout(inactivityTimer);
       if (animationFrameId) cancelAnimationFrame(animationFrameId);
 
@@ -177,7 +166,6 @@ export const useChatMessaging = ({ settings, activeChat, personas, memories, set
           streamHadError = true; // Also treat this as an error so suggestions don't generate
           fullResponse = "Google Cut It for Unknown Reason";
           addToast("Google Cut It for Unknown Reason", 'error');
-          console.log(`[STREAM_ANALYSIS] Identified as a "Google Cut It" event. Reason: Empty response on normal stop.`);
         }
         setChats(prev => prev.map(c => c.id === chatId ? { ...c, messages: c.messages.map(m => m.id === modelMessage.id ? { ...m, content: fullResponse || '...', thoughts: settings.showThoughts ? accumulatedThoughts : undefined, groundingMetadata: finalGroundingMetadata } : m) } : c));
       }
@@ -201,7 +189,17 @@ export const useChatMessaging = ({ settings, activeChat, personas, memories, set
   }, [settings, setChats, activeChat, personas, memories, setSuggestedReplies, addToast]);
 
   const handleSendMessage = useCallback(async (content: string, files: File[] = [], toolConfig: any) => {
-    const attachments = await Promise.all(files.map(fileToData));
+    // 串行处理文件以避免内存峰值
+    const attachments = [];
+    for (let i = 0; i < files.length; i++) {
+      try {
+        const attachment = await fileToData(files[i]);
+        attachments.push(attachment);
+      } catch (error) {
+        console.error(`Failed to process file ${i + 1}:`, error);
+        // 继续处理其他文件，不因为单个文件失败而中断
+      }
+    }
       
     const userMessage: Message = { id: crypto.randomUUID(), role: MessageRole.USER, content: content, timestamp: Date.now(), attachments };
     
