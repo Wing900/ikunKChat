@@ -14,6 +14,7 @@ interface DataManagementProps {
   onExportSelected: () => void;
   onImport: (file: File) => void;
   onClearAll: () => void;
+  onClearChatHistory: () => void;
   visibleIds: Set<string>;
 }
 
@@ -25,6 +26,7 @@ export const DataManagement: React.FC<DataManagementProps> = ({
   onExportSelected,
   onImport,
   onClearAll,
+  onClearChatHistory,
   visibleIds
 }) => {
   const { t } = useLocalization();
@@ -105,6 +107,13 @@ export const DataManagement: React.FC<DataManagementProps> = ({
           >
             <Icon icon="upload" className="w-4 h-4"/>
             {t('importData')}
+          </button>
+          <button
+            onClick={onClearChatHistory}
+            className="btn-outline btn-warning flex items-center justify-center gap-2"
+          >
+            <Icon icon="delete" className="w-4 h-4"/>
+            清除聊天历史
           </button>
           <input
             type="file"

@@ -1,7 +1,7 @@
 {
   "name": "kchat",
   "private": true,
-  "version": "1.4.0",
+  "version": "1.5.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -11,6 +11,7 @@
   "dependencies": {
     "@google/genai": "^1.12.0",
     "@types/katex": "^0.16.7",
+    "browser-image-compression": "^2.0.2",
     "html2canvas": "^1.4.1",
     "jspdf": "^2.5.1",
     "katex": "^0.16.22",

@@ -30,7 +30,7 @@ import { useToast } from './contexts/ToastContext';
 import { usePersonas } from './hooks/usePersonas';
 import { usePersonaMemories } from './hooks/usePersonaMemories';
 import { useTranslationHistory } from './hooks/useTranslationHistory';
-import { exportData, importData, clearAllData, loadPrivacyConsent, savePrivacyConsent, loadLastReadVersion, saveLastReadVersion, exportSelectedChats } from './services/storageService';
+import { exportData, importData, clearAllData, clearChatHistory, loadPrivacyConsent, savePrivacyConsent, loadLastReadVersion, saveLastReadVersion, exportSelectedChats } from './services/storageService';
 import { authService } from './services/authService';
 import { ViewContainer } from './components/common/ViewContainer';
 
@@ -327,6 +327,20 @@ const handleSelectChat = useCallback((id: string) => { setActiveChatId(id); chat
     });
   };
 
+  const handleClearChatHistory = () => {
+    setConfirmation({
+        title: "清除聊天历史",
+        message: "确定要清除所有聊天历史记录吗？此操作不会删除您的设置、角色和其他数据。",
+        onConfirm: () => {
+            clearChatHistory();
+            setChats([]);
+            setActiveChatId(null);
+            setConfirmation(null);
+            addToast("聊天历史已清除", 'success');
+        }
+    });
+  };
+
   // 处理导出选中的聊天
   const handleExportSelectedChats = (selectedChatIds: string[]) => {
     exportSelectedChats(selectedChatIds, chats);
@@ -431,7 +445,7 @@ const handleSelectChat = useCallback((id: string) => { setActiveChatId(id); chat
         </div>
         
         <Suspense fallback={null}>
-          {isSettingsOpen && <SettingsModal settings={settings} onClose={() => setIsSettingsOpen(false)} onSettingsChange={handleSettingsChange} onExportSettings={() => exportData({ settings })} onExportAll={() => exportData({ chats, folders, settings, personas: personas.filter(p => p && !p.isDefault), memories })} onExportSelectedChats={() => setShowChatExportSelector(true)} onImport={handleImport} onClearAll={handleClearAll} availableModels={availableModels} personas={personas} versionInfo={versionInfo} />}
+          {isSettingsOpen && <SettingsModal settings={settings} onClose={() => setIsSettingsOpen(false)} onSettingsChange={handleSettingsChange} onExportSettings={() => exportData({ settings })} onExportAll={() => exportData({ chats, folders, settings, personas: personas.filter(p => p && !p.isDefault), memories })} onExportSelectedChats={() => setShowChatExportSelector(true)} onImport={handleImport} onClearAll={handleClearAll} onClearChatHistory={handleClearChatHistory} availableModels={availableModels} personas={personas} versionInfo={versionInfo} />}
           {lightboxImage && <ImageLightbox src={lightboxImage} onClose={() => setLightboxImage(null)} />}
           {confirmation && <ConfirmationModal {...confirmation} onClose={() => setConfirmation(null)} />}
         </Suspense>

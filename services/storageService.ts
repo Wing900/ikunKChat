@@ -7,6 +7,7 @@ const ROLES_KEY = 'kchat-roles';
 const TRANSLATION_HISTORY_KEY = 'kchat-translation-history';
 const CUSTOM_LANGUAGES_KEY = 'kchat-custom-languages';
 const PERSONA_MEMORIES_KEY = 'kchat-persona-memories';
+const ACTIVE_CHAT_KEY = 'kchat-active-chat';
 const DATA_VERSION_KEY = 'kchat-data-version';
 const CURRENT_DATA_VERSION = '1.2.0'; // 数据版本号，用于数据迁移
 const PRIVACY_CONSENT_KEY = 'kchat-privacy-consent';
@@ -271,6 +272,16 @@ export const loadPersonaMemories = (): Record<string, PersonaMemory[]> => {
     }
 };
 
+export const loadActiveChatId = (): string | null => {
+    try {
+        const saved = localStorage.getItem(ACTIVE_CHAT_KEY);
+        return saved ? JSON.parse(saved) : null;
+    } catch (error) {
+        console.error("Failed to load active chat id from localStorage", error);
+        return null;
+    }
+};
+
 // --- Savers ---
 export const saveChats = (chats: ChatSession[]) => {
     try {
@@ -390,6 +401,18 @@ export const savePersonaMemories = (memories: Record<string, PersonaMemory[]>) =
     }
 };
 
+export const saveActiveChatId = (activeChatId: string | null) => {
+    try {
+        if (activeChatId) {
+            localStorage.setItem(ACTIVE_CHAT_KEY, JSON.stringify(activeChatId));
+        } else {
+            localStorage.removeItem(ACTIVE_CHAT_KEY);
+        }
+    } catch (error) {
+        console.error("Failed to save active chat id to localStorage", error);
+    }
+};
+
 // --- Data Management ---
 export const exportData = (data: { chats?: ChatSession[], folders?: Folder[], settings?: Settings, personas?: Persona[], memories?: Record<string, PersonaMemory[]> }) => {
     const isFullExport = !!data.chats;
@@ -455,7 +478,15 @@ export const clearAllData = () => {
     localStorage.removeItem(TRANSLATION_HISTORY_KEY);
     localStorage.removeItem(CUSTOM_LANGUAGES_KEY);
     localStorage.removeItem(PERSONA_MEMORIES_KEY);
+    localStorage.removeItem(ACTIVE_CHAT_KEY);
     // We don't clear privacy consent here, as it should persist
+};
+
+export const clearChatHistory = () => {
+    localStorage.removeItem(CHATS_KEY);
+    localStorage.removeItem(FOLDERS_KEY);
+    localStorage.removeItem(ACTIVE_CHAT_KEY);
+    // 保留设置、角色和其他数据
 };
 
 // --- Privacy Consent ---

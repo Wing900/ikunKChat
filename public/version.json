@@ -1,16 +1,16 @@
 {
-  "version": "1.4.0",
-  "releaseDate": "2025-10-14",
+  "version": "1.5.0",
+  "releaseDate": "2025-10-16",
   "notes": {
     "zh": [
-      "🎨 优化了UI",
-      "🚨 优化了报错体验",
-      "⚙️ 优化了默认设置"
+      "🎯 完美修复文字和图片一起发崩溃错误",
+      "🧮 LaTeX公式渲染大改进！！更完美",
+      "✂️ 长对话截断问题完善"
     ],
     "en": [
-      "🎨 Optimized the UI",
-      "🚨 Improved error handling experience",
-      "⚙️ Enhanced default settings"
+      "🎯 Perfect fix for image+text sending crashes",
+      "🧮 Major LaTeX rendering improvements! Much more perfect",
+      "✂️ Enhanced long conversation truncation"
     ]
   }
 }
