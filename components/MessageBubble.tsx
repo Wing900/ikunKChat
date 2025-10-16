@@ -3,19 +3,10 @@ import { Message, MessageRole, Settings, Persona } from '../types';
 import { Icon } from './Icon';
 import { MarkdownRenderer } from './MarkdownRenderer';
 import { useLocalization } from '../contexts/LocalizationContext';
-import { PersonaAvatar } from './common/PersonaAvatar';
 import { MessageActions } from './MessageActions';
 
 const TypingIndicator: React.FC<{ thoughts?: string | null }> = ({ thoughts }) => {
   const [text, setText] = useState('');
-  const [elapsedTime, setElapsedTime] = useState(0);
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setElapsedTime(prev => prev + 0.1);
-    }, 100);
-    return () => clearInterval(timer);
-  }, []);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -63,7 +54,6 @@ const TypingIndicator: React.FC<{ thoughts?: string | null }> = ({ thoughts }) =
   return (
     <div className="whitespace-pre-wrap flex items-center gap-2">
       <span>{text}</span>
-      <span className="text-xs text-[var(--text-color-secondary)]">({elapsedTime.toFixed(1)}s)</span>
     </div>
   );
 };
@@ -86,7 +76,7 @@ interface MessageBubbleProps {
 }
 
 export const MessageBubble: React.FC<MessageBubbleProps> = React.memo((props) => {
-  const { message, index, onImageClick, settings, persona, isEditing, onEditRequest, onCancelEdit, onSaveEdit, onDelete, onRegenerate, onCopy, onShowCitations, isLastMessageLoading } = props;
+  const { message, index, onImageClick, settings, persona, onEditRequest, onDelete, onRegenerate, onCopy, onShowCitations, isLastMessageLoading } = props;
   const { t } = useLocalization();
   const isUser = message.role === MessageRole.USER;
   const hasContent = message.content && message.content !== '...';
@@ -94,136 +84,93 @@ export const MessageBubble: React.FC<MessageBubbleProps> = React.memo((props) =>
 
   const [isThoughtsOpen, setIsThoughtsOpen] = useState(false);
   const hasCitations = message.groundingMetadata?.groundingChunks?.length > 0;
-  
-  const [editedContent, setEditedContent] = useState(message.content);
+
   const [isBeingDeleted, setIsBeingDeleted] = useState(false);
   const [isRawView, setIsRawView] = useState(false);
 
-  useEffect(() => {
-    setEditedContent(message.content);
-    setIsRawView(false); // Reset raw view when edit mode is toggled
-  }, [message.content, isEditing]);
-  
   const handleDelete = () => { setIsBeingDeleted(true); setTimeout(() => onDelete(message.id), 350); };
-  const handleSave = () => { if (editedContent.trim()) onSaveEdit(message, editedContent); };
-  
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSave(); }
-    if (e.key === 'Escape') { e.preventDefault(); onCancelEdit(); }
-  };
 
   return (
-    <div
-      className={`flex ${isUser ? 'justify-end' : 'justify-start'} mt-4 ${isBeingDeleted ? 'deleting' : ''}`}
-      style={{ animationDelay: `${Math.min(index * 100, 500)}ms` }}
-    >
-      {/* 垂直堆叠容器：头像和气泡对齐到同一边缘 */}
-      <div className={`flex flex-col gap-2 group relative ${isUser ? 'items-end' : 'items-start'}`}>
-
-        {/* 头像 + 名称 */}
-        <div className="flex items-center gap-2">
-          {!isUser && (
-            <>
-              <div className="w-8 h-8 flex-shrink-0 rounded-full bg-[var(--accent-color)] flex items-center justify-center text-white overflow-hidden">
-                {persona ? <PersonaAvatar avatar={persona.avatar} className="text-xl"/> : <Icon icon="ikunchat.svg" className="w-5 h-5"/>}
-              </div>
-              <span className="text-sm font-medium text-[var(--text-color-secondary)]">{persona?.name || '默认助手'}</span>
-            </>
-          )}
-
-          {isUser && (
-            <>
-              <span className="text-sm font-medium text-[var(--text-color-secondary)]">用户</span>
-              <div className="w-8 h-8 flex-shrink-0 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center text-[var(--text-color-secondary)]">
-                <Icon icon="user" className="w-5 h-5"/>
-              </div>
-            </>
-          )}
-        </div>
-
-        {/* 消息气泡 */}
-        <div className={`max-w-full lg:max-w-[85%] text-base flex flex-col relative transition-all duration-300 ${isUser ? 'user-bubble' : 'bg-transparent rounded-[var(--radius-2xl)]'}`}>
-          <div className={`grid transition-all duration-300 ease-in-out ${isEditing ? 'grid-rows-[0fr] opacity-0' : 'grid-rows-[1fr] opacity-100'}`}>
-            <div className="overflow-hidden">
-              {hasThoughts && (
-                  <div className="thoughts-container">
-                      <button onClick={() => setIsThoughtsOpen(!isThoughtsOpen)} className="thoughts-expander-header">
-                          <Icon icon="brain" className="w-4 h-4" />
-                          <span>{t('thoughts')}</span>
-                          {message.thinkingTime && (
-                            <span className="ml-2 text-xs text-[var(--text-color-secondary)]">({message.thinkingTime.toFixed(2)}s)</span>
-                          )}
-                          <Icon icon="chevron-down" className={`w-4 h-4 transition-transform duration-200 ml-auto ${isThoughtsOpen ? 'rotate-180' : ''}`} />
-                      </button>
-                      <div className={`thoughts-expander-content ${isThoughtsOpen ? 'expanded' : ''}`}>
-                          <div className="inner-content"><MarkdownRenderer content={message.thoughts!} theme={settings.theme} /></div>
-                      </div>
-                  </div>
-              )}
-              <div className={`p-2 ${isUser ? '' : 'text-[var(--text-color)]'}`}>
-                  {message.attachments && message.attachments.length > 0 && (
-                    <div className="mb-2 flex flex-wrap gap-2">
-                      {message.attachments.map((att, i) => (
-                        <div key={i} className="rounded-lg overflow-hidden border border-black/10 dark:border-white/10 max-w-[200px]">
-                          {att.mimeType.startsWith('image/') && att.data ? (
-                            <button onClick={() => onImageClick(`data:${att.mimeType};base64,${att.data}`)} className="block w-full h-full">
-                              <img src={`data:${att.mimeType};base64,${att.data}`} className="max-h-[200px] object-contain" alt={att.name} />
-                            </button>
-                          ) : (
-                             <div className="p-3 bg-black/10 dark:bg-white/10 flex items-center gap-2 text-current">
-                              <Icon icon="file" className="w-6 h-6 flex-shrink-0" />
-                              <span className="text-sm truncate">{att.name}</span>
-                            </div>
-                          )}
-                        </div>
-                      ))}
+      <div
+        className={`flex flex-col items-start mt-6 ${isBeingDeleted ? 'deleting' : ''}`}>
+        <div className={`max-w-full text-base flex flex-col relative transition-all duration-300 group ${isUser ? 'user-bubble' : 'model-bubble'} items-start`}>
+          <div className="overflow-hidden">
+            {hasThoughts && (
+                <div className={`thoughts-container ${isThoughtsOpen ? 'expanded' : ''}`}>
+                    <button onClick={() => setIsThoughtsOpen(!isThoughtsOpen)} className="thoughts-expander-header">
+                        {isThoughtsOpen ? (
+                            <>
+                                <Icon icon="brain" className="w-4 h-4" />
+                                <span>{t('thoughts')}</span>
+                                {message.thinkingTime && (
+                                    <span className="ml-2 text-xs text-[var(--text-color-secondary)]">({message.thinkingTime.toFixed(2)}s)</span>
+                                )}
+                                <Icon icon="chevron-down" className={`w-4 h-4 transition-transform duration-200 ml-auto ${isThoughtsOpen ? 'rotate-180' : ''}`} />
+                            </>
+                        ) : (
+                            <span className="thinking-text">
+                                {message.thinkingTime ? `Thought for ${message.thinkingTime.toFixed(2)}s` : 'Thinking...'}
+                            </span>
+                        )}
+                    </button>
+                    <div className={`thoughts-expander-content ${isThoughtsOpen ? 'expanded' : ''}`}>
+                        <div className="inner-content"><MarkdownRenderer content={message.thoughts!} theme={settings.theme} /></div>
                     </div>
-                  )}
-                  {(isLastMessageLoading && !hasContent) ? (
-                    <TypingIndicator thoughts={message.thoughts} />
-                  ) : (
-                    hasContent && (
-                      <div className="grid items-start">
-                        {/* Rendered View */}
-                        <div className={`col-start-1 row-start-1 grid transition-all duration-300 ease-in-out ${isRawView ? 'grid-rows-[0fr] opacity-0' : 'grid-rows-[1fr] opacity-100'}`} aria-hidden={isRawView}>
-                          <div className="overflow-hidden break-words text-justify">
-                              <MarkdownRenderer content={message.content} theme={settings.theme} />
+                </div>
+            )}
+            <div className={`p-2 ${isUser ? '' : 'text-[var(--text-color)]'}`}>
+                {message.attachments && message.attachments.length > 0 && (
+                  <div className="mb-2 flex flex-wrap gap-2">
+                    {message.attachments.map((att, i) => (
+                      <div key={i} className="rounded-lg overflow-hidden border border-black/10 dark:border-white/10 max-w-[200px]">
+                        {att.mimeType.startsWith('image/') && att.data ? (
+                          <button onClick={() => onImageClick(`data:${att.mimeType};base64,${att.data}`)} className="block w-full h-full">
+                            <img src={`data:${att.mimeType};base64,${att.data}`} className="max-h-[200px] object-contain" alt={att.name} />
+                          </button>
+                        ) : (
+                           <div className="p-3 bg-black/10 dark:bg-white/10 flex items-center gap-2 text-current">
+                            <Icon icon="file" className="w-6 h-6 flex-shrink-0" />
+                            <span className="text-sm truncate">{att.name}</span>
                           </div>
-                        </div>
-                        {/* Raw View */}
-                        <div className={`col-start-1 row-start-1 grid transition-all duration-300 ease-in-out ${isRawView ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`} aria-hidden={!isRawView}>
-                          <div className="overflow-hidden">
-                              <pre className="raw-text-view"><code>{message.content}</code></pre>
-                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {(isLastMessageLoading && !hasContent) ? (
+                  <TypingIndicator thoughts={message.thoughts} />
+                ) : (
+                  hasContent && (
+                    <div className="grid items-start">
+                      {/* Rendered View */}
+                      <div className={`col-start-1 row-start-1 grid transition-all duration-300 ease-in-out ${isRawView ? 'grid-rows-[0fr] opacity-0' : 'grid-rows-[1fr] opacity-100'}`} aria-hidden={isRawView}>
+                        <div className="overflow-hidden break-words text-justify">
+                            <MarkdownRenderer content={message.content} theme={settings.theme} />
                         </div>
                       </div>
-                    )
-                  )}
-              </div>
-              {hasCitations && (
-                  <div className="border-t border-[var(--glass-border)] mt-2 mx-2 mb-2 pt-2">
-                      <button onClick={() => onShowCitations(message.groundingMetadata!.groundingChunks)} className="citations-button">
-                          <Icon icon="search" className="w-4 h-4" /><span>Sources</span>
-                      </button>
-                  </div>
-              )}
+                      {/* Raw View */}
+                      <div className={`col-start-1 row-start-1 grid transition-all duration-300 ease-in-out ${isRawView ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`} aria-hidden={!isRawView}>
+                        <div className="overflow-hidden">
+                            <pre className="raw-text-view"><code>{message.content}</code></pre>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                )}
             </div>
+            {hasCitations && (
+                <div className="border-t border-[var(--glass-border)] mt-2 mx-2 mb-2 pt-2">
+                    <button onClick={() => onShowCitations(message.groundingMetadata!.groundingChunks)} className="citations-button">
+                        <Icon icon="search" className="w-4 h-4" /><span>Sources</span>
+                    </button>
+                </div>
+            )}
           </div>
-          
-          <div className={`transition-all duration-300 ease-in-out ${isEditing ? 'grid grid-rows-[1fr] opacity-100' : 'hidden'}`}>
-            <div className="overflow-hidden p-2 w-full">
-              <textarea value={editedContent} onChange={(e) => setEditedContent(e.target.value)} onKeyDown={handleKeyDown} className="message-edit-textarea" autoFocus={isEditing} />
-              <div className="message-edit-actions">
-                  <button onClick={onCancelEdit} className="px-3 py-1.5 rounded-[var(--radius-2xl)] font-semibold glass-pane border-none text-[var(--text-color)] hover:bg-black/10 dark:hover:bg-white/10">{t('cancel')}</button>
-                  <button onClick={handleSave} className="px-3 py-1.5 rounded-[var(--radius-2xl)] font-semibold bg-[var(--accent-color)] text-white transition-transform hover:scale-105">{isUser ? 'Save & Resubmit' : t('save')}</button>
-              </div>
-            </div>
+          {/* 操作按钮 - 绝对定位到气泡下方 */}
+          <div className="absolute bottom-0 left-0 translate-y-full mt-1">
+            <MessageActions message={message} isModelResponse={!isUser} onCopy={() => onCopy(message.content)} onEdit={onEditRequest} onDelete={handleDelete} onRegenerate={onRegenerate} onToggleRawView={() => setIsRawView(p => !p)} isRawView={isRawView} />
           </div>
         </div>
-
-        {/* 操作按钮 */}
-        <MessageActions message={message} isModelResponse={!isUser} onCopy={() => onCopy(message.content)} onEdit={onEditRequest} onDelete={handleDelete} onRegenerate={onRegenerate} onToggleRawView={() => setIsRawView(p => !p)} isRawView={isRawView} />
       </div>
-    </div>
   );
 });

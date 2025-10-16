@@ -1,7 +1,8 @@
 import React, { useState, useCallback, useRef } from 'react';
 import { ChatSession, Message, MessageRole, Settings, Persona, FileAttachment, PersonaMemory } from '../types';
-import { sendMessageStream, generateChatDetails, generateSuggestedReplies } from '../services/geminiService';
+import { sendMessageStream, generateChatDetails } from '../services/geminiService';
 import { fileToData } from '../utils/fileUtils';
+import { TITLE_GENERATION_PROMPT } from '../data/prompts';
 
 interface UseChatMessagingProps {
   settings: Settings;
@@ -9,14 +10,14 @@ interface UseChatMessagingProps {
   personas: Persona[];
   memories: Record<string, PersonaMemory[]>;
   setChats: React.Dispatch<React.SetStateAction<ChatSession[]>>;
-  setSuggestedReplies: React.Dispatch<React.SetStateAction<string[]>>;
+
   setActiveChatId: React.Dispatch<React.SetStateAction<string | null>>;
   addToast: (message: string, type: 'success' | 'error' | 'info') => void;
   isNextChatStudyMode: boolean;
   setIsNextChatStudyMode: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-export const useChatMessaging = ({ settings, activeChat, personas, memories, setChats, setSuggestedReplies, setActiveChatId, addToast, isNextChatStudyMode, setIsNextChatStudyMode }: UseChatMessagingProps) => {
+export const useChatMessaging = ({ settings, activeChat, personas, memories, setChats, setActiveChatId, addToast, isNextChatStudyMode, setIsNextChatStudyMode }: UseChatMessagingProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const isCancelledRef = useRef(false);
   let inactivityTimer: NodeJS.Timeout; // For stream watchdog
@@ -40,7 +41,6 @@ export const useChatMessaging = ({ settings, activeChat, personas, memories, set
 
     isCancelledRef.current = false;
     setIsLoading(true);
-    setSuggestedReplies([]);
 
     const chatSession = activeChat && activeChat.id === chatId 
         ? activeChat 
@@ -167,7 +167,7 @@ export const useChatMessaging = ({ settings, activeChat, personas, memories, set
           fullResponse = "Google Cut It for Unknown Reason";
           addToast("Google Cut It for Unknown Reason", 'error');
         }
-        setChats(prev => prev.map(c => c.id === chatId ? { ...c, messages: c.messages.map(m => m.id === modelMessage.id ? { ...m, content: fullResponse || '...', thoughts: settings.showThoughts ? accumulatedThoughts : undefined, groundingMetadata: finalGroundingMetadata } : m) } : c));
+        setChats(prev => prev.map(c => c.id === chatId ? { ...c, messages: c.messages.map(m => m.id === modelMessage.id ? { ...m, content: fullResponse || '...', thoughts: settings.showThoughts ? accumulatedThoughts : undefined, groundingMetadata: finalGroundingMetadata, thinkingTime } : m) } : c));
       }
     } catch(e) {
       console.error(e);
@@ -181,12 +181,9 @@ export const useChatMessaging = ({ settings, activeChat, personas, memories, set
       clearTimeout(inactivityTimer); // Ensure timer is cleared in finally block
       if (!isCancelledRef.current) {
         setIsLoading(false);
-        if (settings.showSuggestions && fullResponse && !streamHadError) {
-          generateSuggestedReplies(apiKeys, [...historyForAPI, { ...modelMessage, content: fullResponse }], settings.suggestionModel, settings).then(setSuggestedReplies);
-        }
       }
     }
-  }, [settings, setChats, activeChat, personas, memories, setSuggestedReplies, addToast]);
+  }, [settings, setChats, activeChat, personas, memories, addToast]);
 
   const handleSendMessage = useCallback(async (content: string, files: File[] = [], toolConfig: any) => {
     // 串行处理文件以避免内存峰值
@@ -212,7 +209,11 @@ export const useChatMessaging = ({ settings, activeChat, personas, memories, set
       ? settings.apiKey
       : (process.env.API_KEY ? [process.env.API_KEY] : []);
 
+    // 判断是否是第一条用户消息（用于标题生成）
+    const isFirstUserMessage = !currentChatId || (activeChat?.messages || []).filter(m => m.role === MessageRole.USER).length === 0;
+
     if (!currentChatId) {
+      console.log(`[Chat] Creating new chat - Content: "${content.substring(0, 30)}..."`);
       currentPersonaId = settings.defaultPersona;
       currentIsStudyMode = isNextChatStudyMode;
       const persona = personas.find(p => p.id === currentPersonaId);
@@ -222,16 +223,27 @@ export const useChatMessaging = ({ settings, activeChat, personas, memories, set
       setChats(prev => [newChat, ...prev]);
       setActiveChatId(newChat.id);
       setIsNextChatStudyMode(false);
-      // 仅当未使用角色时才生成标题
-      if (settings.autoTitleGeneration && content && !persona) {
-        if(apiKeys.length > 0) generateChatDetails(apiKeys, content, settings.titleGenerationModel, settings).then(({ title, icon }) => {
-          setChats(p => p.map(c => c.id === currentChatId ? { ...c, title, icon } : c))
-        });
-      }
     } else {
+      console.log(`[Chat] Continuing existing chat - ID: ${currentChatId}`);
       history = [...(activeChat?.messages || []), userMessage];
       setChats(prev => prev.map(c => c.id === currentChatId ? { ...c, messages: [...c.messages, userMessage] } : c));
     }
+
+    // 标题自动生成逻辑 - 只在第一条用户消息时触发
+    if (isFirstUserMessage && settings.autoTitleGeneration && content && apiKeys.length > 0) {
+      const persona = personas.find(p => p.id === currentPersonaId);
+      console.log(`[Title Gen] ✨ Triggering - First message, Persona: ${persona?.name || 'None'}, Model: ${settings.titleGenerationModel}`);
+      const fullPrompt = `${TITLE_GENERATION_PROMPT}\n\n**CONVERSATION:**\n${content}`;
+      generateChatDetails(apiKeys, fullPrompt, settings.titleGenerationModel, settings).then(({ title }) => {
+        console.log(`[Title Gen] ✅ Applied - Title: "${title}"`);
+        setChats(p => p.map(c => c.id === currentChatId ? { ...c, title } : c))
+      }).catch(error => {
+        console.error('[Title Gen] ❌ Failed:', error);
+      });
+    } else if (isFirstUserMessage) {
+      console.log(`[Title Gen] ⏭️ Skipped - Enabled: ${settings.autoTitleGeneration}, Content: ${!!content}, Keys: ${apiKeys.length > 0}`);
+    }
+
     await _initiateStream(currentChatId, history, toolConfig, currentPersonaId, currentIsStudyMode);
   }, [activeChat, settings, setChats, setActiveChatId, _initiateStream, isNextChatStudyMode, setIsNextChatStudyMode, personas]);
 

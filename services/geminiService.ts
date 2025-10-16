@@ -1,3 +1,3 @@
 export * from './gemini/chatService';
 export * from './gemini/personaService';
-export * from './gemini/translationService';
+export { translateText, detectLanguage } from './gemini/translationService';

@@ -3,13 +3,16 @@ import { Settings } from "../../types";
 import { executeWithKeyRotation } from './apiExecutor';
 
 export async function detectLanguage(apiKeys: string[], model: string, text: string, settings: Settings): Promise<string> {
-  if (!text.trim()) return 'en'; // Default to English for empty string
-  try {
-    const payload = {
-      model,
-      contents: `Detect the primary language of the following text and return ONLY its two-letter ISO 639-1 code. For example, for "Hello world", return "en". For "你好世界", return "zh".\n\nText: "${text}"`,
-    };
+  const prompt = `Your task is to identify the language of the following text.
+IMPORTANT: Your response MUST contain *only* the BCP-47 language code (e.g., "en", "zh", "es", "fr"). Do not include the language name or any other explanatory text.
 
+Text to identify:
+${text}
+`;
+
+  try {
+    const payload = { model, contents: prompt };
+    
     console.log('--- KChat API Call ---');
     console.log('API: detectLanguage (via models.generateContent)');
     console.log('Payload:', payload);
@@ -19,8 +22,7 @@ export async function detectLanguage(apiKeys: string[], model: string, text: str
       ai.models.generateContent(payload),
       settings.apiBaseUrl
     );
-    const langCode = response.text.trim().toLowerCase();
-    return (langCode.length === 2 || langCode.length === 3) ? langCode : 'en';
+    return response.text.trim();
   } catch (error) {
     console.error("Error detecting language:", error);
     throw new Error("Language detection failed.");

@@ -32,7 +32,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({ models, selectedMo
 
   return (
     <div className="model-selector-wrapper" ref={wrapperRef}>
-      <div className={`model-selector-options glass-pane ${isOpen ? 'visible' : ''} ${isHeader ? 'header-selector' : ''}`}>
+      <div className={`model-selector-options glass-pane border-opacity-30 ${isOpen ? 'visible' : ''} ${isHeader ? 'header-selector' : ''}`}>
         {models.map(model => (
           <div key={model} onClick={() => handleSelect(model)} className={`model-selector-option ${selectedModel === model ? 'active' : ''}`}>
             <Icon icon="chip" className="w-5 h-5 flex-shrink-0" />
@@ -40,10 +40,10 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({ models, selectedMo
           </div>
         ))}
       </div>
-      <button onClick={toggleOpen} className="model-selector-trigger glass-pane">
+      <button onClick={toggleOpen} className="model-selector-trigger glass-pane border-opacity-30">
         <div className="flex items-center gap-3">
           <Icon icon="chip" className="w-5 h-5 text-[var(--accent-color)]" />
-          <span className="font-semibold text-[var(--text-color)]">{selectedModel || "Select Model"}</span>
+          <span className="font-semibold text-[var(--text-color)] truncate max-w-[120px]">{(selectedModel || "Select Model").length > 17 ? (selectedModel || "Select Model").substring(0, 17) + '...' : (selectedModel || "Select Model")}</span>
         </div>
         <Icon icon="chevron-down" className={`w-5 h-5 text-[var(--text-color-secondary)] transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
       </button>

@@ -82,7 +82,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ versionInfo, ...pr
               className={`px-4 py-2 font-medium text-sm ${activeTab === 'data' ? 'text-[var(--accent-color)] border-b-2 border-[var(--accent-color)]' : 'text-[var(--text-color-secondary)] hover:text-[var(--text-color)]'}`}
               onClick={() => setActiveTab('data')}
             >
-              {t('dataManagement')}
+              {t('data')}
             </button>
             <button
               className={`px-4 py-2 font-medium text-sm ${activeTab === 'about' ? 'text-[var(--accent-color)] border-b-2 border-[var(--accent-color)]' : 'text-[var(--text-color-secondary)] hover:text-[var(--text-color)]'}`}
@@ -113,7 +113,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ versionInfo, ...pr
           ) : null}
           
           {showAllSections || activeTab === 'data' ? (
-            <SettingsSection title={t('dataManagement')} isVisible={showAllSections || sectionVisibility.data}>
+            <SettingsSection title={t('data')} isVisible={showAllSections || sectionVisibility.data}>
               <DataManagement
                 settings={props.settings}
                 onSettingsChange={props.onSettingsChange}

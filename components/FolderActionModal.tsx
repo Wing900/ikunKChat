@@ -5,13 +5,12 @@ import { useLocalization } from '../contexts/LocalizationContext';
 interface FolderActionModalProps {
   folder: Folder | null;
   onClose: () => void;
-  onSave: (idOrName: string, nameOrIcon: string, icon?: string) => void;
+  onSave: (id: string, name: string) => void;
 }
 
 export const FolderActionModal: React.FC<FolderActionModalProps> = ({ folder, onClose, onSave }) => {
   const { t } = useLocalization();
   const [name, setName] = useState(folder?.name || '');
-  const [icon, setIcon] = useState(folder?.icon || '🐔');
   const [isVisible, setIsVisible] = useState(false);
 
   const isNew = folder === null;
@@ -25,9 +24,9 @@ export const FolderActionModal: React.FC<FolderActionModalProps> = ({ folder, on
   const handleSave = () => {
     if (name.trim()) {
       if (isNew) {
-        onSave(name.trim(), icon);
+        onSave(crypto.randomUUID(), name.trim());
       } else {
-        onSave(folder.id, name.trim(), icon);
+        onSave(folder.id, name.trim());
       }
     }
     handleClose();
@@ -53,18 +52,6 @@ export const FolderActionModal: React.FC<FolderActionModalProps> = ({ folder, on
         <h2 className="text-xl font-bold text-[var(--text-color)]">{title}</h2>
         
         <div>
-          <label className="text-sm font-medium text-[var(--text-color-secondary)] mb-1 block">{t('iconEmoji')}</label>
-          <input
-            type="text"
-            value={icon}
-            onChange={(e) => setIcon(e.target.value)}
-            className="input-glass"
-            maxLength={2}
-            placeholder="📁"
-          />
-        </div>
-
-        <div>
           <label className="text-sm font-medium text-[var(--text-color-secondary)] mb-1 block">{t('folderName')}</label>
           <input
             type="text"
@@ -80,7 +67,7 @@ export const FolderActionModal: React.FC<FolderActionModalProps> = ({ folder, on
           <button onClick={handleClose} className="px-4 py-2 rounded-[var(--radius-2xl)] font-semibold glass-pane border-none text-[var(--text-color)] hover:bg-black/10 dark:hover:bg-white/10">
             {t('cancel')}
           </button>
-          <button onClick={handleSave} className="px-4 py-2 rounded-[var(--radius-2xl)] font-semibold bg-[var(--accent-color)] text-white transition-transform hover:scale-105">
+          <button onClick={handleSave} className="px-4 py-2 rounded-[var(--radius-2xl)] font-semibold bg-[var(--accent-color)] text-[var(--accent-color-text)] transition-transform hover:scale-105">
             {t('save')}
           </button>
         </div>

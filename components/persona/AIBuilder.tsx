@@ -79,7 +79,7 @@ export const AIBuilder: React.FC<AIBuilderProps> = ({ persona, onUpdate, setting
             </div>
             <form onSubmit={handleSubmit} className="mt-auto flex gap-2">
                 <input type="text" value={input} onChange={e => setInput(e.target.value)} placeholder={t('builderInputPlaceholder')} className="input-glass flex-grow" disabled={isLoading} />
-                <button type="submit" disabled={isLoading || !input.trim()} className="w-10 h-10 flex-shrink-0 flex items-center justify-center text-white rounded-[var(--radius-2xl)] bg-[var(--accent-color)] disabled:opacity-50 transition-transform hover:scale-105">
+                <button type="submit" disabled={isLoading || !input.trim()} className="w-10 h-10 flex-shrink-0 flex items-center justify-center text-[var(--accent-color-text)] rounded-[var(--radius-2xl)] bg-[var(--accent-color)] disabled:opacity-50 transition-transform hover:scale-105">
                     <Icon icon="send" className="w-5 h-5"/>
                 </button>
             </form>

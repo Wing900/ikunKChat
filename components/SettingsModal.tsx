@@ -49,13 +49,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = (props) => {
 
     // Advanced
     { id: 'apiKey', section: 'advanced', texts: [t('apiKey'), t('apiKeyDesc'), translations.zh.apiKey, translations.zh.apiKeyDesc] },
-    { id: 'globalSystemPrompt', section: 'advanced', texts: [t('globalSystemPrompt'), t('globalSystemPromptDesc'), translations.zh.globalSystemPrompt, translations.zh.globalSystemPromptDesc] },
     { id: 'optimizeFormatting', section: 'advanced', texts: [t('optimizeFormatting'), t('optimizeFormattingDesc'), translations.zh.optimizeFormatting, translations.zh.optimizeFormattingDesc] },
     { id: 'thinkDeeper', section: 'advanced', texts: [t('thinkDeeper'), t('thinkDeeperDesc'), translations.zh.thinkDeeper, translations.zh.thinkDeeperDesc] },
-    { id: 'langDetectModel', section: 'advanced', texts: [t('langDetectModel'), t('langDetectModelDesc'), translations.zh.langDetectModel, translations.zh.langDetectModelDesc] },
     
     // Data
-    { id: 'dataManagement', section: 'data', texts: [t('importData'), t('exportSettings'), t('exportData'), t('clearHistory'), translations.zh.importData, translations.zh.exportSettings, translations.zh.exportData, translations.zh.clearHistory] },
+    { id: 'data', section: 'data', texts: [t('importData'), t('exportSettings'), t('exportData'), t('clearHistory'), translations.zh.importData, translations.zh.exportSettings, translations.zh.exportData, translations.zh.clearHistory] },
   ], [t]);
 
   const { visibleSettingIds, sectionVisibility } = useMemo(() => {
@@ -121,8 +119,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = (props) => {
           </SettingsItem>}
           {visibleSettingIds.has('theme') && <SettingsItem label={t('theme')} description={t('themeDesc')}>
              <div className="flex items-center p-1 rounded-full glass-pane">
-                <button onClick={() => onSettingsChange({ theme: 'light' })} className={`p-2 rounded-full transition-colors ${settings.theme === 'light' ? 'bg-[var(--accent-color)] text-white' : 'hover:bg-white/20'}`}><Icon icon="sun" className="w-5 h-5" /></button>
-                <button onClick={() => onSettingsChange({ theme: 'dark' })} className={`p-2 rounded-full transition-colors ${settings.theme === 'dark' ? 'bg-[var(--accent-color)] text-white' : 'hover:bg-black/20'}`}><Icon icon="moon" className="w-5 h-5" /></button>
+                <button onClick={() => onSettingsChange({ theme: 'light' })} className={`p-2 rounded-full transition-colors ${settings.theme === 'light' ? 'bg-[var(--accent-color)] text-[var(--accent-color-text)]' : 'hover:bg-white/20'}`}><Icon icon="sun" className="w-5 h-5" /></button>
+                <button onClick={() => onSettingsChange({ theme: 'dark' })} className={`p-2 rounded-full transition-colors ${settings.theme === 'dark' ? 'bg-[var(--accent-color)] text-[var(--accent-color-text)]' : 'hover:bg-black/20'}`}><Icon icon="moon" className="w-5 h-5" /></button>
             </div>
           </SettingsItem>}
 
@@ -166,34 +164,15 @@ export const SettingsModal: React.FC<SettingsModalProps> = (props) => {
                 rows={3}
              />
           </SettingsItem>}
-          {visibleSettingIds.has('globalSystemPrompt') && <div className="flex flex-col">
-              <SettingsItem label={t('globalSystemPrompt')} description={t('globalSystemPromptDesc')}>
-                <Switch size="sm" checked={settings.enableGlobalSystemPrompt} onChange={e => onSettingsChange({ enableGlobalSystemPrompt: e.target.checked })} />
-              </SettingsItem>
-              <div className={`collapsible-section ${settings.enableGlobalSystemPrompt ? 'expanded' : ''}`}>
-                  <div className="pb-2">
-                    <textarea 
-                      value={settings.globalSystemPrompt}
-                      onChange={e => onSettingsChange({ globalSystemPrompt: e.target.value })}
-                      className="input-glass w-full"
-                      placeholder="Enter a system prompt..."
-                      rows={3}
-                    />
-                  </div>
-              </div>
-            </div>}
           {visibleSettingIds.has('optimizeFormatting') && <SettingsItem label={t('optimizeFormatting')} description={t('optimizeFormattingDesc')}>
             <Switch size="sm" checked={settings.optimizeFormatting} onChange={e => onSettingsChange({ optimizeFormatting: e.target.checked })} />
           </SettingsItem>}
           {visibleSettingIds.has('thinkDeeper') && <SettingsItem label={t('thinkDeeper')} description={t('thinkDeeperDesc')}>
             <Switch size="sm" checked={settings.thinkDeeper} onChange={e => onSettingsChange({ thinkDeeper: e.target.checked })} />
           </SettingsItem>}
-          {visibleSettingIds.has('langDetectModel') && <SettingsItem label={t('langDetectModel')} description={t('langDetectModelDesc')}>
-            <CustomSelect options={modelOptions} selectedValue={settings.languageDetectionModel} onSelect={(value) => onSettingsChange({ languageDetectionModel: value })} className="w-48" />
-          </SettingsItem>}
-          
-          {sectionVisibility.data && <h3 className="settings-section-title">{t('dataManagement')}</h3>}
-          {visibleSettingIds.has('dataManagement') && <div className="grid grid-cols-2 gap-3 mt-2">
+
+          {sectionVisibility.data && <h3 className="settings-section-title">{t('data')}</h3>}
+          {visibleSettingIds.has('data') && <div className="grid grid-cols-2 gap-3 mt-2">
               <button onClick={handleImportClick} className="btn-outline flex items-center justify-center gap-2"><Icon icon="upload" className="w-4 h-4"/>{t('importData')}</button>
               <input type="file" ref={importFileRef} accept=".json" onChange={handleFileImport} className="hidden" />
               <button onClick={onExportSettings} className="btn-outline flex items-center justify-center gap-2"><Icon icon="download" className="w-4 h-4"/>{t('exportSettings')}</button>

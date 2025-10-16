@@ -86,29 +86,26 @@ export interface TranslationHistoryItem {
 }
 
 export interface Settings {
-  theme: 'light' | 'dark' | 'apple-light' | 'apple-dark' | 'pink-ocean' | 'blue-sky';
+  theme: 'apple-light' | 'apple-dark';
   language: 'en' | 'zh';
   fontFamily: 'system' | 'lxgw' | 'yozai';
+  colorPalette?: string; // 调色板ID (blue, orange, green, purple, red, indigo, cyan, pink)
+  customColor?: string; // 自定义颜色 (HEX格式)
   apiKey: string[] | null;
-  showSuggestions: boolean;
   defaultModel: string;
   defaultPersona: string;
-  suggestionModel: string;
   autoTitleGeneration: boolean;
   titleGenerationModel: string;
-  languageDetectionModel: string;
   defaultSearch: boolean;
   useSearchOptimizerPrompt: boolean;
   showThoughts: boolean;
-  enableGlobalSystemPrompt: boolean;
-  globalSystemPrompt: string;
   optimizeFormatting: boolean;
   thinkDeeper: boolean;
   apiBaseUrl?: string;
-  temperature: number;
-  maxOutputTokens: number;
-  contextLength: number;
+  temperature?: number;
+  maxOutputTokens?: number;
+  contextLength?: number;
   password?: string;
-  streamInactivityTimeout?: number;
   pdfQuality?: 'sd' | 'hd' | 'uhd';
+  streamInactivityTimeout?: number;
 }

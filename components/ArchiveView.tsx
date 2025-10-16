@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { ChatSession } from '../types';
 import { Icon } from './Icon';
 import { useLocalization } from '../contexts/LocalizationContext';
+import { ViewHeader } from './common/ViewHeader';
 
 interface ArchivedChatItemProps {
     chat: ChatSession;
@@ -31,7 +32,6 @@ const ArchivedChatItem: React.FC<ArchivedChatItemProps> = ({ chat, isHiding, onS
             onClick={onSelect}
             style={{ animationDelay: `${index * 50}ms` }}
         >
-            <span className="text-xl">{chat.icon || '💬'}</span>
             <span className="truncate flex-grow font-semibold">{chat.title}</span>
             <div className="archived-chat-item-actions">
                 <button onClick={handleAction(onUnarchive)} className="action-btn" aria-label={t('unarchive')}><Icon icon="unarchive" className="w-4 h-4"/></button>
@@ -50,9 +50,12 @@ interface ArchiveViewProps {
   onUnarchiveChat: (id: string) => void;
   onDeleteChat: (id: string) => void;
   onEditChat: (chat: ChatSession) => void;
+  isSidebarCollapsed: boolean;
+  onToggleSidebar: () => void;
+  onToggleMobileSidebar: () => void;
 }
 
-export const ArchiveView: React.FC<ArchiveViewProps> = ({ chats, onClose, onSelectChat, onUnarchiveChat, onDeleteChat, onEditChat }) => {
+export const ArchiveView: React.FC<ArchiveViewProps> = ({ chats, onClose, onSelectChat, onUnarchiveChat, onDeleteChat, onEditChat, isSidebarCollapsed, onToggleSidebar, onToggleMobileSidebar }) => {
   const { t } = useLocalization();
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -72,21 +75,21 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({ chats, onClose, onSele
 
   return (
     <main className="glass-pane rounded-[var(--radius-2xl)] flex flex-col h-full overflow-hidden relative p-6">
-      <header className="flex items-center justify-between mb-4 flex-shrink-0 gap-4">
-        <h2 className="text-2xl font-bold text-[var(--text-color)]">{t('archivedChats')}</h2>
-        <div className="flex items-center gap-2">
-            <div className="sidebar-search-wrapper max-w-xs">
-              <Icon icon="search" className="sidebar-search-icon w-4 h-4" />
-              <input type="text" placeholder={t('searchHistory')} className="sidebar-search-input !py-2 !text-sm" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
-            </div>
-            <button onClick={onClose} className="p-2 rounded-full hover:bg-black/10 dark:hover:bg-white/10 -mr-2">
-                <Icon icon="close" className="w-5 h-5"/>
-            </button>
+      <ViewHeader
+        title={t('archivedChats')}
+        onClose={onClose}
+        isSidebarCollapsed={isSidebarCollapsed}
+        onToggleSidebar={onToggleSidebar}
+        onToggleMobileSidebar={onToggleMobileSidebar}
+      >
+        <div className="sidebar-search-wrapper max-w-xs">
+          <Icon icon="search" className="sidebar-search-icon w-4 h-4" />
+          <input type="text" placeholder={t('searchHistory')} className="sidebar-search-input !py-2 !text-sm" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
         </div>
-      </header>
+      </ViewHeader>
       <div className="flex-grow overflow-y-auto -mr-6 -ml-2 pr-4 pl-2">
         {hasVisibleChats ? (
-            <div className="archived-chats-list p-2">
+            <div className="archived-chats-list p-2 mt-0">
               {displayedChats.map((chat, index) => (
                   <ArchivedChatItem
                       key={chat.id}
@@ -103,8 +106,8 @@ export const ArchiveView: React.FC<ArchiveViewProps> = ({ chats, onClose, onSele
         ) : (
             <div className="flex flex-col items-center justify-center h-full text-center text-[var(--text-color-secondary)]">
                 <Icon icon="archive" className="w-16 h-16 opacity-50 mb-4" />
-                <h3 className="text-xl font-semibold text-[var(--text-color)]">{searchQuery ? 'No Results Found' : 'No Archived Chats'}</h3>
-                <p>{searchQuery ? 'Try a different search term.' : 'You can archive chats from the sidebar.'}</p>
+                <h3 className="text-xl font-semibold text-[var(--text-color)]">{searchQuery ? t('noResultsFound') : t('noArchivedChats')}</h3>
+                <p>{searchQuery ? t('tryDifferentSearch') : t('canArchiveFromSidebar')}</p>
             </div>
         )}
       </div>

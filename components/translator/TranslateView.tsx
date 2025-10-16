@@ -5,7 +5,7 @@ import { useLocalization } from '../../contexts/LocalizationContext';
 import { useToast } from '../../contexts/ToastContext';
 import { ComboBox } from '../ComboBox';
 import { supportedLanguages as defaultLanguages } from '../../data/supportedLanguages';
-import { detectLanguage, translateText } from '../../services/geminiService';
+import { translateText } from '../../services/geminiService';
 import { readAloud } from '../../services/ttsService';
 import { TranslationHistoryModal } from './TranslationHistoryModal';
 import { loadCustomLanguages, saveCustomLanguages } from '../../services/storageService';
@@ -51,7 +51,7 @@ const TranslateView: React.FC<TranslateViewProps> = ({ settings, onClose, histor
         const apiKeys = settings.apiKey?.length ? settings.apiKey : (process.env.API_KEY ? [process.env.API_KEY] : []);
         if (apiKeys.length === 0) throw new Error("API key not configured in Settings.");
         
-        let finalSourceLang = sourceLang === 'auto' ? await detectLanguage(apiKeys, settings.languageDetectionModel, sourceText, settings) : sourceLang;
+        let finalSourceLang = sourceLang === 'auto' ? 'en' : sourceLang; // Default to English when auto detection is disabled
         const result = await translateText(apiKeys, settings.defaultModel, sourceText, finalSourceLang, targetLang, mode, settings);
         setTranslatedText(result);
         
@@ -100,7 +100,7 @@ const TranslateView: React.FC<TranslateViewProps> = ({ settings, onClose, histor
     try {
         const apiKeys = settings.apiKey || [];
         if (apiKeys.length === 0 && !process.env.API_KEY) throw new Error("API key not set.");
-        const langToRead = langCode === 'auto' ? await detectLanguage(apiKeys, settings.languageDetectionModel, text, settings) : langCode;
+        const langToRead = langCode === 'auto' ? 'en' : langCode; // Default to English when auto detection is disabled
         await readAloud(text, langToRead);
     } catch(e) {
         addToast(`Could not read aloud: ${(e as Error).message}.`, 'error');
@@ -123,14 +123,14 @@ const TranslateView: React.FC<TranslateViewProps> = ({ settings, onClose, histor
               <ComboBox options={targetLangOptions} value={targetLang} onSelect={(val) => handleLanguageChange(val, 'target')} allowCustom className="flex-1"/>
           </div>
           <div className="p-1 rounded-full glass-pane flex items-center self-center">
-            <button onClick={() => setMode('natural')} className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-colors ${mode === 'natural' ? 'bg-[var(--accent-color)] text-white' : ''}`}>{t('natural')}</button>
-            <button onClick={() => setMode('literal')} className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-colors ${mode === 'literal' ? 'bg-[var(--accent-color)] text-white' : ''}`}>{t('literal')}</button>
+            <button onClick={() => setMode('natural')} className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-colors ${mode === 'natural' ? 'bg-[var(--accent-color)] text-[var(--accent-color-text)]' : ''}`}>{t('natural')}</button>
+            <button onClick={() => setMode('literal')} className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-colors ${mode === 'literal' ? 'bg-[var(--accent-color)] text-[var(--accent-color-text)]' : ''}`}>{t('literal')}</button>
           </div>
           <div className="flex flex-col md:flex-row gap-4 flex-grow min-h-[200px]">
               <TranslationBox text={sourceText} setText={setSourceText} onRead={() => handleRead(sourceText, sourceLang)} placeholder={t('enterText')} isSource />
               <TranslationBox text={isLoading ? t('translating') + '...' : translatedText} onRead={() => handleRead(translatedText, targetLang)} setText={setTranslatedText} readOnly />
           </div>
-          <button onClick={handleTranslate} disabled={isLoading || !sourceText.trim()} className="w-full flex items-center justify-center gap-2 px-4 py-3 text-lg font-semibold bg-[var(--accent-color)] text-white rounded-[var(--radius-2xl)] transition-transform hover:scale-105 active:scale-100 disabled:opacity-50">
+          <button onClick={handleTranslate} disabled={isLoading || !sourceText.trim()} className="w-full flex items-center justify-center gap-2 px-4 py-3 text-lg font-semibold bg-[var(--accent-color)] text-[var(--accent-color-text)] rounded-[var(--radius-2xl)] transition-transform hover:scale-105 active:scale-100 disabled:opacity-50">
             {isLoading ? <div className="w-6 h-6 border-2 border-white/50 border-t-white rounded-full animate-spin"></div> : <Icon icon="translate-logo" className="w-6 h-6"/>}
             <span>{isLoading ? t('translating') : t('translate')}</span>
           </button>

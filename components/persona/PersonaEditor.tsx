@@ -86,7 +86,7 @@ export const PersonaEditor: React.FC<PersonaEditorProps> = ({ personaToEdit, onS
                 <h2>{persona.isNew ? t('createPersona') : t('editPersona')}</h2>
                 <div className="flex gap-2">
                     <button onClick={onClose} className="px-4 py-2 rounded-[var(--radius-2xl)] font-semibold glass-pane border-none text-[var(--text-color)] hover:bg-black/10 dark:hover:bg-white/10">{t('cancel')}</button>
-                    <button onClick={handleSave} className="px-5 py-2 rounded-[var(--radius-2xl)] font-semibold bg-[var(--accent-color)] text-white transition-transform hover:scale-105">{t('savePersona')}</button>
+                    <button onClick={handleSave} className="px-5 py-2 rounded-[var(--radius-2xl)] font-semibold bg-[var(--accent-color)] text-[var(--accent-color-text)] transition-transform hover:scale-105">{t('savePersona')}</button>
                 </div>
             </header>
             <div className="persona-editor-scroll-area">
@@ -145,10 +145,6 @@ export const PersonaEditor: React.FC<PersonaEditorProps> = ({ personaToEdit, onS
                         <div className="flex justify-between items-center">
                             <label className="font-medium">{t('contextLength')}</label>
                             <input type="number" min="0" step="1" value={persona.contextLength ?? settings.contextLength} onChange={e => handleUpdate({ contextLength: parseInt(e.target.value, 10) })} className="input-glass w-24" />
-                        </div>
-                        <div className="flex justify-between items-center">
-                            <label className="font-medium">{t('maxOutputTokens')}</label>
-                            <input type="number" min="1" step="1" value={persona.maxOutputTokens ?? settings.maxOutputTokens} onChange={e => handleUpdate({ maxOutputTokens: parseInt(e.target.value, 10) })} className="input-glass w-24" />
                         </div>
                     </div>
                 </div>

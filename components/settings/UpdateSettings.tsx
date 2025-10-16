@@ -47,7 +47,7 @@ export const UpdateSettings: React.FC<UpdateSettingsProps> = ({
             <button
               onClick={onCheckUpdate}
               disabled={isCheckingUpdate}
-              className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-[var(--accent-color)] text-white rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-[var(--accent-color)] text-[var(--accent-color-text)] rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Icon icon="download" className={`w-5 h-5 ${isCheckingUpdate ? 'animate-spin' : ''}`} />
               <span>{isCheckingUpdate ? t('checkingUpdate') : t('checkForUpdate')}</span>

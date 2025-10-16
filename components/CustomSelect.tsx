@@ -81,7 +81,7 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({ options, selectedVal
               onClick={() => { onSelect(option.value); setIsOpen(false); }}
               className={`px-3 py-2 rounded-[var(--radius-2xl)] cursor-pointer transition-colors duration-150 ${
                 selectedValue === option.value
-                  ? 'bg-[var(--accent-color)] text-white font-semibold'
+                  ? 'bg-[var(--accent-color)] text-[var(--accent-color-text)] font-semibold'
                   : 'text-[var(--text-color)] hover:bg-[rgba(0,122,255,0.2)] dark:hover:bg-[rgba(10,132,255,0.25)]'
               }`}
               role="option"

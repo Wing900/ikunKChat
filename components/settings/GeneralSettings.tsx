@@ -4,6 +4,7 @@ import { CustomSelect, SelectOption } from '../CustomSelect';
 import { SettingsItem } from '../SettingsItem';
 import { Icon } from '../Icon';
 import { useLocalization } from '../../contexts/LocalizationContext';
+import { ColorPicker } from '../ColorPicker';
 
 interface GeneralSettingsProps {
   settings: Settings;
@@ -33,15 +34,11 @@ export const GeneralSettings: React.FC<GeneralSettingsProps> = ({ settings, onSe
         <SettingsItem label={t('theme')} description={t('themeDesc')}>
           <CustomSelect
             options={[
-              { value: 'light', label: 'Light' },
-              { value: 'dark', label: 'Dark' },
-              { value: 'apple-light', label: 'Apple Light' },
-              { value: 'apple-dark', label: 'Apple Dark' },
-              { value: 'pink-ocean', label: 'Pink Ocean' },
-              { value: 'blue-sky', label: 'Blue Sky' },
+              { value: 'apple-light', label: '苹果光明' },
+              { value: 'apple-dark', label: '苹果黑暗' },
             ]}
             selectedValue={settings.theme}
-            onSelect={(value) => onSettingsChange({ theme: value as any })}
+            onSelect={(value) => onSettingsChange({ theme: value as 'apple-light' | 'apple-dark' })}
             className="w-48"
           />
         </SettingsItem>
@@ -60,6 +57,18 @@ export const GeneralSettings: React.FC<GeneralSettingsProps> = ({ settings, onSe
           />
         </SettingsItem>
       )}
+      {visibleIds.has('colorPalette') && (
+        <SettingsItem label={t('colorPalette')} description={t('colorPaletteDesc')}>
+          <div style={{ marginTop: '0.5rem' }}>
+            <ColorPicker
+              selectedColorId={settings.colorPalette || 'blue'}
+              customColor={settings.customColor}
+              onSelectColor={(colorId) => onSettingsChange({ colorPalette: colorId, customColor: undefined })}
+              onSelectCustomColor={(color) => onSettingsChange({ customColor: color, colorPalette: 'custom' })}
+            />
+          </div>
+        </SettingsItem>
+      )}
     </>
   );
-};
+}

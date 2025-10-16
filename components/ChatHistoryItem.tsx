@@ -48,10 +48,9 @@ export const ChatHistoryItem: React.FC<ChatHistoryItemProps> = (
             onDragStart={onDragStart}
             onDragEnd={onDragEnd}
             onClick={(e) => { e.preventDefault(); onSelect(); }}
-            className={`history-item group flex items-center gap-3 px-3 py-2.5 rounded-[var(--radius-2xl)] transition-colors text-left relative ${isActive ? 'bg-[var(--accent-color)] text-white' : 'text-[var(--text-color)] hover:bg-black/10 dark:hover:bg-white/10'
+            className={`history-item group flex items-center gap-3 px-3 py-2.5 rounded-[var(--radius-2xl)] transition-colors text-left relative ${isActive ? 'bg-[var(--accent-color)] text-[var(--accent-color-text)]' : 'text-[var(--text-color)] hover:bg-black/10 dark:hover:bg-white/10'
                 } ${isBeingDeleted ? 'deleting' : ''} ${isBeingArchived ? 'archiving' : ''} ${isNew ? 'history-item-enter' : ''} ${isHiding ? 'hiding' : ''}`}
         >
-            <span className="text-xl">{chat.icon || <Icon icon="chat" className="w-5 h-5" />}</span>
             <span className="truncate flex-grow">{chat.title}</span>
             <div className="history-item-actions ml-auto flex-shrink-0">
                 <button onClick={handleArchive} aria-label={t('archive')}><Icon icon="archive" className="w-4 h-4" /></button>

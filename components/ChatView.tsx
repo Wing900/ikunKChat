@@ -4,7 +4,7 @@ import { Icon } from './Icon';
 import { WelcomeView } from './WelcomeView';
 import { MessageBubble } from './MessageBubble';
 import { ChatInput, ChatInputRef } from './chat/ChatInput';
-import { SuggestedReplies } from './SuggestedReplies';
+
 import { useLocalization } from '../contexts/LocalizationContext';
 import { InternalView } from './common/InternalView';
 import { ChatHeader } from './chat/ChatHeader';
@@ -24,7 +24,7 @@ interface ChatViewProps {
   onToggleMobileSidebar: () => void;
   onNewChat: (personaId?: string) => void;
   onImageClick: (src: string) => void;
-  suggestedReplies: string[];
+
   settings: Settings;
   onDeleteMessage: (messageId: string) => void;
   onUpdateMessageContent: (messageId: string, newContent: string) => void;
@@ -36,6 +36,7 @@ interface ChatViewProps {
   onToggleStudyMode: (chatId: string, enabled: boolean) => void;
   isNextChatStudyMode: boolean;
   onToggleNextChatStudyMode: (enabled: boolean) => void;
+  onEditMessage: (message: Message) => void;
 }
 
 export const ChatView: React.FC<ChatViewProps> = (props) => {
@@ -72,7 +73,7 @@ export const ChatView: React.FC<ChatViewProps> = (props) => {
   }, [chatSession, chatSession?.messages, isLoading, editingMessageId]);
 
   const handleSendMessageWithTools = (message: string, files: File[]) => { onSendMessage(message, files, toolConfig); setChatInput(''); };
-  const handleSendSuggestion = (suggestion: string) => onSendMessage(suggestion, [], { ...getDefaultToolConfig(), googleSearch: settings.defaultSearch });
+
 
   const handleSaveEdit = useCallback((message: Message, newContent: string) => {
     if (message.role === 'user') {
@@ -121,7 +122,7 @@ export const ChatView: React.FC<ChatViewProps> = (props) => {
 
   return (
     <main
-      className="glass-pane rounded-[var(--radius-2xl)] flex flex-col h-full overflow-hidden relative"
+      className="rounded-[var(--radius-2xl)] flex flex-col h-full overflow-hidden relative"
       onDragEnter={handleDragEnter} onDragLeave={handleDragLeave} onDragOver={(e) => {e.preventDefault(); e.stopPropagation();}} onDrop={handleDrop}
     >
         <div className={`dropzone-overlay ${isDraggingOver ? 'visible' : ''}`}>
@@ -144,10 +145,10 @@ export const ChatView: React.FC<ChatViewProps> = (props) => {
         
         <div className="flex-grow flex flex-col relative min-h-0">
             <InternalView active={!!chatSession}>
-              <div className="flex-grow overflow-y-auto py-4">
-                <div className="w-full lg:max-w-4xl lg:mx-auto px-2">
+              <div className="flex-grow overflow-y-auto pt-1 pb-5">
+                <div className={`w-full px-6 transition-all duration-300 ${props.isSidebarCollapsed ? 'max-w-6xl mx-auto' : 'max-w-[672px] mx-auto'}`}>
                   {(chatSession?.messages || []).map((msg, index) => (
-                    <MessageBubble key={msg.id} message={msg} index={index} onImageClick={props.onImageClick} settings={settings} persona={activePersona} isLastMessageLoading={isLoading && index === chatSession!.messages.length - 1} isEditing={editingMessageId === msg.id} onEditRequest={() => setEditingMessageId(msg.id)} onCancelEdit={handleCancelEdit} onSaveEdit={handleSaveEdit} onDelete={props.onDeleteMessage} onRegenerate={props.onRegenerate} onCopy={handleCopy} onShowCitations={props.onShowCitations} />
+                    <MessageBubble key={msg.id} message={msg} index={index} onImageClick={props.onImageClick} settings={settings} persona={activePersona} isLastMessageLoading={isLoading && index === chatSession!.messages.length - 1} isEditing={editingMessageId === msg.id} onEditRequest={() => props.onEditMessage(msg)} onCancelEdit={handleCancelEdit} onSaveEdit={handleSaveEdit} onDelete={props.onDeleteMessage} onRegenerate={props.onRegenerate} onCopy={handleCopy} onShowCitations={props.onShowCitations} />
                   ))}
                   <div ref={messagesEndRef} />
                 </div>
@@ -162,13 +163,16 @@ export const ChatView: React.FC<ChatViewProps> = (props) => {
                 personas={props.personas}
                 onStartChat={props.onNewChat}
                 settings={props.settings}
+                isSidebarCollapsed={props.isSidebarCollapsed}
               />
             </InternalView>
         </div>
         
-        {!isLoading && props.suggestedReplies.length > 0 && !editingMessageId && !chatInput && <SuggestedReplies suggestions={props.suggestedReplies} onSendSuggestion={handleSendSuggestion} />}
+        <div className={`w-full px-6 transition-all duration-300 ${props.isSidebarCollapsed ? 'max-w-6xl mx-auto' : 'max-w-[672px] mx-auto'}`}>
 
-        <ChatInput ref={chatInputRef} onSendMessage={handleSendMessageWithTools} isLoading={isLoading} onCancel={props.onCancelGeneration} toolConfig={toolConfig} onToolConfigChange={setToolConfig} input={chatInput} setInput={setChatInput} chatSession={chatSession} onToggleStudyMode={handleToggleStudyMode} isNextChatStudyMode={props.isNextChatStudyMode} availableModels={props.availableModels} currentModel={props.currentModel} onSetModelForActiveChat={props.onSetModelForActiveChat} />
+
+          <ChatInput ref={chatInputRef} onSendMessage={handleSendMessageWithTools} isLoading={isLoading} onCancel={props.onCancelGeneration} toolConfig={toolConfig} onToolConfigChange={setToolConfig} input={chatInput} setInput={setChatInput} chatSession={chatSession} onToggleStudyMode={handleToggleStudyMode} isNextChatStudyMode={props.isNextChatStudyMode} availableModels={props.availableModels} currentModel={props.currentModel} onSetModelForActiveChat={props.onSetModelForActiveChat} />
+        </div>
     </main>
   );
 };
