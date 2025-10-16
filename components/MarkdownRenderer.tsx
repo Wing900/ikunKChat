@@ -83,8 +83,22 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, the
     const button = (e.target as HTMLElement).closest('.code-block-copy-btn');
     if (button) {
         const wrapper = button.closest('.code-block-wrapper');
-        const code = wrapper?.querySelector('code')?.innerText;
-        if (code) {
+        const codeElement = wrapper?.querySelector('code');
+        if (codeElement) {
+            // 获取原始文本内容，移除所有 katex-placeholder 和其他渲染产物
+            let code = codeElement.textContent || '';
+            
+            // 如果 textContent 仍包含占位符，尝试从原始 HTML 提取
+            if (code.includes('katex-placeholder')) {
+                // 创建临时元素来解析
+                const temp = document.createElement('div');
+                temp.innerHTML = codeElement.innerHTML;
+                
+                // 移除所有 katex 相关元素
+                temp.querySelectorAll('.katex, .katex-placeholder, .katex-html, .katex-mathml').forEach(el => el.remove());
+                code = temp.textContent || '';
+            }
+            
             navigator.clipboard.writeText(code);
             const copyTextSpan = button.querySelector('.copy-text');
             if (copyTextSpan) {
@@ -104,30 +118,11 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, the
     if (!contentRef.current) return;
     const currentRef = contentRef.current;
 
-    // --- KaTeX Two-Pass Rendering ---
-
-    // 1. Extract and replace math blocks with placeholders
-    const mathExpressions: { type: 'inline' | 'display'; content: string }[] = [];
+    // --- Parse Markdown to HTML first ---
     let processedContent = content || '';
-
-    // Handle display math ($$ ... $$ and \[ ... \])
-    processedContent = processedContent.replace(/\$\$([\s\S]*?)\$\$|\[([\s\S]*?)\]/g, (match, p1, p2) => {
-        const mathContent = p1 || p2;
-        mathExpressions.push({ type: 'display', content: mathContent });
-        return `<span class="katex-placeholder" data-katex-id="${mathExpressions.length - 1}"></span>`;
-    });
-
-    // Handle inline math ($ ... $ and \( ... \))
-    processedContent = processedContent.replace(/\$([^\$]+?)\$|\\((.+?)\\)/g, (match, p1, p2) => {
-        const mathContent = p1 || p2;
-        mathExpressions.push({ type: 'inline', content: mathContent });
-        return `<span class="katex-placeholder" data-katex-id="${mathExpressions.length - 1}"></span>`;
-    });
-
-    // 2. Parse Markdown to HTML
     const rawHtml = marked.parse(processedContent) as string;
 
-    // 3. Sanitize HTML
+    // Sanitize HTML
     const cleanHtml = typeof DOMPurify !== 'undefined'
       ? DOMPurify.sanitize(rawHtml, {
         USE_PROFILES: { html: true, svg: true, svgFilters: true },
@@ -141,18 +136,72 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, the
       })
       : rawHtml;
 
-    // 4. Inject into DOM
+    // Inject into DOM
     currentRef.innerHTML = cleanHtml;
 
-    // 5. Render KaTeX expressions
-    currentRef.querySelectorAll('.katex-placeholder').forEach(placeholder => {
-        const id = parseInt(placeholder.getAttribute('data-katex-id') || '-1', 10);
-        if (id !== -1 && mathExpressions[id]) {
-            const { type, content } = mathExpressions[id];
+    // --- KaTeX Rendering (DOM-based, excluding code blocks) ---
+    const mathExpressions: { element: HTMLElement; type: 'inline' | 'display'; content: string }[] = [];
+    
+    // Use TreeWalker to find text nodes, but skip <code>, <pre>, and already rendered elements
+    const walker = document.createTreeWalker(
+        currentRef,
+        NodeFilter.SHOW_TEXT,
+        {
+            acceptNode: (node) => {
+                let parent = node.parentElement;
+                while (parent && parent !== currentRef) {
+                    // Skip code blocks, pre blocks, and already rendered KaTeX
+                    if (parent.tagName === 'CODE' ||
+                        parent.tagName === 'PRE' ||
+                        parent.classList.contains('katex') ||
+                        parent.classList.contains('katex-html')) {
+                        return NodeFilter.FILTER_REJECT;
+                    }
+                    parent = parent.parentElement;
+                }
+                return NodeFilter.FILTER_ACCEPT;
+            }
+        }
+    );
+
+    const textNodes: Text[] = [];
+    let currentNode: Node | null;
+    while (currentNode = walker.nextNode()) {
+        textNodes.push(currentNode as Text);
+    }
+
+    // Process text nodes for math expressions
+    textNodes.forEach(node => {
+        const text = node.textContent || '';
+        if (!text.includes('$') && !text.includes('\\[') && !text.includes('\\(')) {
+            return; // Skip if no math delimiters
+        }
+
+        const fragment = document.createDocumentFragment();
+        let lastIndex = 0;
+        let match;
+
+        // Combined regex for all math delimiters
+        const mathRegex = /\$\$([\s\S]*?)\$\$|\\\[([\s\S]*?)\\\]|\$([^\$\n]+?)\$|\\\((.+?)\\\)/g;
+
+        while ((match = mathRegex.exec(text)) !== null) {
+            // Add text before math
+            if (match.index > lastIndex) {
+                fragment.appendChild(document.createTextNode(text.slice(lastIndex, match.index)));
+            }
+
+            // Determine math type and content
+            const isDisplay = match[1] !== undefined || match[2] !== undefined;
+            const mathContent = match[1] || match[2] || match[3] || match[4];
+
+            // Create placeholder span
+            const span = document.createElement('span');
+            span.className = 'katex-placeholder';
+            
             try {
-                katex.render(content, placeholder as HTMLElement, {
+                katex.render(mathContent, span, {
                     throwOnError: false,
-                    displayMode: type === 'display',
+                    displayMode: isDisplay,
                     errorColor: '#cc0000',
                     strict: false,
                     trust: true,
@@ -171,19 +220,32 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, the
                 });
             } catch (error) {
                 console.error('KaTeX rendering error:', error);
-                placeholder.textContent = `[KaTeX Error: ${ (error as Error).message }]`;
+                span.textContent = `[Math Error: ${mathContent}]`;
             }
+
+            fragment.appendChild(span);
+            lastIndex = match.index + match[0].length;
+        }
+
+        // Add remaining text
+        if (lastIndex < text.length) {
+            fragment.appendChild(document.createTextNode(text.slice(lastIndex)));
+        }
+
+        // Replace original text node with fragment (only if we found math)
+        if (lastIndex > 0) {
+            node.replaceWith(fragment);
         }
     });
 
-    // 6. Highlight code blocks
+    // Highlight code blocks
     currentRef.querySelectorAll('pre code').forEach((block) => {
         if (typeof hljs !== 'undefined') {
             hljs.highlightElement(block as HTMLElement);
         }
     });
 
-    // 7. Render Mermaid diagrams
+    // Render Mermaid diagrams
     try {
         mermaid.initialize({
             startOnLoad: false,

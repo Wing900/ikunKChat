@@ -456,7 +456,7 @@ const handleSelectChat = useCallback((id: string) => { setActiveChatId(id); setI
         {/* 桌面端Zen区域 - 完全重构，使用更高z-index和绝对定位 */}
         {isSidebarCollapsed && (
           <div
-            className="fixed inset-y-0 left-0 w-20 bg-transparent hover:bg-gradient-to-r hover:from-black/10 hover:to-transparent dark:hover:from-white/10 transition-all duration-200 cursor-pointer hidden md:block z-[200]"
+            className="fixed inset-y-0 left-0 w-1 md:w-8 bg-transparent hover:bg-gradient-to-r hover:from-black/10 hover:to-transparent dark:hover:from-white/10 transition-all duration-200 cursor-pointer hidden md:block z-[200]"
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
