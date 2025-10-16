@@ -49,11 +49,11 @@ export const loadSettings = (): Partial<Settings> | null => {
             parsed.apiKey = [];
         }
 
-        // 强制颜色主题迁移：将所有用户迁移到中性灰主题
-        // Force color palette migration: migrate all users to neutral theme
-        if (parsed.colorPalette === 'red' || parsed.colorPalette) {
-            // 清除旧的颜色主题设置，让系统使用新的默认主题（中性灰）
-            delete parsed.colorPalette;
+        // 颜色主题迁移：只迁移旧的 'red' 主题到 'neutral'
+        // Color palette migration: only migrate legacy 'red' theme to 'neutral'
+        if (parsed.colorPalette === 'red') {
+            // 将旧的红色主题迁移为中性灰
+            parsed.colorPalette = 'neutral';
             // 立即保存更新后的设置
             try {
                 localStorage.setItem(SETTINGS_KEY, JSON.stringify(parsed));
