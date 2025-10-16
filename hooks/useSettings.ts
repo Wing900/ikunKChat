@@ -8,11 +8,11 @@ const defaultSettings: Settings = {
   theme: 'apple-light',
   language: 'zh',
   fontFamily: 'lxgw',
+  colorPalette: 'neutral',
+  customColor: undefined,
   apiKey: [],
-  showSuggestions: false,
   defaultModel: 'gemini-2.5-pro-preview-05-06-maxthinking',
   defaultPersona: 'default-math-assistant',
-  suggestionModel: 'gemini-2.5-flash',
   autoTitleGeneration: true,
   titleGenerationModel: 'gemini-2.5-flash',
   defaultSearch: false,
@@ -72,7 +72,6 @@ export const useSettings = () => {
         setSettings(current => {
           const newDefaults: Partial<Settings> = {};
           if (!allModels.includes(current.defaultModel)) newDefaults.defaultModel = allModels[0];
-          if (!allModels.includes(current.suggestionModel)) newDefaults.suggestionModel = allModels.find(m => m.includes('lite')) || allModels[0];
           if (!allModels.includes(current.titleGenerationModel)) newDefaults.titleGenerationModel = allModels.find(m => m.includes('lite')) || allModels[0];
           return Object.keys(newDefaults).length > 0 ? { ...current, ...newDefaults } : current;
         });
