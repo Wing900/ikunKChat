@@ -128,44 +128,78 @@ export const Sidebar: React.FC<SidebarProps> = (props) => {
   );
   
   return (
-    <aside className={`h-full flex-col flex flex-shrink-0 transition-transform md:transition-all duration-300 ease-in-out fixed md:relative inset-y-0 left-0 z-40 ${isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:transform-none ${isCollapsed ? 'md:w-0 md:p-0' : 'w-80 p-3'}`}>
-      <div className={`glass-pane rounded-[var(--radius-2xl)] h-full flex flex-col p-4 relative overflow-hidden transition-opacity duration-200 ${isCollapsed ? 'md:opacity-0' : 'opacity-100'}`}>
+    <>
+      {/* 侧边栏主体 */}
+      <aside className={`h-full flex-col flex flex-shrink-0 transition-transform md:transition-all duration-300 ease-in-out md:relative inset-y-0 left-0 z-40 ${isMobileSidebarOpen ? 'fixed translate-x-0' : 'fixed -translate-x-full'} md:relative md:transform-none ${isCollapsed ? 'w-0 md:w-16' : 'w-80'} overflow-hidden`}>
+      <div className={`glass-pane rounded-[var(--radius-2xl)] h-full flex flex-col p-4 relative ${isCollapsed ? 'md:opacity-0 md:w-16' : 'opacity-100'}`}>
         <div className="flex items-center justify-between gap-3 mb-4 px-2">
-            <div className="flex items-center gap-3"><Icon icon="ikunchat.svg" className="w-8 h-8 text-[var(--accent-color)]" /><h1 className="text-2xl font-bold text-[var(--text-color)]">ikunKChat</h1></div>
-            <button onClick={onToggleCollapse} className="p-2 rounded-full hover:bg-black/10 dark:hover:bg-white/10 -mr-2 hidden md:block" aria-label={t('collapseSidebar')} data-tooltip={t('collapseSidebar')} data-tooltip-placement="left"><Icon icon="panel-left-close" className="w-5 h-5" /></button>
-            <button onClick={onToggleMobileSidebar} className="p-2 rounded-full hover:bg-black/10 dark:hover:bg-white/10 -mr-2 md:hidden" aria-label={t('collapseSidebar')} data-tooltip={t('collapseSidebar')} data-tooltip-placement="left"><Icon icon="panel-left-close" className="w-5 h-5" /></button>
-        </div>
-        <button onClick={() => onNewChat()} className="w-full flex items-center justify-center gap-2 px-4 py-3 mb-4 text-lg font-semibold bg-[var(--accent-color)] text-white rounded-[var(--radius-2xl)] transition-transform hover:scale-105 active:scale-100"><Icon icon="plus" className="w-6 h-6" />{t('newChat')}</button>
-        <div className="sidebar-search-wrapper mb-2"><Icon icon="search" className="sidebar-search-icon w-5 h-5" /><input type="text" placeholder={t('searchHistory')} className="sidebar-search-input" value={searchQuery} onChange={(e) => onSetSearchQuery(e.target.value)} /></div>
-
-        <div className="flex-grow overflow-y-auto -mr-2 pr-2 pt-2">
-          <div className="flex items-center justify-between mt-2 mb-1 px-2"><h2 className="text-sm font-semibold text-[var(--text-color-secondary)] uppercase tracking-wider">{t('history')}</h2><button onClick={onNewFolder} className="p-1 rounded-full text-[var(--text-color-secondary)] hover:text-[var(--text-color)]" data-tooltip={t('newFolder')} data-tooltip-placement="left"><Icon icon="folder-plus" className="w-5 h-5" /></button></div>
-          
-          <nav className="flex flex-col gap-1">
-            {visibleFolders.map(folder => (
-              <div key={folder.id} className={`folder-wrapper ${deletingFolderId === folder.id ? 'deleting' : ''} ${!prevFolderIdsRef.current.has(folder.id) ? 'history-item-enter' : ''} ${folder.isHiding ? 'hiding' : ''}`} onDrop={(e) => handleDrop(e, folder.id)} onDragOver={(e) => handleDragOver(e, folder.id)} onDragLeave={() => setDragOverTarget(null)}>
-                <div className={`folder-header ${dragOverTarget === folder.id ? 'drop-target' : ''}`} onClick={() => toggleFolder(folder.id)}>
-                  <Icon icon="chevron-down" className={`folder-chevron w-4 h-4 flex-shrink-0 ${openFolderIds.has(folder.id) ? 'open' : ''}`} />
-                  <span className="text-xl">{folder.icon || <Icon icon="folder" className="w-5 h-5 text-[var(--accent-color)]" />}</span>
-                  <span className="truncate flex-grow">{folder.name}</span>
-                  <div className="folder-actions ml-auto flex-shrink-0">
-                    <button onClick={(e) => { e.stopPropagation(); onEditFolder(folder); }} aria-label="Edit folder"><Icon icon="edit" className="w-4 h-4" /></button>
-                    <button onClick={(e) => { e.stopPropagation(); handleDeleteFolderClick(folder.id); }} aria-label="Delete folder"><Icon icon="delete" className="w-4 h-4 text-red-500" /></button>
-                  </div>
-                </div>
-                <div className="folder-content" style={{ maxHeight: openFolderIds.has(folder.id) ? `${folder.chats.filter(c => !c.isHiding).length * 52 + 8}px` : '0px' }}>
-                  <div className="flex flex-col gap-1 py-1">{folder.chats.map(renderChat)}</div>
-                </div>
-              </div>
-            ))}
-            
-            <div className={`root-drop-zone ${dragOverTarget === 'root' ? 'drop-target' : ''}`} onDrop={(e) => handleDrop(e, null)} onDragOver={(e) => handleDragOver(e, 'root')} onDragLeave={() => setDragOverTarget(null)}>
-              {visibleRootChats.map(renderChat)}
+            <div className={`flex items-center gap-3 ${isCollapsed ? 'hidden' : ''}`}>
+              <Icon icon="ikunchat.svg" className="w-8 h-8 text-[var(--accent-color)]" />
+              <h1 className="text-2xl font-bold text-[var(--text-color)]">ikunKChat</h1>
             </div>
-          </nav>
+            <button onClick={onToggleCollapse} className="p-2 rounded-full hover:bg-black/10 dark:hover:bg-white/10 -mr-2 hidden md:block" aria-label={t('collapseSidebar')} data-tooltip={t('collapseSidebar')} data-tooltip-placement="left">
+              <Icon icon="panel-left-close" className="w-5 h-5" />
+            </button>
+            <button onClick={onToggleMobileSidebar} className="p-2 rounded-full hover:bg-black/10 dark:hover:bg-white/10 -mr-2 md:hidden" aria-label={t('collapseSidebar')} data-tooltip={t('collapseSidebar')} data-tooltip-placement="left">
+              <Icon icon="panel-left-close" className="w-5 h-5" />
+            </button>
         </div>
-        
-        <div className="mt-auto pt-2">
+        {!isCollapsed && (
+          <>
+            <button onClick={() => onNewChat()} className="w-full flex items-center justify-center gap-2 px-4 py-3 mb-4 text-lg font-semibold bg-[var(--accent-color)] text-[var(--accent-color-text)] rounded-[var(--radius-2xl)] transition-transform hover:scale-105 active:scale-100">
+              <Icon icon="plus" className="w-6 h-6" />
+              {t('newChat')}
+            </button>
+            <div className="sidebar-search-wrapper mb-2">
+              <Icon icon="search" className="sidebar-search-icon w-5 h-5" />
+              <input type="text" placeholder={t('searchHistory')} className="sidebar-search-input" value={searchQuery} onChange={(e) => onSetSearchQuery(e.target.value)} />
+            </div>
+          </>
+        )}
+
+        <div className="flex-grow overflow-y-auto">
+          {!isCollapsed && (
+            <>
+              <div className="flex items-center justify-between mt-2 mb-1 px-2">
+                <h2 className="text-sm font-semibold text-[var(--text-color-secondary)] uppercase tracking-wider">{t('history')}</h2>
+                <button onClick={onNewFolder} className="p-1 rounded-full text-[var(--text-color-secondary)] hover:text-[var(--text-color)]" data-tooltip={t('newFolder')} data-tooltip-placement="left">
+                  <Icon icon="folder-plus" className="w-5 h-5" />
+                </button>
+              </div>
+
+              <nav className="flex flex-col gap-1">
+                {visibleFolders.map(folder => (
+                  <div key={folder.id} className={`folder-wrapper ${deletingFolderId === folder.id ? 'deleting' : ''} ${!prevFolderIdsRef.current.has(folder.id) ? 'history-item-enter' : ''} ${folder.isHiding ? 'hiding' : ''}`} onDrop={(e) => handleDrop(e, folder.id)} onDragOver={(e) => handleDragOver(e, folder.id)} onDragLeave={() => setDragOverTarget(null)}>
+                    <div className={`folder-header ${dragOverTarget === folder.id ? 'drop-target' : ''}`} onClick={() => toggleFolder(folder.id)}>
+                      <Icon icon="chevron-down" className={`folder-chevron w-4 h-4 flex-shrink-0 ${openFolderIds.has(folder.id) ? 'open' : ''}`} />
+                      <span className="text-xl">{folder.icon || <Icon icon="folder" className="w-5 h-5 text-[var(--accent-color)]" />}</span>
+                      <span className="truncate flex-grow">{folder.name}</span>
+                      {!isCollapsed && (
+                        <div className="folder-actions ml-auto flex-shrink-0">
+                          <button onClick={(e) => { e.stopPropagation(); onEditFolder(folder); }} aria-label="Edit folder">
+                            <Icon icon="edit" className="w-4 h-4" />
+                          </button>
+                          <button onClick={(e) => { e.stopPropagation(); handleDeleteFolderClick(folder.id); }} aria-label="Delete folder">
+                            <Icon icon="delete" className="w-4 h-4 text-red-500" />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                    <div className="folder-content" style={{ maxHeight: openFolderIds.has(folder.id) ? `${folder.chats.filter(c => !c.isHiding).length * 52 + 8}px` : '0px' }}>
+                      <div className="flex flex-col gap-1 py-1">{folder.chats.map(renderChat)}</div>
+                    </div>
+                  </div>
+                ))}
+
+                <div className={`root-drop-zone ${dragOverTarget === 'root' ? 'drop-target' : ''}`} onDrop={(e) => handleDrop(e, null)} onDragOver={(e) => handleDragOver(e, 'root')} onDragLeave={() => setDragOverTarget(null)}>
+                  {visibleRootChats.map(renderChat)}
+                </div>
+              </nav>
+            </>
+          )}
+        </div>
+
+        <div className={`mt-auto pt-2 ${isCollapsed ? 'hidden' : ''}`}>
             <button onClick={onOpenPersonas} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-[var(--radius-2xl)] text-[var(--text-color)] hover:bg-black/10 dark:hover:bg-white/10" data-tooltip={t('personas')} data-tooltip-placement="right">
                 <Icon icon="users" className="w-5 h-5" />
                 <span className="font-semibold">{t('personas')}</span>
@@ -186,5 +220,6 @@ export const Sidebar: React.FC<SidebarProps> = (props) => {
           </div>
           </div>
           </aside>
+          </>
           );
           };

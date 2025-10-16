@@ -3,7 +3,6 @@ import { Settings } from '../types';
 import { useLocalization } from '../contexts/LocalizationContext';
 import { getAvailableModels } from '../services/modelService';
 import { loadSettings, saveSettings } from '../services/storageService';
-import { defaultPersonas } from '../data/defaultPersonas';
 
 const defaultSettings: Settings = {
   theme: 'apple-light',
@@ -16,20 +15,16 @@ const defaultSettings: Settings = {
   suggestionModel: 'gemini-2.5-flash',
   autoTitleGeneration: true,
   titleGenerationModel: 'gemini-2.5-flash',
-  languageDetectionModel: 'gemini-2.5-flash',
   defaultSearch: false,
   useSearchOptimizerPrompt: false,
   showThoughts: true,
-  enableGlobalSystemPrompt: false,
-  globalSystemPrompt: '',
   optimizeFormatting: false,
   thinkDeeper: false,
   apiBaseUrl: '',
   temperature: 0.7,
-  maxOutputTokens: 8192,
+  maxOutputTokens: 999999,
   contextLength: 50,
   password: undefined,
-  streamInactivityTimeout: 300,
   pdfQuality: 'hd',
 };
 
@@ -42,9 +37,6 @@ export const useSettings = () => {
   useEffect(() => {
     const loadedSettings = loadSettings();
     const initialSettings = { ...defaultSettings, ...loadedSettings };
-    if (!loadedSettings && window.matchMedia?.('(prefers-color-scheme: dark)').matches) {
-      initialSettings.theme = 'dark';
-    }
 
     // Override API Base URL if set in environment variables
     if (process.env.API_BASE_URL) {
@@ -59,10 +51,13 @@ export const useSettings = () => {
   useEffect(() => {
     if (!isStorageLoaded) return;
     saveSettings(settings);
-    document.body.classList.remove('theme-dark', 'theme-apple-light', 'theme-apple-dark', 'theme-pink-ocean', 'theme-blue-sky');
-    if (settings.theme !== 'light') {
-      document.body.classList.add(`theme-${settings.theme}`);
-    }
+
+    // Clear all previous theme classes
+    document.body.classList.remove('theme-apple-light', 'theme-apple-dark');
+    
+    // Apply theme class
+    document.body.classList.add(`theme-${settings.theme}`);
+
     document.body.dataset.font = settings.fontFamily;
     setLanguage(settings.language);
   }, [settings, isStorageLoaded, setLanguage]);
@@ -79,7 +74,6 @@ export const useSettings = () => {
           if (!allModels.includes(current.defaultModel)) newDefaults.defaultModel = allModels[0];
           if (!allModels.includes(current.suggestionModel)) newDefaults.suggestionModel = allModels.find(m => m.includes('lite')) || allModels[0];
           if (!allModels.includes(current.titleGenerationModel)) newDefaults.titleGenerationModel = allModels.find(m => m.includes('lite')) || allModels[0];
-          if (!allModels.includes(current.languageDetectionModel)) newDefaults.languageDetectionModel = allModels.find(m => m.includes('lite')) || allModels[0];
           return Object.keys(newDefaults).length > 0 ? { ...current, ...newDefaults } : current;
         });
       });

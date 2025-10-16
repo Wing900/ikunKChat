@@ -4,6 +4,7 @@ import { Icon } from './Icon';
 import { useLocalization } from '../contexts/LocalizationContext';
 import { PersonaAvatar } from './common/PersonaAvatar';
 import { Toast } from './Toast';
+import { ViewHeader } from './common/ViewHeader';
 
 const PersonaCard: React.FC<{ persona: Persona & { isHiding?: boolean }, onStartChat: () => void, onEdit: () => void, onDelete: () => void, index: number }> = ({ persona, onStartChat, onEdit, onDelete, index }) => {
     const { t } = useLocalization();
@@ -37,7 +38,7 @@ const PersonaCard: React.FC<{ persona: Persona & { isHiding?: boolean }, onStart
                 </div>
             </div>
             <p className="text-sm text-[var(--text-color-secondary)] flex-grow mb-4 h-16 overflow-hidden">{persona.bio}</p>
-            <button onClick={onStartChat} className="mt-auto w-full flex items-center justify-center gap-2 px-4 py-2 text-md font-semibold bg-[var(--accent-color)] text-white rounded-[var(--radius-2xl)] transition-transform hover:scale-105 active:scale-100">
+            <button onClick={onStartChat} className="mt-auto w-full flex items-center justify-center gap-2 px-4 py-2 text-md font-semibold bg-[var(--accent-color)] text-[var(--accent-color-text)] rounded-[var(--radius-2xl)] transition-transform hover:scale-105 active:scale-100">
                 <Icon icon="plus" className="w-5 h-5" />
                 {t('startChat')}
             </button>
@@ -67,6 +68,9 @@ interface RolesViewProps {
   onDeletePersona: (id: string) => void;
   error?: string | null;
   clearError?: () => void;
+  isSidebarCollapsed: boolean;
+  onToggleSidebar: () => void;
+  onToggleMobileSidebar: () => void;
 }
 
 export const RolesView: React.FC<RolesViewProps> = ({
@@ -77,7 +81,10 @@ export const RolesView: React.FC<RolesViewProps> = ({
   onCreatePersona,
   onDeletePersona,
   error,
-  clearError
+  clearError,
+  isSidebarCollapsed,
+  onToggleSidebar,
+  onToggleMobileSidebar
 }) => {
   const { t } = useLocalization();
   const [searchQuery, setSearchQuery] = useState('');
@@ -145,31 +152,31 @@ export const RolesView: React.FC<RolesViewProps> = ({
         </div>
       )}
       
-      <header className="flex items-center justify-between mb-4 md:mb-6 flex-shrink-0 gap-4">
-        <h2 className="text-2xl font-bold text-[var(--text-color)]">{t('selectPersona')}</h2>
-         <div className="flex items-center gap-2">
-            <div className="sidebar-search-wrapper max-w-xs">
-                <Icon icon="search" className="sidebar-search-icon w-4 h-4" />
-                <input
-                  type="text"
-                  placeholder="搜索角色..."
-                  className="sidebar-search-input !py-2 !text-sm"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-            </div>
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className={`p-2 rounded-full hover:bg-black/10 dark:hover:bg-white/10 ${showFilters ? 'bg-blue-100 dark:bg-blue-900' : ''}`}
-              title="过滤器"
-            >
-              <Icon icon="settings" className="w-5 h-5"/>
-            </button>
-            <button onClick={onClose} className="p-2 rounded-full hover:bg-black/10 dark:hover:bg-white/10 -mr-2">
-                <Icon icon="close" className="w-5 h-5"/>
-            </button>
-         </div>
-      </header>
+      <ViewHeader
+        title={t('selectPersona')}
+        onClose={onClose}
+        isSidebarCollapsed={isSidebarCollapsed}
+        onToggleSidebar={onToggleSidebar}
+        onToggleMobileSidebar={onToggleMobileSidebar}
+      >
+        <div className="sidebar-search-wrapper max-w-xs">
+            <Icon icon="search" className="sidebar-search-icon w-4 h-4" />
+            <input
+              type="text"
+              placeholder="搜索角色..."
+              className="sidebar-search-input !py-2 !text-sm"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+        </div>
+        <button
+          onClick={() => setShowFilters(!showFilters)}
+          className={`p-2 rounded-full hover:bg-black/10 dark:hover:bg-white/10 ${showFilters ? 'bg-blue-100 dark:bg-blue-900' : ''}`}
+          title="过滤器"
+        >
+          <Icon icon="settings" className="w-5 h-5"/>
+        </button>
+      </ViewHeader>
       
       {/* 过滤器面板 */}
       {showFilters && (

@@ -12,7 +12,7 @@ export const useChatData = ({ settings, isStorageLoaded, onSettingsChange }: Use
   const [chats, setChats] = useState<ChatSession[]>([]);
   const [folders, setFolders] = useState<Folder[]>([]);
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
-  const [suggestedReplies, setSuggestedReplies] = useState<string[]>([]);
+
 
   useEffect(() => {
     if (isStorageLoaded) {
@@ -95,7 +95,7 @@ export const useChatData = ({ settings, isStorageLoaded, onSettingsChange }: Use
     chats, setChats,
     folders, setFolders,
     activeChatId, setActiveChatId,
-    suggestedReplies, setSuggestedReplies,
+
     handleDeleteChat,
     handleUpdateChatDetails,
     handleNewFolder,

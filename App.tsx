@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, lazy, Suspense } from 'react';
+import React, { useState, useCallback, useEffect, lazy, Suspense, useLayoutEffect } from 'react';
 import { Sidebar } from './components/sidebar/Sidebar';
 import { ChatView } from './components/ChatView';
 import { EditChatModal } from './components/EditChatModal';
@@ -8,6 +8,7 @@ import { ToastContainer } from './components/ToastContainer';
 import { UpdateIndicator } from './components/UpdateIndicator';
 import { UpdateSettings } from './components/settings/UpdateSettings';
 import { usePWAUpdate } from './hooks/usePWAUpdate';
+import { generateMd3Palette } from './utils/colorUtils';
 
 // Lazy load components
 const ImageLightbox = lazy(() => import('./components/ImageLightbox').then(module => ({ default: module.ImageLightbox })));
@@ -21,8 +22,10 @@ import PasswordView from './components/PasswordView';
 const PrivacyNoticeModal = lazy(() => import('./components/PrivacyNoticeModal').then(module => ({ default: module.PrivacyNoticeModal })));
 const UpdateNoticeModal = lazy(() => import('./components/UpdateNoticeModal').then(module => ({ default: module.UpdateNoticeModal })));
 const ChatExportSelector = lazy(() => import('./components/settings/ChatExportSelector').then(module => ({ default: module.ChatExportSelector })));
-import { ChatSession, Folder, Settings, Persona } from './types';
+const ChatClearSelector = lazy(() => import('./components/ChatClearSelector').then(module => ({ default: module.ChatClearSelector })));
+import { ChatSession, Folder, Settings, Persona, Message } from './types';
 import { LocalizationProvider, useLocalization } from './contexts/LocalizationContext';
+import { getColorPalette, getDefaultColorPalette } from './data/colorPalettes';
 import { useSettings } from './hooks/useSettings';
 import { useChatData } from './hooks/useChatData';
 import { useChatMessaging } from './hooks/useChatMessaging';
@@ -33,6 +36,7 @@ import { useTranslationHistory } from './hooks/useTranslationHistory';
 import { exportData, importData, clearAllData, clearChatHistory, loadPrivacyConsent, savePrivacyConsent, loadLastReadVersion, saveLastReadVersion, exportSelectedChats } from './services/storageService';
 import { authService } from './services/authService';
 import { ViewContainer } from './components/common/ViewContainer';
+import { MessageEditModal } from './components/MessageEditModal';
 
 type View = 'chat' | 'personas' | 'editor' | 'archive' | 'translate';
 
@@ -42,6 +46,7 @@ const AppContainer = () => {
   const [versionInfo, setVersionInfo] = useState<any>(null);
   const [showUpdateSettings, setShowUpdateSettings] = useState(false);
   const [showChatExportSelector, setShowChatExportSelector] = useState(false);
+  const [showChatClearSelector, setShowChatClearSelector] = useState(false);
   const { needRefresh, updateServiceWorker } = usePWAUpdate();
 
   const [hasConsented, setHasConsented] = useState(() => {
@@ -74,6 +79,79 @@ const AppContainer = () => {
   });
 
   const { settings, setSettings, availableModels, isStorageLoaded } = useSettings();
+
+  // 应用调色板到CSS变量
+  useLayoutEffect(() => {
+    const applyColorPalette = () => {
+      const isDark = settings.theme.includes('dark');
+      
+      // 如果有自定义颜色，使用 MD3 生成完整调色板
+      if (settings.customColor) {
+        try {
+          const md3Palette = generateMd3Palette(settings.customColor);
+          const colorScheme = isDark ? md3Palette.dark : md3Palette.light;
+          
+          // 应用所有生成的颜色
+          Object.entries(colorScheme).forEach(([key, value]) => {
+            document.documentElement.style.setProperty(key, value);
+          });
+          
+          // 额外设置 dynamic 变量以覆盖默认值
+          document.documentElement.style.setProperty('--dynamic-primary', colorScheme['--md-sys-color-primary']);
+          document.documentElement.style.setProperty('--dynamic-on-primary', colorScheme['--md-sys-color-on-primary']);
+          document.documentElement.style.setProperty('--dynamic-surface', colorScheme['--md-sys-color-surface']);
+          document.documentElement.style.setProperty('--dynamic-on-surface', colorScheme['--md-sys-color-on-surface']);
+          document.documentElement.style.setProperty('--dynamic-on-surface-variant', colorScheme['--md-sys-color-on-surface-variant']);
+          document.documentElement.style.setProperty('--dynamic-outline-variant', colorScheme['--md-sys-color-outline-variant']);
+          document.documentElement.style.setProperty('--dynamic-surface-container', colorScheme['--md-sys-color-surface-variant']);
+          document.documentElement.style.setProperty('--dynamic-on-surface-container', colorScheme['--md-sys-color-on-surface-variant']);
+          document.documentElement.style.setProperty('--dynamic-error', colorScheme['--md-sys-color-error']);
+          document.documentElement.style.setProperty('--dynamic-glass-bg', colorScheme['--glass-bg']);
+          document.documentElement.style.setProperty('--dynamic-code-bg', colorScheme['--code-bg']);
+          document.documentElement.style.setProperty('--dynamic-user-bubble-bg', colorScheme['--user-bubble-bg']);
+          return;
+        } catch (error) {
+          console.error('[Color] Failed to generate MD3 palette:', error);
+        }
+      }
+      
+      // 使用预设调色板
+      const paletteId = settings.colorPalette || 'blue';
+      const palette = getColorPalette(paletteId) || getDefaultColorPalette();
+      
+      if (isDark) {
+        document.documentElement.style.setProperty('--dynamic-primary', palette.primaryDark);
+        document.documentElement.style.setProperty('--dynamic-on-primary', palette.onPrimaryDark);
+        document.documentElement.style.setProperty('--dynamic-surface', palette.surfaceDark);
+        document.documentElement.style.setProperty('--dynamic-on-surface', palette.onSurfaceDark);
+        document.documentElement.style.setProperty('--dynamic-on-surface-variant', palette.onSurfaceVariantDark);
+        document.documentElement.style.setProperty('--dynamic-outline-variant', palette.outlineVariantDark);
+        document.documentElement.style.setProperty('--dynamic-surface-container', palette.surfaceContainerDark);
+        document.documentElement.style.setProperty('--dynamic-on-surface-container', palette.onSurfaceContainerDark);
+        document.documentElement.style.setProperty('--dynamic-error', palette.errorDark);
+        document.documentElement.style.setProperty('--dynamic-glass-bg', palette.glassBgDark);
+        document.documentElement.style.setProperty('--dynamic-code-bg', palette.codeBgDark);
+        document.documentElement.style.setProperty('--dynamic-user-bubble-bg', palette.userBubbleBgDark);
+      } else {
+        document.documentElement.style.setProperty('--dynamic-primary', palette.primaryLight);
+        document.documentElement.style.setProperty('--dynamic-on-primary', palette.onPrimaryLight);
+        document.documentElement.style.setProperty('--dynamic-surface', palette.surfaceLight);
+        document.documentElement.style.setProperty('--dynamic-on-surface', palette.onSurfaceLight);
+        document.documentElement.style.setProperty('--dynamic-on-surface-variant', palette.onSurfaceVariantLight);
+        document.documentElement.style.setProperty('--dynamic-outline-variant', palette.outlineVariantLight);
+        document.documentElement.style.setProperty('--dynamic-surface-container', palette.surfaceContainerLight);
+        document.documentElement.style.setProperty('--dynamic-on-surface-container', palette.onSurfaceContainerLight);
+        document.documentElement.style.setProperty('--dynamic-error', palette.errorLight);
+        document.documentElement.style.setProperty('--dynamic-glass-bg', palette.glassBgLight);
+        document.documentElement.style.setProperty('--dynamic-code-bg', palette.codeBgLight);
+        document.documentElement.style.setProperty('--dynamic-user-bubble-bg', palette.userBubbleBgLight);
+      }
+    };
+
+    if (isStorageLoaded) {
+      applyColorPalette();
+    }
+  }, [settings.theme, settings.colorPalette, settings.customColor, isStorageLoaded]);
 
   const handleSettingsChange = useCallback((newSettings: Partial<Settings>) => {
     setSettings(prev => ({ ...prev, ...newSettings }));
@@ -112,10 +190,6 @@ const AppContainer = () => {
   }, []);
 
 
-  // useEffect(() => {
-  //   console.log("哇真的是你啊");
-  //   console.log("多看一眼就会爆炸");
-  // }, []);
 
   useEffect(() => {
     const fetchVersionInfo = async () => {
@@ -135,7 +209,6 @@ const AppContainer = () => {
   };
 
   const handleCheckForUpdates = async () => {
-    console.log('[App] Manually checking for updates...');
     if ('serviceWorker' in navigator) {
       const registration = await navigator.serviceWorker.getRegistration();
       if (registration) {
@@ -151,7 +224,7 @@ const AppContainer = () => {
             }
           }, 3000); // Wait 3 seconds to see if needRefresh is triggered
         } catch (error) {
-          console.error('[App] Failed to check for updates:', error);
+          console.error('[Update] Check failed:', error);
           addToast('检查更新失败', 'error');
         }
       } else {
@@ -184,7 +257,7 @@ const AppContainer = () => {
     handleUpdateMessageContent, handleRegenerate, handleEditAndResubmit
   } = useChatMessaging({
     settings, activeChat, personas, memories, setChats,
-    setSuggestedReplies: chatDataHandlers.setSuggestedReplies, setActiveChatId, addToast,
+    setActiveChatId, addToast,
     isNextChatStudyMode, setIsNextChatStudyMode
   });
 
@@ -196,6 +269,7 @@ const AppContainer = () => {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [citationChunks, setCitationChunks] = useState<any[] | null>(null);
+  const [editingMessage, setEditingMessage] = useState<Message | null>(null);
   
 
   const handleNewChat = useCallback((personaId?: string | null) => {
@@ -212,7 +286,6 @@ const AppContainer = () => {
         const newChatSession: ChatSession = {
             id: crypto.randomUUID(),
             title: persona.name || 'New Persona Chat',
-            icon: (persona.avatar.type === 'emoji' ? persona.avatar.value : '👤') || '💬',
             messages: [],
             createdAt: Date.now(),
             model: persona.model ?? settings.defaultModel,
@@ -234,10 +307,9 @@ const AppContainer = () => {
     }
 
     setSearchQuery('');
-    chatDataHandlers.setSuggestedReplies([]);
     setIsMobileSidebarOpen(false);
     setCurrentView('chat');
-  }, [settings.defaultPersona, settings.defaultModel, personas, isNextChatStudyMode, setChats, setActiveChatId, setIsNextChatStudyMode, chatDataHandlers.setSuggestedReplies, addToast, loading]);
+  }, [settings.defaultPersona, settings.defaultModel, personas, isNextChatStudyMode, setChats, setActiveChatId, setIsNextChatStudyMode, addToast, loading]);
 
 // 在用户首次进入应用时自动创建使用 default-assistant 角色的聊天
 useEffect(() => {
@@ -257,7 +329,7 @@ useEffect(() => {
     const isDefaultPersonaValid = personas.some(p => p.id === currentDefaultPersonaId);
 
     if (!isDefaultPersonaValid) {
-      console.warn(`Invalid defaultPersona found in settings: ${currentDefaultPersonaId}. Resetting to the first available persona.`);
+      console.warn(`[Persona] Invalid defaultPersona: ${currentDefaultPersonaId}, resetting to first available`);
       const firstAvailablePersona = personas[0];
       if (firstAvailablePersona) {
         handleSettingsChange({ defaultPersona: firstAvailablePersona.id });
@@ -268,7 +340,7 @@ useEffect(() => {
   }
 }, [personas, settings.defaultPersona, handleSettingsChange]);
 
-const handleSelectChat = useCallback((id: string) => { setActiveChatId(id); chatDataHandlers.setSuggestedReplies([]); setIsMobileSidebarOpen(false); setCurrentView('chat'); }, [setActiveChatId, chatDataHandlers.setSuggestedReplies]);
+const handleSelectChat = useCallback((id: string) => { setActiveChatId(id); setIsMobileSidebarOpen(false); setCurrentView('chat'); }, [setActiveChatId]);
   
   const handleNewChatSidebar = useCallback(() => {
     handleNewChat(null);
@@ -306,7 +378,7 @@ const handleSelectChat = useCallback((id: string) => { setActiveChatId(id); chat
         addToast("Import successful!", 'success');
     }).catch(err => {
         addToast("Invalid backup file.", 'error');
-        console.error(err);
+        console.error('[Import] Failed:', err);
     });
   };
 
@@ -328,17 +400,7 @@ const handleSelectChat = useCallback((id: string) => { setActiveChatId(id); chat
   };
 
   const handleClearChatHistory = () => {
-    setConfirmation({
-        title: "清除聊天历史",
-        message: "确定要清除所有聊天历史记录吗？此操作不会删除您的设置、角色和其他数据。",
-        onConfirm: () => {
-            clearChatHistory();
-            setChats([]);
-            setActiveChatId(null);
-            setConfirmation(null);
-            addToast("聊天历史已清除", 'success');
-        }
-    });
+    setShowChatClearSelector(true);
   };
 
   // 处理导出选中的聊天
@@ -346,6 +408,22 @@ const handleSelectChat = useCallback((id: string) => { setActiveChatId(id); chat
     exportSelectedChats(selectedChatIds, chats);
     setShowChatExportSelector(false);
     addToast("Selected chats exported successfully", 'success');
+  };
+
+  // 处理清除选中的聊天
+  const handleClearSelectedChats = (selectedChatIds: string[]) => {
+    setConfirmation({
+      title: "确认清除聊天记录",
+      message: `确定要清除选中的 ${selectedChatIds.length} 个聊天记录吗？此操作无法撤销。归档的聊天不会被影响。`,
+      onConfirm: () => {
+        setChats(prev => prev.filter(chat => !selectedChatIds.includes(chat.id)));
+        if (activeChatId && selectedChatIds.includes(activeChatId)) {
+          setActiveChatId(null);
+        }
+        setConfirmation(null);
+        addToast(`已清除 ${selectedChatIds.length} 个聊天记录`, 'success');
+      }
+    });
   };
 
   // 检查是否设置了环境变量密码
@@ -370,44 +448,68 @@ const handleSelectChat = useCallback((id: string) => { setActiveChatId(id); chat
   }
   
   return (
-    <div className="h-dvh-screen w-screen flex bg-[var(--bg-image)] text-[var(--text-color)] overflow-hidden">
+    <div className="h-dvh-screen w-screen flex bg-[var(--bg-image)] text-[var(--text-color)] overflow-hidden fixed inset-0">
         <ToastContainer />
-        {isMobileSidebarOpen && <div className="fixed inset-0 bg-black/30 z-30 md:hidden" onClick={() => setIsMobileSidebarOpen(false)} aria-hidden="true"/>}
-        <Sidebar
-          chats={chats}
-          folders={folders}
-          activeChatId={activeChatId}
-          onNewChat={handleNewChatSidebar}
-          onSelectChat={handleSelectChat}
-          onDeleteChat={chatDataHandlers.handleDeleteChat}
-          onEditChat={setEditingChat}
-          onArchiveChat={(id) => chatDataHandlers.handleArchiveChat(id, true)}
-          onNewFolder={() => setEditingFolder('new')}
-          onEditFolder={setEditingFolder}
-          onDeleteFolder={chatDataHandlers.handleDeleteFolder}
-          onMoveChatToFolder={chatDataHandlers.handleMoveChatToFolder}
-          isCollapsed={isSidebarCollapsed}
-          onToggleCollapse={() => setIsSidebarCollapsed(p => !p)}
-          isMobileSidebarOpen={isMobileSidebarOpen}
-          onToggleMobileSidebar={() => setIsMobileSidebarOpen(false)}
-          searchQuery={searchQuery}
-          onSetSearchQuery={setSearchQuery}
-          onOpenSettings={() => setIsSettingsOpen(true)}
-          onOpenPersonas={() => handleOpenView('personas')}
-          onOpenArchive={() => handleOpenView('archive')}
-          onOpenTranslate={() => handleOpenView('translate')}
-        >
-          <UpdateIndicator
-            updateAvailable={needRefresh}
-            isCheckingUpdate={false} // No longer needed
-            onClick={openUpdateSettings}
+        
+        {/* 移动端遮罩层已删除 - 通过侧边栏内的关闭按钮或汉堡按钮关闭 */}
+        
+        {/* 桌面端Zen区域 - 完全重构，使用更高z-index和绝对定位 */}
+        {isSidebarCollapsed && (
+          <div
+            className="fixed inset-y-0 left-0 w-20 bg-transparent hover:bg-gradient-to-r hover:from-black/10 hover:to-transparent dark:hover:from-white/10 transition-all duration-200 cursor-pointer hidden md:block z-[200]"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setIsSidebarCollapsed(false);
+            }}
+            onMouseDown={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+            }}
+            aria-label="展开侧边栏"
+            title="点击展开侧边栏"
           />
-        </Sidebar>
-        <div className={`flex-1 flex flex-col h-full transition-all duration-300 ${isSidebarCollapsed ? 'p-3 pb-2' : 'p-3 pb-2 md:pl-0'}`}>
-          <div className="view-wrapper">
+        )}
+
+          <div className="flex flex-1 h-full overflow-hidden relative">
+          {/* 侧边栏 - 直接渲染，无额外容器 */}
+          <Sidebar
+            chats={chats}
+            folders={folders}
+            activeChatId={activeChatId}
+            onNewChat={handleNewChatSidebar}
+            onSelectChat={handleSelectChat}
+            onDeleteChat={chatDataHandlers.handleDeleteChat}
+            onEditChat={setEditingChat}
+            onArchiveChat={(id) => chatDataHandlers.handleArchiveChat(id, true)}
+            onNewFolder={() => setEditingFolder('new')}
+            onEditFolder={setEditingFolder}
+            onDeleteFolder={chatDataHandlers.handleDeleteFolder}
+            onMoveChatToFolder={chatDataHandlers.handleMoveChatToFolder}
+            isCollapsed={isSidebarCollapsed}
+            onToggleCollapse={() => setIsSidebarCollapsed(p => !p)}
+            isMobileSidebarOpen={isMobileSidebarOpen}
+            onToggleMobileSidebar={() => setIsMobileSidebarOpen(p => !p)}
+            searchQuery={searchQuery}
+            onSetSearchQuery={setSearchQuery}
+            onOpenSettings={() => setIsSettingsOpen(true)}
+            onOpenPersonas={() => handleOpenView('personas')}
+            onOpenArchive={() => handleOpenView('archive')}
+            onOpenTranslate={() => handleOpenView('translate')}
+          >
+            <UpdateIndicator
+              updateAvailable={needRefresh}
+              isCheckingUpdate={false}
+              onClick={openUpdateSettings}
+              versionInfo={versionInfo}
+            />
+          </Sidebar>
+
+          {/* 聊天界面容器 */}
+          <div className="flex-1 flex flex-col h-full overflow-hidden">
             <Suspense fallback={<div className="flex items-center justify-center h-full">Loading...</div>}>
               <ViewContainer view="chat" activeView={currentView}>
-                <ChatView chatSession={activeChat} personas={personas} onSendMessage={handleSendMessage} isLoading={isLoading} onCancelGeneration={handleCancel} currentModel={settings.defaultModel} onSetCurrentModel={(model) => handleSettingsChange({ defaultModel: model })} onSetModelForActiveChat={chatDataHandlers.handleSetModelForActiveChat} availableModels={availableModels} isSidebarCollapsed={isSidebarCollapsed} onToggleSidebar={() => setIsSidebarCollapsed(p => !p)} onToggleMobileSidebar={() => setIsMobileSidebarOpen(p => !p)} onNewChat={handleNewChat} onImageClick={setLightboxImage} suggestedReplies={chatDataHandlers.suggestedReplies} settings={settings} onDeleteMessage={handleDeleteMessage} onUpdateMessageContent={handleUpdateMessageContent} onRegenerate={handleRegenerate} onEditAndResubmit={handleEditAndResubmit} onShowCitations={setCitationChunks} onDeleteChat={chatDataHandlers.handleDeleteChat} onEditChat={setEditingChat} onToggleStudyMode={chatDataHandlers.handleToggleStudyMode} isNextChatStudyMode={isNextChatStudyMode} onToggleNextChatStudyMode={setIsNextChatStudyMode} />
+                <ChatView chatSession={activeChat} personas={personas} onSendMessage={handleSendMessage} isLoading={isLoading} onCancelGeneration={handleCancel} currentModel={settings.defaultModel} onSetCurrentModel={(model) => handleSettingsChange({ defaultModel: model })} onSetModelForActiveChat={chatDataHandlers.handleSetModelForActiveChat} availableModels={availableModels} isSidebarCollapsed={isSidebarCollapsed} onToggleSidebar={() => setIsSidebarCollapsed(p => !p)} onToggleMobileSidebar={() => setIsMobileSidebarOpen(p => !p)} onNewChat={handleNewChat} onImageClick={setLightboxImage} settings={settings} onDeleteMessage={handleDeleteMessage} onUpdateMessageContent={handleUpdateMessageContent} onRegenerate={handleRegenerate} onEditAndResubmit={handleEditAndResubmit} onShowCitations={setCitationChunks} onDeleteChat={chatDataHandlers.handleDeleteChat} onEditChat={setEditingChat} onToggleStudyMode={chatDataHandlers.handleToggleStudyMode} isNextChatStudyMode={isNextChatStudyMode} onToggleNextChatStudyMode={setIsNextChatStudyMode} onEditMessage={setEditingMessage} />
               </ViewContainer>
               <ViewContainer view="personas" activeView={currentView}>
                 <RolesView
@@ -419,10 +521,23 @@ const handleSelectChat = useCallback((id: string) => { setActiveChatId(id); chat
                   onClose={() => setCurrentView('chat')}
                   error={error}
                   clearError={clearError}
+                  isSidebarCollapsed={isSidebarCollapsed}
+                  onToggleSidebar={() => setIsSidebarCollapsed(p => !p)}
+                  onToggleMobileSidebar={() => setIsMobileSidebarOpen(p => !p)}
                 />
               </ViewContainer>
               <ViewContainer view="archive" activeView={currentView}>
-                <ArchiveView chats={chats} onSelectChat={handleSelectChat} onUnarchiveChat={(id) => chatDataHandlers.handleArchiveChat(id, false)} onDeleteChat={chatDataHandlers.handleDeleteChat} onEditChat={setEditingChat} onClose={() => setCurrentView('chat')} />
+                <ArchiveView
+                  chats={chats}
+                  onSelectChat={handleSelectChat}
+                  onUnarchiveChat={(id) => chatDataHandlers.handleArchiveChat(id, false)}
+                  onDeleteChat={chatDataHandlers.handleDeleteChat}
+                  onEditChat={setEditingChat}
+                  onClose={() => setCurrentView('chat')}
+                  isSidebarCollapsed={isSidebarCollapsed}
+                  onToggleSidebar={() => setIsSidebarCollapsed(p => !p)}
+                  onToggleMobileSidebar={() => setIsMobileSidebarOpen(p => !p)}
+                />
               </ViewContainer>
               <ViewContainer view="editor" activeView={currentView}>
                 <PersonaEditor
@@ -438,12 +553,19 @@ const handleSelectChat = useCallback((id: string) => { setActiveChatId(id); chat
                 />
               </ViewContainer>
                <ViewContainer view="translate" activeView={currentView}>
-                <TranslateView settings={settings} onClose={() => setCurrentView('chat')} history={translationHistory} setHistory={setTranslationHistory} />
+                <TranslateView
+                  settings={settings}
+                  onClose={() => setCurrentView('chat')}
+                  history={translationHistory}
+                  setHistory={setTranslationHistory}
+                  isSidebarCollapsed={isSidebarCollapsed}
+                  onToggleSidebar={() => setIsSidebarCollapsed(p => !p)}
+                  onToggleMobileSidebar={() => setIsMobileSidebarOpen(p => !p)}
+                />
               </ViewContainer>
             </Suspense>
-          </div>
         </div>
-        
+
         <Suspense fallback={null}>
           {isSettingsOpen && <SettingsModal settings={settings} onClose={() => setIsSettingsOpen(false)} onSettingsChange={handleSettingsChange} onExportSettings={() => exportData({ settings })} onExportAll={() => exportData({ chats, folders, settings, personas: personas.filter(p => p && !p.isDefault), memories })} onExportSelectedChats={() => setShowChatExportSelector(true)} onImport={handleImport} onClearAll={handleClearAll} onClearChatHistory={handleClearChatHistory} availableModels={availableModels} personas={personas} versionInfo={versionInfo} />}
           {lightboxImage && <ImageLightbox src={lightboxImage} onClose={() => setLightboxImage(null)} />}
@@ -454,7 +576,21 @@ const handleSelectChat = useCallback((id: string) => { setActiveChatId(id); chat
         {editingChat && <EditChatModal chat={editingChat} onClose={() => setEditingChat(null)} onSave={chatDataHandlers.handleUpdateChatDetails} />}
         {editingFolder && <FolderActionModal folder={editingFolder === 'new' ? null : editingFolder} onClose={() => setEditingFolder(null)} onSave={editingFolder === 'new' ? chatDataHandlers.handleNewFolder : chatDataHandlers.handleUpdateFolder} />}
         {citationChunks && <CitationDrawer chunks={citationChunks} onClose={() => setCitationChunks(null)} />}
-        
+        {editingMessage && (
+          <MessageEditModal
+            message={editingMessage}
+            onClose={() => setEditingMessage(null)}
+            onSave={(message, newContent) => {
+              if (message.role === 'user') {
+                handleEditAndResubmit(message.id, newContent);
+              } else {
+                handleUpdateMessageContent(message.id, newContent);
+              }
+              setEditingMessage(null);
+            }}
+          />
+        )}
+
         {/* 更新设置模态框 */}
         {showUpdateSettings && (
           <UpdateSettings
@@ -466,7 +602,7 @@ const handleSelectChat = useCallback((id: string) => { setActiveChatId(id); chat
             updateAvailable={needRefresh}
           />
         )}
-        
+
         {/* 聊天导出选择器 */}
         {showChatExportSelector && (
           <Suspense fallback={null}>
@@ -478,10 +614,19 @@ const handleSelectChat = useCallback((id: string) => { setActiveChatId(id); chat
             />
           </Suspense>
         )}
-        
-        {/* 全局页脚 */}
-        <footer className="py-4 text-center text-sm text-gray-500 dark:text-gray-400">
-        </footer>
+
+        {/* 聊天清除选择器 */}
+        {showChatClearSelector && (
+          <Suspense fallback={null}>
+            <ChatClearSelector
+              chats={chats}
+              folders={folders}
+              onClose={() => setShowChatClearSelector(false)}
+              onClearSelected={handleClearSelectedChats}
+            />
+          </Suspense>
+          )}
+      </div>
     </div>
   );
 }

@@ -42,39 +42,62 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({ chatSession, onNewChat, 
     }, []);
 
     return (
-        <header className={`p-4 flex-shrink-0 flex items-center justify-between gap-2 ${chatSession ? 'border-b border-[var(--glass-border)]' : ''}`}>
+        <header className="pt-6 pb-4 px-3 flex-shrink-0 flex items-center justify-between gap-2 relative z-[150]">
             <div className="flex items-center gap-2 min-w-0">
                 <button
-                    onClick={onToggleMobileSidebar}
-                    className="md:hidden p-1 rounded-full hover:bg-black/10 dark:hover:bg-white/10"
+                    onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        onToggleMobileSidebar();
+                    }}
+                    className="md:hidden p-2 rounded-full hover:bg-black/10 dark:hover:bg-white/10 transition-colors active:scale-95 relative z-[200]"
                     aria-label={t('expandSidebar')}
                     data-tooltip={t('expandSidebar')}
                     data-tooltip-placement="right"
+                    type="button"
                 >
-                    <Icon icon="menu" className="w-6 h-6" />
+                    <Icon icon="menu" className="w-6 h-6 pointer-events-none" />
                 </button>
                 {isSidebarCollapsed && (
                     <button
-                        onClick={onToggleSidebar}
-                        className="hidden md:flex items-center justify-center p-1 rounded-full hover:bg-black/10 dark:hover:bg-white/10"
+                        onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            onToggleSidebar();
+                        }}
+                        className="hidden md:flex items-center justify-center p-3 rounded-full hover:bg-black/10 dark:hover:bg-white/10 transition-colors active:scale-95"
                         aria-label={t('expandSidebar')}
                         data-tooltip={t('expandSidebar')}
                         data-tooltip-placement="right"
+                        type="button"
                     >
                         <Icon icon="menu" className="w-6 h-6" />
                     </button>
                 )}
+                {!isSidebarCollapsed && (
+                    <button
+                        onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            onToggleSidebar();
+                        }}
+                        className="hidden md:flex items-center justify-center p-3 rounded-full hover:bg-black/10 dark:hover:bg-white/10 transition-colors active:scale-95"
+                        aria-label={t('collapseSidebar')}
+                        data-tooltip={t('collapseSidebar')}
+                        data-tooltip-placement="right"
+                        type="button"
+                    >
+                        <Icon icon="panel-left-close" className="w-6 h-6" />
+                    </button>
+                )}
                 {chatSession && (
-                    <div className="flex items-center gap-2 truncate">
-                        <span className="text-2xl">{chatSession.icon || "💬"}</span>
-                        <h2 className="text-xl font-bold text-[var(--text-color)] truncate">{chatSession.title}</h2>
-                    </div>
+                    <h2 className="text-xl font-bold text-[var(--text-color)] truncate">{chatSession.title}</h2>
                 )}
             </div>
             {/* 桌面端按钮 - 始终显示 */}
             <div className="hidden md:flex items-center gap-1 ml-auto">
-                <button onClick={() => onNewChat()} className="p-2 rounded-full hover:bg-black/10 dark:hover:bg-white/10" data-tooltip={t('newChat')} data-tooltip-placement="left">
-                    <Icon icon="plus" className="w-6 h-6" />
+                <button onClick={() => onNewChat()} className="p-1.5 rounded-full hover:bg-black/10 dark:hover:bg-white/10" data-tooltip={t('newChat')} data-tooltip-placement="left">
+                    <Icon icon="plus" className="w-5 h-5" />
                 </button>
                 <div className="w-64">
                     <ModelSelector models={availableModels} selectedModel={chatSession?.model || currentModel} onModelChange={onSetModelForActiveChat} isHeader={true} />
@@ -83,8 +106,8 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({ chatSession, onNewChat, 
             
             {/* 移动端按钮 - 始终显示 */}
             <div className="md:hidden flex items-center gap-1 ml-auto">
-                <button onClick={() => onNewChat()} className="p-2 rounded-full hover:bg-black/10 dark:hover:bg-white/10" data-tooltip={t('newChat')} data-tooltip-placement="left">
-                    <Icon icon="plus" className="w-6 h-6" />
+                <button onClick={() => onNewChat()} className="p-1.5 rounded-full hover:bg-black/10 dark:hover:bg-white/10" data-tooltip={t('newChat')} data-tooltip-placement="left">
+                    <Icon icon="plus" className="w-5 h-5" />
                 </button>
                 <div className="relative" ref={mobileModelSelectorRef}>
                     <button
@@ -96,13 +119,13 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({ chatSession, onNewChat, 
                         <Icon icon="chip" className="w-6 h-6" />
                     </button>
                     {isMobileModelSelectorOpen && (
-                        <div className="absolute top-16 right-0 z-10 w-48">
+                        <div className="absolute top-16 right-0 z-10 w-48 max-h-60 overflow-y-auto">
                             <div className="glass-pane rounded-[var(--radius-2xl)] p-2 shadow-lg">
                                 {availableModels.map(model => (
                                     <div
                                         key={model}
                                         onClick={() => handleMobileModelSelect(model)}
-                                        className={`p-2 rounded-lg cursor-pointer flex items-center gap-2 ${currentModel === model ? 'bg-[var(--accent-color)] text-white' : 'hover:bg-black/10 dark:hover:bg-white/10'}`}
+                                        className={`p-2 rounded-lg cursor-pointer flex items-center gap-2 ${currentModel === model ? 'bg-[var(--accent-color)] text-[var(--accent-color-text)]' : 'hover:bg-black/10 dark:hover:bg-white/10'}`}
                                     >
                                         <Icon icon="chip" className="w-4 h-4" />
                                         <span className="text-sm">{model}</span>

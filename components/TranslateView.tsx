@@ -9,15 +9,19 @@ import { detectLanguage, translateText } from '../services/geminiService';
 import { readAloud } from '../services/ttsService';
 import { TranslationHistoryModal } from './TranslationHistoryModal';
 import { loadCustomLanguages, saveCustomLanguages } from '../services/storageService';
+import { ViewHeader } from './common/ViewHeader';
 
 interface TranslateViewProps {
   settings: Settings;
   onClose: () => void;
   history: TranslationHistoryItem[];
   setHistory: React.Dispatch<React.SetStateAction<TranslationHistoryItem[]>>;
+  isSidebarCollapsed: boolean;
+  onToggleSidebar: () => void;
+  onToggleMobileSidebar: () => void;
 }
 
-const TranslateView: React.FC<TranslateViewProps> = ({ settings, onClose, history, setHistory }) => {
+const TranslateView: React.FC<TranslateViewProps> = ({ settings, onClose, history, setHistory, isSidebarCollapsed, onToggleSidebar, onToggleMobileSidebar }) => {
   const { t } = useLocalization();
   const { addToast } = useToast();
   const [sourceText, setSourceText] = useState('');
@@ -181,13 +185,15 @@ const TranslateView: React.FC<TranslateViewProps> = ({ settings, onClose, histor
 
   return (
     <main className="glass-pane rounded-[var(--radius-2xl)] flex flex-col h-full overflow-hidden relative p-4 md:p-6">
-      <header className="flex items-center justify-between mb-4 flex-shrink-0">
-        <h2 className="text-2xl font-bold text-[var(--text-color)]">{t('translator')}</h2>
-         <div className="flex items-center gap-2">
-            <button onClick={() => setIsHistoryOpen(true)} className="p-2 rounded-full hover:bg-black/10 dark:hover:bg-white/10" data-tooltip={t('translationHistory')} data-tooltip-placement="bottom"><Icon icon="history" className="w-5 h-5"/></button>
-            <button onClick={onClose} className="p-2 rounded-full hover:bg-black/10 dark:hover:bg-white/10"><Icon icon="close" className="w-5 h-5"/></button>
-         </div>
-      </header>
+      <ViewHeader
+        title={t('translator')}
+        onClose={onClose}
+        isSidebarCollapsed={isSidebarCollapsed}
+        onToggleSidebar={onToggleSidebar}
+        onToggleMobileSidebar={onToggleMobileSidebar}
+      >
+        <button onClick={() => setIsHistoryOpen(true)} className="p-2 rounded-full hover:bg-black/10 dark:hover:bg-white/10" data-tooltip={t('translationHistory')} data-tooltip-placement="bottom"><Icon icon="history" className="w-5 h-5"/></button>
+      </ViewHeader>
       <div className="flex-grow flex flex-col gap-4 min-h-0">
           <div className='flex items-center justify-center gap-2'>
               <ComboBox options={sourceLangOptions} value={sourceLang} onSelect={(val) => handleLanguageChange(val, 'source')} allowCustom className="flex-1"/>

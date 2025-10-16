@@ -3,18 +3,18 @@ import { Persona, Settings } from '../../types';
 import { executeWithKeyRotation } from './apiExecutor';
 
 export async function generatePersonaUpdate(apiKeys: string[], model: string, currentPersona: Persona, userInstruction: string, settings: Settings): Promise<{ personaUpdate: Partial<Persona>, explanation: string }> {
-  const systemPrompt = `You are an AI assistant that helps users configure a persona for a chatbot. The user will provide their current persona configuration as a JSON object and an instruction on how to modify it.
-Your task is to generate a JSON object representing the *updated* fields of the persona, and a short, friendly explanation of the changes you made.
+  const systemPrompt = `你是一个AI助手，帮助用户配置聊天机器人的角色。用户将提供他们当前的角色配置（JSON对象）和如何修改的指令。
+你的任务是生成一个JSON对象，表示角色的*更新*字段，以及关于你所做的更改的简短友好的解释。
 
-Current Persona:
+当前角色:
 ${JSON.stringify(currentPersona, null, 2)}
 
-User Instruction:
+用户指令:
 "${userInstruction}"
 
-Respond ONLY with a JSON object with two keys: "personaUpdate" (containing only the changed fields) and "explanation" (a brief, conversational string describing what you did).
-For example, if the user says "make it a pirate", you might change the name, bio, and system prompt.
-The 'tools' property is a boolean map: { "googleSearch": boolean, "codeExecution": boolean, "urlContext": boolean }.
+仅使用包含两个键的JSON对象响应: "personaUpdate"（包含仅更改的字段）和"explanation"（描述你操作的简短对话式字符串）。
+例如，如果用户说"让它成为海盗"，你可能会更改姓名、简介和系统提示。
+'tools'属性是一个布尔映射: { "googleSearch": boolean, "codeExecution": boolean, "urlContext": boolean }。
 `;
 
   try {

@@ -81,51 +81,6 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({ settings, on
           </div>
         </SettingsItem>
       )}
-      {visibleIds.has('maxOutputTokens') && (
-        <SettingsItem label={t('maxOutputTokens')} description={t('maxOutputTokensDesc')}>
-          <div className="flex items-center gap-2">
-            <input
-              type="number"
-              min="1"
-              step="1"
-              value={settings.maxOutputTokens}
-              onChange={e => onSettingsChange({ maxOutputTokens: parseInt(e.target.value, 10) })}
-              className="input-glass w-24"
-            />
-          </div>
-        </SettingsItem>
-      )}
-      {visibleIds.has('streamInactivityTimeout') && (
-        <SettingsItem label={t('streamInactivityTimeout')} description={t('streamInactivityTimeoutDesc')}>
-          <div className="flex items-center gap-2">
-            <input
-              type="number"
-              min="10"
-              step="1"
-              value={settings.streamInactivityTimeout || 60}
-              onChange={e => onSettingsChange({ streamInactivityTimeout: parseInt(e.target.value, 10) })}
-              className="input-glass w-24"
-            />
-          </div>
-        </SettingsItem>
-      )}
-      {visibleIds.has('globalSystemPrompt') && (
-        <div className="flex flex-col">
-            <SettingsItem label={t('globalSystemPrompt')} description={t('globalSystemPromptDesc')}>
-              <Switch size="sm" checked={settings.enableGlobalSystemPrompt} onChange={e => onSettingsChange({ enableGlobalSystemPrompt: e.target.checked })} />
-            </SettingsItem>
-            <div className={`collapsible-section ${settings.enableGlobalSystemPrompt ? 'expanded' : ''}`}>
-                <div className="pb-2">
-                  <textarea value={settings.globalSystemPrompt} onChange={e => onSettingsChange({ globalSystemPrompt: e.target.value })} className="input-glass w-full" placeholder="Enter a system prompt..." rows={3}/>
-                </div>
-            </div>
-          </div>
-      )}
-      {visibleIds.has('langDetectModel') && (
-        <SettingsItem label={t('langDetectModel')} description={t('langDetectModelDesc')}>
-          <CustomSelect options={modelOptions} selectedValue={settings.languageDetectionModel} onSelect={(value) => onSettingsChange({ languageDetectionModel: value })} className="w-48" />
-        </SettingsItem>
-      )}
     </>
   );
 };

@@ -77,7 +77,7 @@ export const EditChatModal: React.FC<EditChatModalProps> = ({ chat, onClose, onS
           </button>
           <button 
             onClick={handleSave}
-            className="px-4 py-2 rounded-[var(--radius-2xl)] font-semibold bg-[var(--accent-color)] text-white transition-transform hover:scale-105"
+            className="px-4 py-2 rounded-[var(--radius-2xl)] font-semibold bg-[var(--accent-color)] text-[var(--accent-color-text)] transition-transform hover:scale-105"
           >
             {t('save')}
           </button>

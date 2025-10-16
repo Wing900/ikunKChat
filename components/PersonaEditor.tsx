@@ -109,7 +109,7 @@ const AIBuilder: React.FC<{ persona: Persona, onUpdate: (update: Partial<Persona
             </div>
             <form onSubmit={handleSubmit} className="mt-auto flex gap-2">
                 <input type="text" value={input} onChange={e => setInput(e.target.value)} placeholder={t('builderInputPlaceholder')} className="input-glass flex-grow" disabled={isLoading} />
-                <button type="submit" disabled={isLoading || !input.trim()} className="w-10 h-10 flex-shrink-0 flex items-center justify-center text-white rounded-[var(--radius-2xl)] bg-[var(--accent-color)] disabled:opacity-50 transition-transform hover:scale-105">
+                <button type="submit" disabled={isLoading || !input.trim()} className="w-10 h-10 flex-shrink-0 flex items-center justify-center text-[var(--accent-color-text)] rounded-[var(--radius-2xl)] bg-[var(--accent-color)] disabled:opacity-50 transition-transform hover:scale-105">
                     <Icon icon="send" className="w-5 h-5"/>
                 </button>
             </form>
@@ -174,7 +174,7 @@ export const PersonaEditor: React.FC<PersonaEditorProps> = ({ personaToEdit, onS
                 <h2>{persona.isNew ? t('createPersona') : t('editPersona')}</h2>
                 <div className="flex gap-2">
                     <button onClick={onClose} className="px-4 py-2 rounded-[var(--radius-2xl)] font-semibold glass-pane border-none text-[var(--text-color)] hover:bg-black/10 dark:hover:bg-white/10">{t('cancel')}</button>
-                    <button onClick={handleSave} className="px-5 py-2 rounded-[var(--radius-2xl)] font-semibold bg-[var(--accent-color)] text-white transition-transform hover:scale-105">{t('savePersona')}</button>
+                    <button onClick={handleSave} className="px-5 py-2 rounded-[var(--radius-2xl)] font-semibold bg-[var(--accent-color)] text-[var(--accent-color-text)] transition-transform hover:scale-105">{t('savePersona')}</button>
                 </div>
             </header>
             <div className="persona-editor-scroll-area">

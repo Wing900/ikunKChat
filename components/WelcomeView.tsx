@@ -14,6 +14,7 @@ interface WelcomeViewProps {
   personas: Persona[];
   onStartChat: (personaId: string) => void;
   settings: any;
+  isSidebarCollapsed?: boolean;
 }
 
 export const WelcomeView: React.FC<WelcomeViewProps> = ({
@@ -22,7 +23,8 @@ export const WelcomeView: React.FC<WelcomeViewProps> = ({
   availableModels,
   personas,
   onStartChat,
-  settings
+  settings,
+  isSidebarCollapsed = false
 }) => {
   const { t } = useLocalization();
   const [selectedPersonaId, setSelectedPersonaId] = useState<string>('');
@@ -51,13 +53,13 @@ export const WelcomeView: React.FC<WelcomeViewProps> = ({
   }));
 
   return (
-    <div className="flex-grow flex flex-col items-center justify-center text-center p-8">
+    <div className={`flex-grow flex flex-col items-center justify-center text-center p-8 transition-all duration-300 ${isSidebarCollapsed ? 'max-w-6xl mx-auto' : 'max-w-4xl mx-auto'}`}>
       <Icon icon="ikunchat.svg" className="w-24 h-24 text-[var(--accent-color)] opacity-80" />
       <h1 className="mt-6 text-4xl font-bold text-[var(--text-color)]">{t('welcomeTo')}</h1>
       <p className="mt-2 text-lg text-[var(--text-color-secondary)] max-w-md">
         {t('welcomeDesc')}
       </p>
-      
+
       <div className="mt-12">
         <button
           onClick={handleStartChat}

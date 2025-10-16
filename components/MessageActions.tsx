@@ -26,27 +26,27 @@ export const MessageActions: React.FC<MessageActionsProps> = ({ message, isModel
         <div className="message-actions">
             {!isModelResponse && (
                 <button className="action-btn" onClick={onEdit} data-tooltip="Edit & Resubmit" data-tooltip-placement="top">
-                    <Icon icon="edit" className="w-4 h-4"/>
+                    <Icon icon="edit" className="w-3.5 h-3.5"/>
                 </button>
             )}
             {isModelResponse && (
                  <button className="action-btn" onClick={onRegenerate} data-tooltip="Regenerate" data-tooltip-placement="top">
-                    <Icon icon="regenerate" className="w-4 h-4"/>
+                    <Icon icon="regenerate" className="w-3.5 h-3.5"/>
                 </button>
             )}
              {isModelResponse && (
                 <button className="action-btn" onClick={onEdit} data-tooltip="Edit" data-tooltip-placement="top">
-                    <Icon icon="edit" className="w-4 h-4"/>
+                    <Icon icon="edit" className="w-3.5 h-3.5"/>
                 </button>
             )}
             <button className="action-btn" onClick={onToggleRawView} data-tooltip={isRawView ? "Show Rendered" : "Show Raw Text"} data-tooltip-placement="top">
-                <Icon icon="eye" className="w-4 h-4"/>
+                <Icon icon="eye" className="w-3.5 h-3.5"/>
             </button>
             <button className="action-btn" onClick={handleCopy} data-tooltip={copied ? "Copied!" : "Copy"} data-tooltip-placement="top">
-                <Icon icon="copy" className="w-4 h-4"/>
+                <Icon icon="copy" className="w-3.5 h-3.5"/>
             </button>
             <button className="action-btn danger" onClick={onDelete} data-tooltip="Delete" data-tooltip-placement="top">
-                <Icon icon="delete" className="w-4 h-4"/>
+                <Icon icon="delete" className="w-3.5 h-3.5"/>
             </button>
         </div>
     );
