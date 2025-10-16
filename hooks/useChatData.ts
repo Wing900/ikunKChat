@@ -53,12 +53,12 @@ export const useChatData = ({ settings, isStorageLoaded, onSettingsChange }: Use
     setChats(p => p.map(c => c.id === id ? { ...c, title, icon } : c));
   }, []);
 
-  const handleNewFolder = useCallback((name: string, icon: string) => {
-    setFolders(p => [{ id: crypto.randomUUID(), name, icon, createdAt: Date.now() }, ...p]);
+  const handleNewFolder = useCallback((id: string, name: string, icon?: string) => {
+    setFolders(p => [{ id, name, icon: icon || '', createdAt: Date.now() }, ...p]);
   }, []);
 
-  const handleUpdateFolder = useCallback((id: string, name: string, icon: string) => {
-    setFolders(p => p.map(f => f.id === id ? { ...f, name, icon } : f));
+  const handleUpdateFolder = useCallback((id: string, name: string, icon?: string) => {
+    setFolders(p => p.map(f => f.id === id ? { ...f, name, icon: icon || f.icon || '' } : f));
   }, []);
 
   const handleDeleteFolder = useCallback((id:string) => {
