@@ -150,11 +150,14 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, the
             acceptNode: (node) => {
                 let parent = node.parentElement;
                 while (parent && parent !== currentRef) {
-                    // Skip code blocks, pre blocks, and already rendered KaTeX
+                    // Skip code blocks, pre blocks, code-block-wrapper, and already rendered KaTeX
                     if (parent.tagName === 'CODE' ||
                         parent.tagName === 'PRE' ||
+                        parent.classList.contains('code-block-wrapper') ||
+                        parent.classList.contains('code-block-header') ||
                         parent.classList.contains('katex') ||
-                        parent.classList.contains('katex-html')) {
+                        parent.classList.contains('katex-html') ||
+                        parent.classList.contains('katex-placeholder')) {
                         return NodeFilter.FILTER_REJECT;
                     }
                     parent = parent.parentElement;

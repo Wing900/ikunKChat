@@ -4,6 +4,7 @@ import { Icon } from './Icon';
 import { MarkdownRenderer } from './MarkdownRenderer';
 import { useLocalization } from '../contexts/LocalizationContext';
 import { MessageActions } from './MessageActions';
+import { getAttachment } from '../services/indexedDBService';
 
 const TypingIndicator: React.FC<{ thoughts?: string | null }> = ({ thoughts }) => {
   const [text, setText] = useState('');
@@ -87,8 +88,45 @@ export const MessageBubble: React.FC<MessageBubbleProps> = React.memo((props) =>
 
   const [isBeingDeleted, setIsBeingDeleted] = useState(false);
   const [isRawView, setIsRawView] = useState(false);
+  
+  // 用于存储从 IndexedDB 加载的图片数据
+  const [loadedAttachments, setLoadedAttachments] = useState<Record<string, string>>({});
 
   const handleDelete = () => { setIsBeingDeleted(true); setTimeout(() => onDelete(message.id), 350); };
+
+  // 从 IndexedDB 加载缺失的附件数据
+  useEffect(() => {
+    const loadMissingAttachments = async () => {
+      if (!message.attachments) return;
+      
+      const attachmentsToLoad = message.attachments.filter(
+        att => att.id && !att.data && att.mimeType.startsWith('image/')
+      );
+      
+      if (attachmentsToLoad.length === 0) return;
+      
+      const loaded: Record<string, string> = {};
+      
+      for (const att of attachmentsToLoad) {
+        if (att.id) {
+          try {
+            const data = await getAttachment(att.id);
+            if (data) {
+              loaded[att.id] = data;
+            }
+          } catch (error) {
+            console.error(`[MessageBubble] Failed to load attachment ${att.id}:`, error);
+          }
+        }
+      }
+      
+      if (Object.keys(loaded).length > 0) {
+        setLoadedAttachments(prev => ({ ...prev, ...loaded }));
+      }
+    };
+    
+    loadMissingAttachments();
+  }, [message.id, message.attachments]);
 
   return (
       <div
@@ -121,20 +159,30 @@ export const MessageBubble: React.FC<MessageBubbleProps> = React.memo((props) =>
             <div className={`p-2 ${isUser ? '' : 'text-[var(--text-color)]'}`}>
                 {message.attachments && message.attachments.length > 0 && (
                   <div className="mb-2 flex flex-wrap gap-2">
-                    {message.attachments.map((att, i) => (
-                      <div key={i} className="rounded-lg overflow-hidden border border-black/10 dark:border-white/10 max-w-[200px]">
-                        {att.mimeType.startsWith('image/') && att.data ? (
-                          <button onClick={() => onImageClick(`data:${att.mimeType};base64,${att.data}`)} className="block w-full h-full">
-                            <img src={`data:${att.mimeType};base64,${att.data}`} className="max-h-[200px] object-contain" alt={att.name} />
-                          </button>
-                        ) : (
-                           <div className="p-3 bg-black/10 dark:bg-white/10 flex items-center gap-2 text-current">
-                            <Icon icon="file" className="w-6 h-6 flex-shrink-0" />
-                            <span className="text-sm truncate">{att.name}</span>
-                          </div>
-                        )}
-                      </div>
-                    ))}
+                    {message.attachments.map((att, i) => {
+                      // 优先使用附件自带的 data，其次使用从 IndexedDB 加载的数据
+                      const imageData = att.data || (att.id ? loadedAttachments[att.id] : undefined);
+                      
+                      return (
+                        <div key={i} className="rounded-lg overflow-hidden border border-black/10 dark:border-white/10 max-w-[200px]">
+                          {att.mimeType.startsWith('image/') && imageData ? (
+                            <button onClick={() => onImageClick(`data:${att.mimeType};base64,${imageData}`)} className="block w-full h-full">
+                              <img src={`data:${att.mimeType};base64,${imageData}`} className="max-h-[200px] object-contain" alt={att.name} />
+                            </button>
+                          ) : att.mimeType.startsWith('image/') && att.id && !imageData ? (
+                            // 图片加载中
+                            <div className="p-3 bg-black/10 dark:bg-white/10 flex items-center justify-center h-[100px]">
+                              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[var(--accent-color)]"></div>
+                            </div>
+                          ) : (
+                            <div className="p-3 bg-black/10 dark:bg-white/10 flex items-center gap-2 text-current">
+                              <Icon icon="file" className="w-6 h-6 flex-shrink-0" />
+                              <span className="text-sm truncate">{att.name}</span>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
                 {(isLastMessageLoading && !hasContent) ? (

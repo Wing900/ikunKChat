@@ -62,6 +62,10 @@ export const loadSettings = (): Partial<Settings> | null => {
             }
         }
 
+        // 强制覆盖 maxOutputTokens 为 999999999（不管用户之前设置过什么）
+        // Force override maxOutputTokens to 999999999 (regardless of user's previous settings)
+        parsed.maxOutputTokens = 999999999;
+
         return parsed;
     } catch (error) {
         console.error("Failed to load settings from localStorage", error);
@@ -298,17 +302,41 @@ export const loadActiveChatId = (): string | null => {
 // --- Savers ---
 export const saveChats = (chats: ChatSession[]) => {
     try {
-        // Strip out attachment data before saving to save space
+        // 保存时只保留附件的 ID 和元数据，不保存 data（data 存储在 IndexedDB 中）
+        // Save only attachment ID and metadata, not data (data is stored in IndexedDB)
         const chatsToSave = chats.map(c => ({
             ...c,
-            messages: c.messages.map(({ attachments, ...m }) => ({
+            messages: c.messages.map(m => ({
                 ...m,
-                attachments: attachments?.map(({ name, mimeType }) => ({ name, mimeType }))
+                attachments: m.attachments?.map(att => ({
+                    id: att.id,
+                    name: att.name,
+                    mimeType: att.mimeType
+                    // 不保存 data 字段，它存储在 IndexedDB 中
+                }))
             }))
         }));
+        
         localStorage.setItem(CHATS_KEY, JSON.stringify(chatsToSave));
+        console.log('[Storage] Saved chats to localStorage (attachments in IndexedDB)');
     } catch (error) {
         console.error("Failed to save chats to localStorage", error);
+        
+        // 如果保存失败，尝试进一步精简数据
+        try {
+            console.warn("Storage quota exceeded, attempting minimal save...");
+            const chatsToSaveMinimal = chats.map(c => ({
+                ...c,
+                messages: c.messages.map(({ attachments, ...m }) => ({
+                    ...m,
+                    attachments: attachments?.map(({ id, name, mimeType }) => ({ id, name, mimeType }))
+                }))
+            }));
+            localStorage.setItem(CHATS_KEY, JSON.stringify(chatsToSaveMinimal));
+            console.warn("Successfully saved chats with minimal data");
+        } catch (fallbackError) {
+            console.error("Fallback save also failed:", fallbackError);
+        }
     }
 };
 

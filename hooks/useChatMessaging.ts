@@ -3,6 +3,7 @@ import { ChatSession, Message, MessageRole, Settings, Persona, FileAttachment, P
 import { sendMessageStream, generateChatDetails } from '../services/geminiService';
 import { fileToData } from '../utils/fileUtils';
 import { TITLE_GENERATION_PROMPT } from '../data/prompts';
+import { saveAttachment } from '../services/indexedDBService';
 
 interface UseChatMessagingProps {
   settings: Settings;
@@ -187,11 +188,31 @@ export const useChatMessaging = ({ settings, activeChat, personas, memories, set
 
   const handleSendMessage = useCallback(async (content: string, files: File[] = [], toolConfig: any) => {
     // 串行处理文件以避免内存峰值
-    const attachments = [];
+    const attachments: FileAttachment[] = [];
     for (let i = 0; i < files.length; i++) {
       try {
         const attachment = await fileToData(files[i]);
-        attachments.push(attachment);
+        
+        // 生成唯一 ID 并保存到 IndexedDB
+        const attachmentId = `att_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        
+        if (attachment.data) {
+          try {
+            await saveAttachment(attachmentId, attachment.data, attachment.mimeType, attachment.name);
+            console.log(`[IndexedDB] Saved attachment: ${attachmentId} (${attachment.name})`);
+          } catch (dbError) {
+            console.error(`[IndexedDB] Failed to save attachment ${attachment.name}:`, dbError);
+            // 如果 IndexedDB 保存失败，继续使用 data 字段（降级处理）
+          }
+        }
+        
+        // 保存引用（ID）到消息中，保留 data 用于当前会话
+        attachments.push({
+          id: attachmentId,
+          name: attachment.name,
+          mimeType: attachment.mimeType,
+          data: attachment.data // 保留用于当前会话显示
+        });
       } catch (error) {
         console.error(`Failed to process file ${i + 1}:`, error);
         // 继续处理其他文件，不因为单个文件失败而中断

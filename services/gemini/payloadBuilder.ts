@@ -28,8 +28,8 @@ export function prepareChatPayload(history: Message[], settings: Settings, toolC
   };
 
   // 2. **修复** 更保守的大小限制策略
-  // 针对代理服务器优化，使用更保守的限制 (1.5MB)
-  const MAX_PAYLOAD_SIZE = 1.5 * 1024 * 1024; // 1.5MB - 为代理服务器留缓冲
+  // 针对代理服务器优化，使用更保守的限制 (200MB)
+  const MAX_PAYLOAD_SIZE = 200 * 1024 * 1024; // 200MB - 支持大量图片和长文本
 
   // 预先计算系统指令大小
   let systemInstructionParts: string[] = [];
