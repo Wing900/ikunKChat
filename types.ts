@@ -6,6 +6,7 @@ export enum MessageRole {
 }
 
 export interface FileAttachment {
+  id?: string; // IndexedDB 中的附件 ID（如果存储在 IndexedDB 中）
   name: string;
   mimeType: string;
   data?: string; // base64 encoded string. Optional to allow for saving w/o data.

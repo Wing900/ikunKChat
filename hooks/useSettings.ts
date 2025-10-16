@@ -22,7 +22,7 @@ const defaultSettings: Settings = {
   thinkDeeper: false,
   apiBaseUrl: '',
   temperature: 0.7,
-  maxOutputTokens: 999999,
+  maxOutputTokens: 999999999,
   contextLength: 50,
   password: undefined,
   pdfQuality: 'hd',

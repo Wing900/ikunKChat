@@ -14,6 +14,7 @@
     "@types/katex": "^0.16.7",
     "browser-image-compression": "^2.0.2",
     "html2canvas": "^1.4.1",
+    "idb": "^8.0.3",
     "jspdf": "^2.5.1",
     "katex": "^0.16.22",
     "marked": "^16.1.1",

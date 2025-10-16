@@ -9,6 +9,7 @@ import { UpdateIndicator } from './components/UpdateIndicator';
 import { UpdateSettings } from './components/settings/UpdateSettings';
 import { usePWAUpdate } from './hooks/usePWAUpdate';
 import { generateMd3Palette } from './utils/colorUtils';
+import { initDB, migrateAttachmentsFromLocalStorage } from './services/indexedDBService';
 
 // Lazy load components
 const ImageLightbox = lazy(() => import('./components/ImageLightbox').then(module => ({ default: module.ImageLightbox })));
@@ -190,6 +191,22 @@ const AppContainer = () => {
   }, []);
 
 
+
+  // 初始化 IndexedDB 并迁移旧数据
+  useEffect(() => {
+    const initStorage = async () => {
+      try {
+        await initDB();
+        const migratedCount = await migrateAttachmentsFromLocalStorage();
+        if (migratedCount > 0) {
+          console.log(`[IndexedDB] Migrated ${migratedCount} attachments from localStorage`);
+        }
+      } catch (error) {
+        console.error('[IndexedDB] Initialization failed:', error);
+      }
+    };
+    initStorage();
+  }, []);
 
   useEffect(() => {
     const fetchVersionInfo = async () => {
