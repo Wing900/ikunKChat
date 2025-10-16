@@ -5,7 +5,7 @@ import { useLocalization } from '../contexts/LocalizationContext';
 interface FolderActionModalProps {
   folder: Folder | null;
   onClose: () => void;
-  onSave: (id: string, name: string) => void;
+  onSave: (id: string, name: string, icon?: string) => void;
 }
 
 export const FolderActionModal: React.FC<FolderActionModalProps> = ({ folder, onClose, onSave }) => {
@@ -24,9 +24,9 @@ export const FolderActionModal: React.FC<FolderActionModalProps> = ({ folder, on
   const handleSave = () => {
     if (name.trim()) {
       if (isNew) {
-        onSave(crypto.randomUUID(), name.trim());
+        onSave(crypto.randomUUID(), name.trim(), '');
       } else {
-        onSave(folder.id, name.trim());
+        onSave(folder.id, name.trim(), folder.icon || '');
       }
     }
     handleClose();

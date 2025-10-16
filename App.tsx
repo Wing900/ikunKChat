@@ -452,24 +452,6 @@ const handleSelectChat = useCallback((id: string) => { setActiveChatId(id); setI
         <ToastContainer />
         
         {/* 移动端遮罩层已删除 - 通过侧边栏内的关闭按钮或汉堡按钮关闭 */}
-        
-        {/* 桌面端Zen区域 - 完全重构，使用更高z-index和绝对定位 */}
-        {isSidebarCollapsed && (
-          <div
-            className="fixed inset-y-0 left-0 w-1 md:w-8 bg-transparent hover:bg-gradient-to-r hover:from-black/10 hover:to-transparent dark:hover:from-white/10 transition-all duration-200 cursor-pointer hidden md:block z-[200]"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              setIsSidebarCollapsed(false);
-            }}
-            onMouseDown={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-            }}
-            aria-label="展开侧边栏"
-            title="点击展开侧边栏"
-          />
-        )}
 
           <div className="flex flex-1 h-full overflow-hidden relative">
           {/* 侧边栏 - 直接渲染，无额外容器 */}
