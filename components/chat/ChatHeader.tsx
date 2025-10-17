@@ -46,7 +46,6 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({ chatSession, onNewChat, 
             <div className="flex items-center gap-2 min-w-0">
                 <button
                     onTouchStart={(e) => {
-                        e.preventDefault();
                         e.stopPropagation();
                         onToggleMobileSidebar();
                     }}
