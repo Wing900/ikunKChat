@@ -103,9 +103,6 @@ Before formulating any response, you will initiate an internal 'Deep Thought Mon
 Once your internal 'Deep Thought Monologue' is complete and you are confident in the robustness and depth of your reasoning, provide your final response to the user. This response should reflect the full breadth and depth of your internal process, but without explicitly detailing the monologue unless specifically requested by the user. Your output format will be determined by your assessment of the user's query, aiming for maximum clarity and utility.
 `;
 
-export const SEARCH_OPTIMIZER_PROMPT = `You have access to Google Search. Analyze the user's query. If the query clearly requires real-time information (e.g., "what's the weather today," "latest news," "stock prices") or information about very recent events, you MUST use Google Search to get the most up-to-date answer. For general knowledge, creative tasks, or conversational responses, you should rely on your internal training data and SHOULD NOT use search. When you do use search, act as an expert search strategist: first, formulate an optimal, concise search query, then execute the search and synthesize the results into a clear, well-structured, and fully cited answer.`;
-
-
 export const TITLE_GENERATION_PROMPT = `
 You are an expert in summarizing conversations. Your task is to create a concise, filename-style title for the given chat history.
 

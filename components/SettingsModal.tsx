@@ -42,9 +42,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = (props) => {
     // Behavior
     { id: 'autoTitleGeneration', section: 'behavior', texts: [t('autoTitleGeneration'), t('autoTitleGenerationDesc'), translations.zh.autoTitleGeneration, translations.zh.autoTitleGenerationDesc] },
     { id: 'titleGenModel', section: 'behavior', texts: [t('titleGenModel'), t('titleGenModelDesc'), translations.zh.titleGenModel, translations.zh.titleGenModelDesc] },
-    { id: 'suggestions', section: 'behavior', texts: [t('suggestions'), t('suggestionsDesc'), translations.zh.suggestions, translations.zh.suggestionsDesc] },
-    { id: 'suggestionModel', section: 'behavior', texts: [t('suggestionModel'), t('suggestionModelDesc'), translations.zh.suggestionModel, translations.zh.suggestionModelDesc] },
-    { id: 'defaultSearch', section: 'behavior', texts: [t('defaultSearch'), t('defaultSearchDesc'), t('useSearchOptimizerPrompt'), t('useSearchOptimizerPromptDesc'), translations.zh.defaultSearch, translations.zh.defaultSearchDesc, translations.zh.useSearchOptimizerPrompt, translations.zh.useSearchOptimizerPromptDesc] },
     { id: 'showThoughts', section: 'behavior', texts: [t('showThoughts'), t('showThoughtsDesc'), translations.zh.showThoughts, translations.zh.showThoughtsDesc] },
 
     // Advanced
@@ -131,24 +128,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = (props) => {
           {visibleSettingIds.has('titleGenModel') && <SettingsItem label={t('titleGenModel')} description={t('titleGenModelDesc')} isDisabled={!settings.autoTitleGeneration}>
             <CustomSelect options={modelOptions} selectedValue={settings.titleGenerationModel} onSelect={(value) => onSettingsChange({ titleGenerationModel: value })} className="w-48" disabled={!settings.autoTitleGeneration}/>
           </SettingsItem>}
-           {visibleSettingIds.has('suggestions') && <SettingsItem label={t('suggestions')} description={t('suggestionsDesc')}>
-            <Switch size="sm" checked={settings.showSuggestions} onChange={e => onSettingsChange({ showSuggestions: e.target.checked })} />
-          </SettingsItem>}
-          {visibleSettingIds.has('suggestionModel') && <SettingsItem label={t('suggestionModel')} description={t('suggestionModelDesc')} isDisabled={!settings.showSuggestions}>
-            <CustomSelect options={modelOptions} selectedValue={settings.suggestionModel} onSelect={(value) => onSettingsChange({ suggestionModel: value })} className="w-48" disabled={!settings.showSuggestions} />
-          </SettingsItem>}
-          {visibleSettingIds.has('defaultSearch') && <div className="flex flex-col">
-            <SettingsItem label={t('defaultSearch')} description={t('defaultSearchDesc')}>
-                <Switch size="sm" checked={settings.defaultSearch} onChange={e => onSettingsChange({ defaultSearch: e.target.checked })} />
-            </SettingsItem>
-            <div className={`collapsible-section ${settings.defaultSearch ? 'expanded' : ''}`}>
-                <div className="pb-2 pl-4">
-                  <SettingsItem label={t('useSearchOptimizerPrompt')} description={t('useSearchOptimizerPromptDesc')} isDisabled={!settings.defaultSearch} className="border-l-2 border-[var(--glass-border)] pl-4 -ml-4">
-                    <Switch size="sm" checked={settings.useSearchOptimizerPrompt} onChange={e => onSettingsChange({ useSearchOptimizerPrompt: e.target.checked })} disabled={!settings.defaultSearch} />
-                  </SettingsItem>
-                </div>
-            </div>
-          </div>}
           {visibleSettingIds.has('showThoughts') && <SettingsItem label={t('showThoughts')} description={t('showThoughtsDesc')}>
             <Switch size="sm" checked={settings.showThoughts} onChange={e => onSettingsChange({ showThoughts: e.target.checked })} />
           </SettingsItem>}

@@ -14,8 +14,6 @@ interface ChatInputProps {
   onSendMessage: (message: string, files: File[]) => void;
   isLoading: boolean;
   onCancel: () => void;
-  toolConfig: any;
-  onToolConfigChange: (config: any) => void;
   input: string;
   setInput: (value: string) => void;
   chatSession: ChatSession | null;
@@ -38,30 +36,21 @@ const ToolItem: React.FC<{icon: any, label: string, checked: boolean, onChange: 
     </div>
 );
 
-const ActiveToolIndicator: React.FC<{ toolConfig: any, isStudyMode: boolean, t: (key: any) => string }> = ({ toolConfig, isStudyMode, t }) => {
-    const activeTools = [
-        isStudyMode && { name: t('studyLearn'), icon: 'graduation-cap' as const },
-        toolConfig.googleSearch && { name: t('googleSearch'), icon: 'search' as const },
-        toolConfig.codeExecution && { name: t('codeExecution'), icon: 'code' as const },
-        toolConfig.urlContext && { name: t('urlContext'), icon: 'link' as const },
-    ].filter(Boolean);
-
-    if (activeTools.length === 0) return null;
+const ActiveToolIndicator: React.FC<{ isStudyMode: boolean, t: (key: any) => string }> = ({ isStudyMode, t }) => {
+    if (!isStudyMode) return null;
 
     return (
         <div className="active-tools-indicator">
-            {activeTools.map((tool, index) => (
-                <div key={tool.name} className="active-tool-chip" style={{animationDelay: `${index * 50}ms`}}>
-                    <Icon icon={tool.icon} className="w-4 h-4" />
-                    <span>{tool.name}</span>
-                </div>
-            ))}
+            <div className="active-tool-chip">
+                <Icon icon="graduation-cap" className="w-4 h-4" />
+                <span>{t('studyLearn')}</span>
+            </div>
         </div>
     );
 };
 
 
-export const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(({ onSendMessage, isLoading, onCancel, toolConfig, onToolConfigChange, input, setInput, chatSession, onToggleStudyMode, isNextChatStudyMode }, ref) => {
+export const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(({ onSendMessage, isLoading, onCancel, input, setInput, chatSession, onToggleStudyMode, isNextChatStudyMode }, ref) => {
   const { t } = useLocalization();
   const { addToast } = useToast();
   const [files, setFiles] = useState<FileWithId[]>([]);
@@ -177,28 +166,12 @@ export const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(({ onSendMessa
     }
   }
   
-  const handleToolChange = (tool: string, value: any) => {
-      const newConfig = {...toolConfig, [tool]: value};
-      
-      if(tool === 'urlContext' && value) {
-        newConfig.codeExecution = false;
-      } else if (tool === 'codeExecution' && value) {
-        newConfig.urlContext = false;
-      }
-      
-      onToolConfigChange(newConfig);
-  }
 
   return (
     <form onSubmit={handleSubmit} className="p-2 pt-0 flex flex-col relative">
         <div ref={toolsWrapperRef} className={`tool-selector-options glass-pane ${isToolsOpen ? 'visible' : ''}`}>
-            <ToolItem icon="code" label={t('codeExecution')} checked={toolConfig.codeExecution} onChange={e => handleToolChange('codeExecution', e.target.checked)} disabled={toolConfig.urlContext} />
-            <ToolItem icon="search" label={t('googleSearch')} checked={toolConfig.googleSearch} onChange={e => handleToolChange('googleSearch', e.target.checked)} />
-            <ToolItem icon="link" label={t('urlContext')} checked={toolConfig.urlContext} onChange={e => handleToolChange('urlContext', e.target.checked)} disabled={toolConfig.codeExecution} />
-            <div className="my-1 mx-2 h-[1px] bg-[var(--glass-border)]"></div>
-            <div className="p-2 pt-1">
+            <div className="p-2">
                 <ToolItem icon="graduation-cap" label={t('studyLearn')} checked={isStudyModeActive} onChange={e => onToggleStudyMode(e.target.checked)} />
-                <p className="text-xs text-[var(--text-color-secondary)] px-3 -mt-1">{t('studyLearnDesc')}</p>
             </div>
         </div>
 
@@ -222,10 +195,10 @@ export const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(({ onSendMessa
             </div>
           )}
           
-          <ActiveToolIndicator toolConfig={toolConfig} isStudyMode={isStudyModeActive} t={t} />
+          <ActiveToolIndicator isStudyMode={isStudyModeActive} t={t} />
 
           <div className="flex items-end p-2">
-            <button ref={toolsButtonRef} type="button" onClick={() => setIsToolsOpen(p => !p)} className={`p-2 rounded-full flex-shrink-0 transition-colors ${isToolsOpen ? 'bg-[var(--accent-color)] text-[var(--accent-color-text)]' : 'text-[var(--text-color-secondary)] hover:bg-black/10 dark:hover:bg-white/10'}`} aria-label={t('tools')}>
+            <button ref={toolsButtonRef} type="button" onClick={() => setIsToolsOpen(p => !p)} className={`p-2 rounded-full flex-shrink-0 transition-colors ${isToolsOpen ? 'bg-[var(--accent-color)] text-[var(--accent-color-text)]' : 'text-[var(--text-color-secondary)] hover:bg-black/10 dark:hover:bg-white/10'}`} aria-label="Tools">
               <Icon icon="tools" className="w-6 h-6" />
             </button>
             <button type="button" onClick={() => fileInputRef.current?.click()} className="p-2 text-[var(--text-color-secondary)] hover:text-[var(--accent-color)] disabled:opacity-50 flex-shrink-0" aria-label="Attach files">

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-type View = 'chat' | 'personas' | 'editor' | 'archive' | 'translate';
+type View = 'chat' | 'personas' | 'editor' | 'archive';
 
 interface ViewContainerProps {
     view: View;

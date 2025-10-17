@@ -1,10 +1,10 @@
-import { ChatSession, Folder, Settings, Persona, TranslationHistoryItem, PersonaMemory } from '../types';
+import { ChatSession, Folder, Settings, Persona, PersonaMemory } from '../types';
+import { getAttachments } from './indexedDBService';
 
 const CHATS_KEY = 'kchat-sessions';
 const FOLDERS_KEY = 'kchat-folders';
 const SETTINGS_KEY = 'kchat-settings';
 const ROLES_KEY = 'kchat-roles';
-const TRANSLATION_HISTORY_KEY = 'kchat-translation-history';
 const CUSTOM_LANGUAGES_KEY = 'kchat-custom-languages';
 const PERSONA_MEMORIES_KEY = 'kchat-persona-memories';
 const ACTIVE_CHAT_KEY = 'kchat-active-chat';
@@ -14,12 +14,71 @@ const PRIVACY_CONSENT_KEY = 'kchat-privacy-consent';
 const LAST_READ_VERSION_KEY = 'kchat-last-read-version';
 
 // --- Loaders ---
-export const loadChats = (): ChatSession[] => {
+export const loadChats = async (): Promise<ChatSession[]> => {
     try {
+        console.log('[存储] 📂 开始加载聊天记录...');
         const saved = localStorage.getItem(CHATS_KEY);
-        return saved ? JSON.parse(saved) : [];
+        if (!saved) {
+            console.log('[存储] 📭 没有找到聊天记录');
+            return [];
+        }
+
+        const chats: ChatSession[] = JSON.parse(saved);
+        console.log(`[存储] 📊 从localStorage加载了 ${chats.length} 个聊天`);
+
+        // 收集所有需要从 IndexedDB 加载的附件 ID
+        const allAttachmentIds: string[] = [];
+        const attachmentLocations: Map<string, { chatId: string; messageId: string; attachmentIndex: number }> = new Map();
+
+        chats.forEach(chat => {
+            chat.messages?.forEach(message => {
+                message.attachments?.forEach((att, index) => {
+                    if (att.id && !att.data) {
+                        allAttachmentIds.push(att.id);
+                        attachmentLocations.set(att.id, {
+                            chatId: chat.id,
+                            messageId: message.id,
+                            attachmentIndex: index
+                        });
+                    }
+                });
+            });
+        });
+
+        console.log(`[存储] 📎 发现 ${allAttachmentIds.length} 个需要从IndexedDB加载的附件`);
+
+        // 如果有附件需要加载，从 IndexedDB 批量加载
+        if (allAttachmentIds.length > 0) {
+            try {
+                const attachmentDataMap = await getAttachments(allAttachmentIds);
+                console.log(`[存储] ✅ 从IndexedDB成功加载了 ${attachmentDataMap.size}/${allAttachmentIds.length} 个附件数据`);
+
+                // 将加载的数据填充回对应的附件对象
+                let restoredCount = 0;
+                chats.forEach(chat => {
+                    chat.messages?.forEach(message => {
+                        message.attachments?.forEach(att => {
+                            if (att.id && attachmentDataMap.has(att.id)) {
+                                att.data = attachmentDataMap.get(att.id);
+                                restoredCount++;
+                                console.log(`[存储] 🔄 恢复附件数据: ${att.name} (${att.id})`);
+                            } else if (att.id && !att.data) {
+                                console.warn(`[存储] ⚠️ 附件数据丢失: ${att.name} (${att.id}) - IndexedDB中未找到`);
+                            }
+                        });
+                    });
+                });
+
+                console.log(`[存储] ✅ 总共恢复了 ${restoredCount} 个附件的数据字段`);
+            } catch (error) {
+                console.error('[存储] ❌ 从IndexedDB加载附件失败:', error);
+            }
+        }
+
+        console.log('[存储] 🎉 聊天记录加载完成');
+        return chats;
     } catch (error) {
-        console.error("Failed to load chats from localStorage", error);
+        console.error("[存储] ❌ 加载聊天记录失败:", error);
         return [];
     }
 };
@@ -108,21 +167,6 @@ const validatePersona = (persona: Persona): PersonaValidationResult => {
         errors.push('角色头像值不能为空');
     }
     
-    // 工具配置验证
-    if (typeof persona.tools !== 'object') {
-        errors.push('工具配置格式不正确');
-    } else {
-        if (typeof persona.tools.googleSearch !== 'boolean') {
-            errors.push('Google搜索配置必须为布尔值');
-        }
-        if (typeof persona.tools.codeExecution !== 'boolean') {
-            errors.push('代码执行配置必须为布尔值');
-        }
-        if (typeof persona.tools.urlContext !== 'boolean') {
-            errors.push('URL上下文配置必须为布尔值');
-        }
-    }
-    
     // 模型参数验证
     if (persona.temperature !== undefined && (typeof persona.temperature !== 'number' || persona.temperature < 0 || persona.temperature > 1)) {
         errors.push('温度值必须在0到1之间');
@@ -167,11 +211,6 @@ const sanitizePersona = (persona: Persona): Persona => {
             type: persona.avatar.type || 'emoji',
             value: persona.avatar.value || '🤖'
         },
-        tools: {
-            googleSearch: Boolean(persona.tools.googleSearch),
-            codeExecution: Boolean(persona.tools.codeExecution),
-            urlContext: Boolean(persona.tools.urlContext)
-        },
         temperature: persona.temperature !== undefined ? parseFloat(persona.temperature.toFixed(1)) : undefined,
         contextLength: persona.contextLength !== undefined ? parseInt(persona.contextLength.toString(), 10) : undefined,
         maxOutputTokens: persona.maxOutputTokens !== undefined ? parseInt(persona.maxOutputTokens.toString(), 10) : undefined
@@ -180,13 +219,9 @@ const sanitizePersona = (persona: Persona): Persona => {
 
 // 数据迁移函数
 const migratePersonaData = (data: any): Persona => {
-    // 处理旧版本数据格式
-    if (data.tools === undefined) {
-        data.tools = {
-            googleSearch: false,
-            codeExecution: false,
-            urlContext: false
-        };
+    // 删除旧的 tools 字段（如果存在）
+    if (data.tools !== undefined) {
+        delete data.tools;
     }
     
     // 确保avatar字段存在
@@ -235,7 +270,6 @@ export const loadRoles = (): Persona[] => {
                     bio: item.b,
                     systemPrompt: item.sp,
                     avatar: item.av,
-                    tools: item.t,
                     temperature: item.temp,
                     contextLength: item.cl,
                     maxOutputTokens: item.mot,
@@ -258,16 +292,6 @@ export const loadRoles = (): Persona[] => {
         return [];
     }
 }
-
-export const loadTranslationHistory = (): TranslationHistoryItem[] => {
-    try {
-        const saved = localStorage.getItem(TRANSLATION_HISTORY_KEY);
-        return saved ? JSON.parse(saved) : [];
-    } catch (error) {
-        console.error("Failed to load translation history from localStorage", error);
-        return [];
-    }
-};
 
 export const loadCustomLanguages = (): { code: string, name: string }[] => {
     try {
@@ -318,7 +342,7 @@ export const saveChats = (chats: ChatSession[]) => {
         }));
         
         localStorage.setItem(CHATS_KEY, JSON.stringify(chatsToSave));
-        console.log('[Storage] Saved chats to localStorage (attachments in IndexedDB)');
+        console.log('[存储] 已保存聊天到localStorage (附件保存在IndexedDB)');
     } catch (error) {
         console.error("Failed to save chats to localStorage", error);
         
@@ -379,7 +403,6 @@ export const saveRoles = (roles: Persona[]) => {
             b: persona.bio,
             sp: persona.systemPrompt,
             av: persona.avatar,
-            t: persona.tools,
             temp: persona.temperature,
             cl: persona.contextLength,
             mot: persona.maxOutputTokens,
@@ -401,7 +424,6 @@ export const saveRoles = (roles: Persona[]) => {
                 bio: persona.bio.substring(0, 100),
                 systemPrompt: persona.systemPrompt.substring(0, 200),
                 avatar: persona.avatar,
-                tools: persona.tools,
                 temperature: persona.temperature,
                 contextLength: persona.contextLength,
                 maxOutputTokens: persona.maxOutputTokens,
@@ -417,14 +439,6 @@ export const saveRoles = (roles: Persona[]) => {
 
 // 导出验证函数供其他模块使用
 export { validatePersona, sanitizePersona };
-
-export const saveTranslationHistory = (history: TranslationHistoryItem[]) => {
-    try {
-        localStorage.setItem(TRANSLATION_HISTORY_KEY, JSON.stringify(history));
-    } catch (error) {
-        console.error("Failed to save translation history to localStorage", error);
-    }
-};
 
 export const saveCustomLanguages = (languages: { code: string, name: string }[]) => {
     try {
@@ -516,7 +530,6 @@ export const clearAllData = () => {
     localStorage.removeItem(FOLDERS_KEY);
     localStorage.removeItem(SETTINGS_KEY);
     localStorage.removeItem(ROLES_KEY);
-    localStorage.removeItem(TRANSLATION_HISTORY_KEY);
     localStorage.removeItem(CUSTOM_LANGUAGES_KEY);
     localStorage.removeItem(PERSONA_MEMORIES_KEY);
     localStorage.removeItem(ACTIVE_CHAT_KEY);

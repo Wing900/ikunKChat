@@ -17,7 +17,6 @@ const newPersonaTemplate: Persona = {
   avatar: { type: 'emoji', value: '🤖' },
   bio: '',
   systemPrompt: '你是一个有帮助的AI助手。',
-  tools: { googleSearch: false, codeExecution: false, urlContext: false },
   isNew: true,
 };
 
@@ -44,12 +43,7 @@ export const PersonaEditor: React.FC<PersonaEditorProps> = ({ personaToEdit, onS
   }, [personaToEdit]);
 
   const handleUpdate = (update: Partial<Persona>) => {
-    setPersona(prev => {
-        const newTools = { ...prev.tools, ...update.tools };
-        if (update.tools?.codeExecution === true) newTools.urlContext = false;
-        if (update.tools?.urlContext === true) newTools.codeExecution = false;
-        return { ...prev, ...update, tools: newTools, avatar: { ...prev.avatar, ...update.avatar } };
-    });
+    setPersona(prev => ({ ...prev, ...update, avatar: { ...prev.avatar, ...update.avatar } }));
   };
   
   const handleAvatarFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -115,14 +109,6 @@ export const PersonaEditor: React.FC<PersonaEditorProps> = ({ personaToEdit, onS
                     <label>{t('personaSystemPrompt')}</label>
                     <textarea value={persona.systemPrompt} onChange={e => handleUpdate({systemPrompt: e.target.value})} placeholder={t('personaSystemPromptPlaceholder')} className="input-glass" rows={6}/>
                 </div>
-                <div className="form-group">
-                    <label>{t('personaTools')}</label>
-                    <div className="p-3 rounded-[var(--radius-2xl)] glass-pane flex flex-col gap-2">
-                        <div className="flex justify-between items-center"><label className="font-medium">{t('googleSearch')}</label><Switch size="sm" checked={persona.tools.googleSearch} onChange={e => handleUpdate({tools: {...persona.tools, googleSearch: e.target.checked}})} /></div>
-                        <div className="flex justify-between items-center"><label className="font-medium">{t('codeExecution')}</label><Switch size="sm" checked={persona.tools.codeExecution} onChange={e => handleUpdate({tools: { ...persona.tools, codeExecution: e.target.checked }})} /></div>
-                        <div className="flex justify-between items-center"><label className="font-medium">{t('urlContext')}</label><Switch size="sm" checked={persona.tools.urlContext} onChange={e => handleUpdate({tools: { ...persona.tools, urlContext: e.target.checked }})} /></div>
-                      </div>
-                    </div>
                     <div className="form-group">
                       <label>{t('modelParameters')}</label>
                       <div className="p-4 rounded-[var(--radius-2xl)] glass-pane flex flex-col gap-4">

@@ -15,8 +15,6 @@ const defaultSettings: Settings = {
   defaultPersona: 'default-math-assistant',
   autoTitleGeneration: true,
   titleGenerationModel: 'gemini-2.5-flash',
-  defaultSearch: false,
-  useSearchOptimizerPrompt: false,
   showThoughts: true,
   optimizeFormatting: false,
   thinkDeeper: false,

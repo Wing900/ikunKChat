@@ -16,10 +16,10 @@ export const useSettingsSearch = (searchQuery: string) => {
     if (!lowerQuery) {
       const allVisible = new Set([
         'language', 'theme', 'defaultPersona', 'fontFamily', 'colorPalette', 'password',
-        'autoTitleGeneration', 'titleGenModel', 'suggestions', 'suggestionModel',
-        'defaultSearch', 'showThoughts', 'apiKey', 'apiBaseUrl', 'temperature',
+        'autoTitleGeneration', 'titleGenModel',
+        'showThoughts', 'apiKey', 'apiBaseUrl', 'temperature',
         'contextLength', 'maxOutputTokens',
-        'streamInactivityTimeout', 'langDetectModel', 'data'
+        'streamInactivityTimeout', 'data'
       ]);
       const allSectionsVisible = SECTIONS.reduce((acc, sec) => ({ ...acc, [sec]: true }), {});
       return { visibleSettingIds: allVisible, sectionVisibility: allSectionsVisible as SectionVisibility };
@@ -38,9 +38,6 @@ export const useSettingsSearch = (searchQuery: string) => {
         // Behavior
         { id: 'autoTitleGeneration', section: 'behavior', texts: [t('autoTitleGeneration'), t('autoTitleGenerationDesc'), translations.zh.autoTitleGeneration, translations.zh.autoTitleGenerationDesc] },
         { id: 'titleGenModel', section: 'behavior', texts: [t('titleGenModel'), t('titleGenModelDesc'), translations.zh.titleGenModel, translations.zh.titleGenModelDesc] },
-        { id: 'suggestions', section: 'behavior', texts: [t('suggestions'), t('suggestionsDesc'), translations.zh.suggestions, translations.zh.suggestionsDesc] },
-        { id: 'suggestionModel', section: 'behavior', texts: [t('suggestionModel'), t('suggestionModelDesc'), translations.zh.suggestionModel, translations.zh.suggestionModelDesc] },
-        { id: 'defaultSearch', section: 'behavior', texts: [t('defaultSearch'), t('defaultSearchDesc'), t('useSearchOptimizerPrompt'), t('useSearchOptimizerPromptDesc'), translations.zh.defaultSearch, translations.zh.defaultSearchDesc, translations.zh.useSearchOptimizerPrompt, translations.zh.useSearchOptimizerPromptDesc] },
         { id: 'showThoughts', section: 'behavior', texts: [t('showThoughts'), t('showThoughtsDesc'), translations.zh.showThoughts, translations.zh.showThoughtsDesc] },
 
         // Advanced
@@ -49,7 +46,6 @@ export const useSettingsSearch = (searchQuery: string) => {
         { id: 'temperature', section: 'advanced', texts: [t('temperature'), t('temperatureDesc'), translations.zh.temperature, translations.zh.temperatureDesc] },
         { id: 'contextLength', section: 'advanced', texts: [t('contextLength'), t('contextLengthDesc'), translations.zh.contextLength, translations.zh.contextLengthDesc] },
         { id: 'streamInactivityTimeout', section: 'advanced', texts: [t('streamInactivityTimeout'), t('streamInactivityTimeoutDesc'), translations.zh.streamInactivityTimeout, translations.zh.streamInactivityTimeoutDesc] },
-        { id: 'langDetectModel', section: 'advanced', texts: [t('langDetectModel'), t('langDetectModelDesc'), translations.zh.langDetectModel, translations.zh.langDetectModelDesc] },
         
         // Data
         { id: 'data', section: 'data', texts: [t('importData'), t('exportSettings'), t('exportData'), t('clearHistory'), translations.zh.importData, translations.zh.exportSettings, translations.zh.exportData, translations.zh.clearHistory] },

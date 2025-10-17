@@ -10,11 +10,6 @@ interface UsePersonasProps {
 interface PersonaFilters {
   name?: string;
   tags?: string[];
-  tools?: {
-    googleSearch?: boolean;
-    codeExecution?: boolean;
-    urlContext?: boolean;
-  };
   isDefault?: boolean;
 }
 
@@ -137,25 +132,6 @@ export const usePersonas = ({ isStorageLoaded }: UsePersonasProps) => {
             persona.bio.toLowerCase().includes(tag.toLowerCase())
           )
         );
-      }
-      
-      // 工具过滤
-      if (filters.tools) {
-        if (filters.tools.googleSearch !== undefined) {
-          filteredPersonas = filteredPersonas.filter(persona =>
-            persona.tools.googleSearch === filters.tools!.googleSearch
-          );
-        }
-        if (filters.tools.codeExecution !== undefined) {
-          filteredPersonas = filteredPersonas.filter(persona =>
-            persona.tools.codeExecution === filters.tools!.codeExecution
-          );
-        }
-        if (filters.tools.urlContext !== undefined) {
-          filteredPersonas = filteredPersonas.filter(persona =>
-            persona.tools.urlContext === filters.tools!.urlContext
-          );
-        }
       }
       
       // 默认角色过滤

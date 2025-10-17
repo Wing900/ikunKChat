@@ -118,8 +118,39 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, the
     if (!contentRef.current) return;
     const currentRef = contentRef.current;
 
-    // --- Parse Markdown to HTML first ---
+// --- Step 1: Extract and protect math expressions before Markdown parsing ---
     let processedContent = content || '';
+    const mathPlaceholders: { id: string; content: string; isDisplay: boolean }[] = [];
+    let placeholderIndex = 0;
+
+    // Extract display math ($$...$$ and \[...\])
+    // 关键修正：只替换公式本身，不捕获或改变周围的换行和空格，以保护 Markdown 列表结构。
+    processedContent = processedContent.replace(/\$\$([\s\S]*?)\$\$/g, (match, content) => {
+    const id = `MATH_PLACEHOLDER_${placeholderIndex++}`;
+    mathPlaceholders.push({ id, content: content, isDisplay: true });
+    return id;
+    });
+
+    processedContent = processedContent.replace(/\\\[([\s\S]*?)\\\]/g, (match, content) => {
+    const id = `MATH_PLACEHOLDER_${placeholderIndex++}`;
+    mathPlaceholders.push({ id, content: content, isDisplay: true });
+    return id;
+    });
+
+    // Extract inline math ($...$ and \(...\))
+    processedContent = processedContent.replace(/\$([^\$\n]+?)\$/g, (match, content) => {
+      const id = `MATH_PLACEHOLDER_${placeholderIndex++}`;
+      mathPlaceholders.push({ id, content: content, isDisplay: false });
+      return id;
+    });
+
+    processedContent = processedContent.replace(/\\\((.+?)\\\)/g, (match, content) => {
+      const id = `MATH_PLACEHOLDER_${placeholderIndex++}`;
+      mathPlaceholders.push({ id, content: content, isDisplay: false });
+      return id;
+    });
+
+    // --- Step 2: Parse Markdown to HTML ---
     const rawHtml = marked.parse(processedContent) as string;
 
     // Sanitize HTML
@@ -139,10 +170,8 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, the
     // Inject into DOM
     currentRef.innerHTML = cleanHtml;
 
-    // --- KaTeX Rendering (DOM-based, excluding code blocks) ---
-    const mathExpressions: { element: HTMLElement; type: 'inline' | 'display'; content: string }[] = [];
-    
-    // Use TreeWalker to find text nodes, but skip <code>, <pre>, and already rendered elements
+    // --- Step 3: Restore and render math expressions with KaTeX ---
+    // Use TreeWalker to find text nodes containing placeholders, but skip code blocks
     const walker = document.createTreeWalker(
         currentRef,
         NodeFilter.SHOW_TEXT,
@@ -150,14 +179,11 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, the
             acceptNode: (node) => {
                 let parent = node.parentElement;
                 while (parent && parent !== currentRef) {
-                    // Skip code blocks, pre blocks, code-block-wrapper, and already rendered KaTeX
+                    // Skip code blocks, pre blocks, and code-block-wrapper
                     if (parent.tagName === 'CODE' ||
                         parent.tagName === 'PRE' ||
                         parent.classList.contains('code-block-wrapper') ||
-                        parent.classList.contains('code-block-header') ||
-                        parent.classList.contains('katex') ||
-                        parent.classList.contains('katex-html') ||
-                        parent.classList.contains('katex-placeholder')) {
+                        parent.classList.contains('code-block-header')) {
                         return NodeFilter.FILTER_REJECT;
                     }
                     parent = parent.parentElement;
@@ -173,60 +199,65 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, the
         textNodes.push(currentNode as Text);
     }
 
-    // Process text nodes for math expressions
+    // Process text nodes to restore math placeholders
     textNodes.forEach(node => {
         const text = node.textContent || '';
-        if (!text.includes('$') && !text.includes('\\[') && !text.includes('\\(')) {
-            return; // Skip if no math delimiters
+        if (!text.includes('MATH_PLACEHOLDER_')) {
+            return; // Skip if no placeholders
         }
 
         const fragment = document.createDocumentFragment();
         let lastIndex = 0;
         let match;
 
-        // Combined regex for all math delimiters
-        const mathRegex = /\$\$([\s\S]*?)\$\$|\\\[([\s\S]*?)\\\]|\$([^\$\n]+?)\$|\\\((.+?)\\\)/g;
+        // Find all math placeholders
+        const placeholderRegex = /MATH_PLACEHOLDER_(\d+)/g;
 
-        while ((match = mathRegex.exec(text)) !== null) {
-            // Add text before math
+        while ((match = placeholderRegex.exec(text)) !== null) {
+            // Add text before placeholder
             if (match.index > lastIndex) {
                 fragment.appendChild(document.createTextNode(text.slice(lastIndex, match.index)));
             }
 
-            // Determine math type and content
-            const isDisplay = match[1] !== undefined || match[2] !== undefined;
-            const mathContent = match[1] || match[2] || match[3] || match[4];
+            const placeholderIdx = parseInt(match[1], 10);
+            const mathData = mathPlaceholders[placeholderIdx];
 
-            // Create placeholder span
-            const span = document.createElement('span');
-            span.className = 'katex-placeholder';
-            
-            try {
-                katex.render(mathContent, span, {
-                    throwOnError: false,
-                    displayMode: isDisplay,
-                    errorColor: '#cc0000',
-                    strict: false,
-                    trust: true,
-                    macros: {
-                        "\\f": "#1f(#2)",
-                        "\\R": "\\mathbb{R}",
-                        "\\N": "\\mathbb{N}",
-                        "\\Z": "\\mathbb{Z}",
-                        "\\Q": "\\mathbb{Q}",
-                        "\\C": "\\mathbb{C}",
-                        "\\abs": "\\left| #1 \\right|",
-                        "\\norm": "\\left\\| #1 \\right\|",
-                        "\\pdv": "\\frac{\\partial #1}{\\partial #2}",
-                        "\\dv": "\\frac{d #1}{d #2}"
-                    }
-                });
-            } catch (error) {
-                console.error('KaTeX rendering error:', error);
-                span.textContent = `[Math Error: ${mathContent}]`;
+            if (mathData) {
+                // Create span for KaTeX rendering
+                const span = document.createElement('span');
+                span.className = 'katex-placeholder';
+                
+                try {
+                    katex.render(mathData.content, span, {
+                        throwOnError: false,
+                        displayMode: mathData.isDisplay,
+                        errorColor: '#cc0000',
+                        strict: false,
+                        trust: true,
+                        macros: {
+                            "\\f": "#1f(#2)",
+                            "\\R": "\\mathbb{R}",
+                            "\\N": "\\mathbb{N}",
+                            "\\Z": "\\mathbb{Z}",
+                            "\\Q": "\\mathbb{Q}",
+                            "\\C": "\\mathbb{C}",
+                            "\\abs": "\\left| #1 \\right|",
+                            "\\norm": "\\left\\| #1 \\right\|",
+                            "\\pdv": "\\frac{\\partial #1}{\\partial #2}",
+                            "\\dv": "\\frac{d #1}{d #2}"
+                        }
+                    });
+                } catch (error) {
+                    console.error('KaTeX rendering error:', error);
+                    span.textContent = `[Math Error: ${mathData.content}]`;
+                }
+
+                fragment.appendChild(span);
+            } else {
+                // Placeholder not found, keep original text
+                fragment.appendChild(document.createTextNode(match[0]));
             }
 
-            fragment.appendChild(span);
             lastIndex = match.index + match[0].length;
         }
 
@@ -235,7 +266,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, the
             fragment.appendChild(document.createTextNode(text.slice(lastIndex)));
         }
 
-        // Replace original text node with fragment (only if we found math)
+        // Replace original text node with fragment (only if we found placeholders)
         if (lastIndex > 0) {
             node.replaceWith(fragment);
         }
@@ -275,3 +306,4 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, the
 
   return <div ref={contentRef} className="markdown-content" />;
 };
+
