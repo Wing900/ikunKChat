@@ -17,7 +17,6 @@ const SettingsModal = lazy(() => import('./components/settings/SettingsModal').t
 const RolesView = lazy(() => import('./components/RolesView').then(module => ({ default: module.RolesView })));
 const PersonaEditor = lazy(() => import('./components/persona/PersonaEditor').then(module => ({ default: module.PersonaEditor })));
 const ArchiveView = lazy(() => import('./components/ArchiveView').then(module => ({ default: module.ArchiveView })));
-const TranslateView = lazy(() => import('./components/translator/TranslateView')); // This is a default export
 const ConfirmationModal = lazy(() => import('./components/ConfirmationModal').then(module => ({ default: module.ConfirmationModal })));
 import PasswordView from './components/PasswordView';
 const PrivacyNoticeModal = lazy(() => import('./components/PrivacyNoticeModal').then(module => ({ default: module.PrivacyNoticeModal })));
@@ -33,13 +32,12 @@ import { useChatMessaging } from './hooks/useChatMessaging';
 import { useToast } from './contexts/ToastContext';
 import { usePersonas } from './hooks/usePersonas';
 import { usePersonaMemories } from './hooks/usePersonaMemories';
-import { useTranslationHistory } from './hooks/useTranslationHistory';
 import { exportData, importData, clearAllData, clearChatHistory, loadPrivacyConsent, savePrivacyConsent, loadLastReadVersion, saveLastReadVersion, exportSelectedChats } from './services/storageService';
 import { authService } from './services/authService';
 import { ViewContainer } from './components/common/ViewContainer';
 import { MessageEditModal } from './components/MessageEditModal';
 
-type View = 'chat' | 'personas' | 'editor' | 'archive' | 'translate';
+type View = 'chat' | 'personas' | 'editor' | 'archive';
 
 const AppContainer = () => {
   const PRIVACY_STATEMENT_VERSION = '1.0.0'; // 声明版本号
@@ -161,7 +159,6 @@ const AppContainer = () => {
   const { chats, setChats, folders, setFolders, activeChatId, setActiveChatId, ...chatDataHandlers } = useChatData({ settings, isStorageLoaded, onSettingsChange: handleSettingsChange });
   const { personas, setPersonas, savePersonas, deletePersona, loading, error, clearError } = usePersonas({ isStorageLoaded });
   const { memories, getMemoriesForPersona, addMemory, updateMemory, deleteMemory } = usePersonaMemories({ isStorageLoaded });
-  const { translationHistory, setTranslationHistory } = useTranslationHistory({ isStorageLoaded });
   const { addToast } = useToast();
   const { t } = useLocalization();
 
@@ -408,7 +405,6 @@ const handleSelectChat = useCallback((id: string) => { setActiveChatId(id); setI
             setChats([]);
             setFolders([]);
             setPersonas(p => p.filter(p => p && p.isDefault));
-            setTranslationHistory([]);
             setActiveChatId(null);
             setConfirmation(null);
             addToast("All data cleared.", 'success');
@@ -494,7 +490,6 @@ const handleSelectChat = useCallback((id: string) => { setActiveChatId(id); setI
             onOpenSettings={() => setIsSettingsOpen(true)}
             onOpenPersonas={() => handleOpenView('personas')}
             onOpenArchive={() => handleOpenView('archive')}
-            onOpenTranslate={() => handleOpenView('translate')}
           >
             <UpdateIndicator
               updateAvailable={needRefresh}
@@ -549,17 +544,6 @@ const handleSelectChat = useCallback((id: string) => { setActiveChatId(id); setI
                   onAddMemory={addMemory}
                   onUpdateMemory={updateMemory}
                   onDeleteMemory={deleteMemory}
-                />
-              </ViewContainer>
-               <ViewContainer view="translate" activeView={currentView}>
-                <TranslateView
-                  settings={settings}
-                  onClose={() => setCurrentView('chat')}
-                  history={translationHistory}
-                  setHistory={setTranslationHistory}
-                  isSidebarCollapsed={isSidebarCollapsed}
-                  onToggleSidebar={() => setIsSidebarCollapsed(p => !p)}
-                  onToggleMobileSidebar={() => setIsMobileSidebarOpen(p => !p)}
                 />
               </ViewContainer>
             </Suspense>

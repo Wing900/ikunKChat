@@ -28,7 +28,7 @@ export const useChatMessaging = ({ settings, activeChat, personas, memories, set
     setIsLoading(false); 
   }, []);
 
-  const _initiateStream = useCallback(async (chatId: string, historyForAPI: Message[], toolConfig: any, personaId: string | null | undefined, isStudyMode?: boolean) => {
+  const _initiateStream = useCallback(async (chatId: string, historyForAPI: Message[], personaId: string | null | undefined, isStudyMode?: boolean) => {
     const personaMemories = personaId ? memories[personaId] : undefined;
     const apiKeys = settings.apiKey && settings.apiKey.length > 0
       ? settings.apiKey
@@ -66,8 +66,7 @@ export const useChatMessaging = ({ settings, activeChat, personas, memories, set
 
     try {
       const currentModel = chatSession.model;
-      const effectiveToolConfig = { ...toolConfig, showThoughts: settings.showThoughts };
-      const stream = sendMessageStream(apiKeys, historyForAPI.slice(0, -1), promptContent, promptAttachments, currentModel, settings, effectiveToolConfig, activePersona, chatSession.isStudyMode, personaMemories);
+      const stream = sendMessageStream(apiKeys, historyForAPI.slice(0, -1), promptContent, promptAttachments, currentModel, settings, activePersona, chatSession.isStudyMode, personaMemories);
       
       // --- UI Update Logic using requestAnimationFrame ---
       let animationFrameId: number | null = null;
@@ -164,7 +163,7 @@ export const useChatMessaging = ({ settings, activeChat, personas, memories, set
       if (!isCancelledRef.current) {
         // Final check for empty response after a "STOP" reason, which can indicate a silent refusal to answer.
         if (!streamHadError && fullResponse.trim().length === 0) {
-          streamHadError = true; // Also treat this as an error so suggestions don't generate
+          streamHadError = true;
           fullResponse = "Google Cut It for Unknown Reason";
           addToast("Google Cut It for Unknown Reason", 'error');
         }
@@ -186,38 +185,83 @@ export const useChatMessaging = ({ settings, activeChat, personas, memories, set
     }
   }, [settings, setChats, activeChat, personas, memories, addToast]);
 
-  const handleSendMessage = useCallback(async (content: string, files: File[] = [], toolConfig: any) => {
+  const handleSendMessage = useCallback(async (content: string, files: File[] = []) => {
+    console.log(`\n[消息发送] 📤 开始处理消息发送`);
+    console.log(`[消息发送] 📝 消息内容长度: ${content.length} 字符`);
+    console.log(`[消息发送] 📎 附件数量: ${files.length} 个`);
+    
     // 串行处理文件以避免内存峰值
     const attachments: FileAttachment[] = [];
     for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      console.log(`\n[附件处理] 🔄 处理附件 ${i + 1}/${files.length}: "${file.name}"`);
+      
       try {
-        const attachment = await fileToData(files[i]);
+        const attachment = await fileToData(file);
+        
+        console.log(`[附件处理] ✅ 文件转换成功`);
+        console.log(`[附件处理] 📊 附件对象 - 名称: "${attachment.name}", MIME: ${attachment.mimeType}, data存在: ${!!attachment.data}, data类型: ${typeof attachment.data}, data长度: ${attachment.data?.length || 0}`);
+        
+        // 验证附件数据有效性
+        if (!attachment.data || typeof attachment.data !== 'string') {
+          console.error(`[附件处理] ❌ 附件数据无效!`);
+          console.error(`[附件处理] ❌ data字段: ${attachment.data === undefined ? 'undefined' : attachment.data === null ? 'null' : typeof attachment.data}`);
+          addToast(`文件 "${file.name}" 数据无效，已跳过`, 'error');
+          continue; // 跳过这个无效附件
+        }
         
         // 生成唯一 ID 并保存到 IndexedDB
         const attachmentId = `att_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        console.log(`[附件处理] 🆔 生成附件ID: ${attachmentId}`);
         
         if (attachment.data) {
           try {
+            console.log(`[附件处理] 💾 尝试保存到IndexedDB...`);
             await saveAttachment(attachmentId, attachment.data, attachment.mimeType, attachment.name);
-            console.log(`[IndexedDB] Saved attachment: ${attachmentId} (${attachment.name})`);
+            console.log(`[附件处理] ✅ IndexedDB保存成功: ${attachmentId} (${attachment.name})`);
           } catch (dbError) {
-            console.error(`[IndexedDB] Failed to save attachment ${attachment.name}:`, dbError);
+            console.error(`[附件处理] ⚠️ IndexedDB保存失败，将使用内存存储 (${attachment.name}):`, dbError);
             // 如果 IndexedDB 保存失败，继续使用 data 字段（降级处理）
           }
         }
         
         // 保存引用（ID）到消息中，保留 data 用于当前会话
-        attachments.push({
+        const attachmentObject = {
           id: attachmentId,
           name: attachment.name,
           mimeType: attachment.mimeType,
           data: attachment.data // 保留用于当前会话显示
-        });
+        };
+        
+        console.log(`[附件处理] ✅ 附件对象创建完成`);
+        console.log(`[附件处理] 🔍 最终验证 - data存在: ${!!attachmentObject.data}, data类型: ${typeof attachmentObject.data}, data长度: ${attachmentObject.data?.length || 0}`);
+        
+        attachments.push(attachmentObject);
+        console.log(`[附件处理] ✅ 附件 ${i + 1}/${files.length} 处理成功并添加到列表`);
+        
       } catch (error) {
-        console.error(`Failed to process file ${i + 1}:`, error);
+        console.error(`[附件处理] ❌ 处理失败 - 附件 ${i + 1}/${files.length} (${file.name}):`, error);
+        console.error(`[附件处理] ❌ 错误详情:`, {
+          fileName: file.name,
+          fileType: file.type,
+          fileSize: file.size,
+          errorMessage: error instanceof Error ? error.message : String(error),
+          errorStack: error instanceof Error ? error.stack : undefined
+        });
+        addToast(`文件 "${file.name}" 处理失败: ${error instanceof Error ? error.message : '未知错误'}`, 'error');
         // 继续处理其他文件，不因为单个文件失败而中断
       }
     }
+    
+    console.log(`\n[附件处理] 📊 处理结果汇总:`);
+    console.log(`[附件处理] 📥 输入文件数: ${files.length}`);
+    console.log(`[附件处理] ✅ 成功处理数: ${attachments.length}`);
+    console.log(`[附件处理] ❌ 失败/跳过数: ${files.length - attachments.length}`);
+    
+    // 详细列出所有成功的附件
+    attachments.forEach((att, idx) => {
+      console.log(`[附件处理] 📌 附件[${idx}] - 名称: "${att.name}", MIME: ${att.mimeType}, data有效: ${!!att.data && typeof att.data === 'string'}, 大小: ${att.data?.length || 0} 字符`);
+    });
       
     const userMessage: Message = { id: crypto.randomUUID(), role: MessageRole.USER, content: content, timestamp: Date.now(), attachments };
     
@@ -265,7 +309,7 @@ export const useChatMessaging = ({ settings, activeChat, personas, memories, set
       console.log(`[Title Gen] ⏭️ Skipped - Enabled: ${settings.autoTitleGeneration}, Content: ${!!content}, Keys: ${apiKeys.length > 0}`);
     }
 
-    await _initiateStream(currentChatId, history, toolConfig, currentPersonaId, currentIsStudyMode);
+    await _initiateStream(currentChatId, history, currentPersonaId, currentIsStudyMode);
   }, [activeChat, settings, setChats, setActiveChatId, _initiateStream, isNextChatStudyMode, setIsNextChatStudyMode, personas]);
 
   const handleDeleteMessage = useCallback((messageId: string) => {
@@ -314,10 +358,9 @@ export const useChatMessaging = ({ settings, activeChat, personas, memories, set
 
     if (historyForResubmit.length > 0) {
         setChats(prev => prev.map(c => c.id === chatId ? { ...c, messages: historyForResubmit } : c));
-        const toolConfig = { codeExecution: false, googleSearch: settings.defaultSearch, urlContext: false };
-        _initiateStream(chatId, historyForResubmit, toolConfig, activeChat.personaId, activeChat.isStudyMode);
+        _initiateStream(chatId, historyForResubmit, activeChat.personaId, activeChat.isStudyMode);
     }
-  }, [activeChat, isLoading, settings.defaultSearch, setChats, _initiateStream]);
+  }, [activeChat, isLoading, setChats, _initiateStream]);
 
   const handleEditAndResubmit = useCallback((messageId: string, newContent: string) => {
     if (!activeChat?.id || isLoading) return;
@@ -334,10 +377,9 @@ export const useChatMessaging = ({ settings, activeChat, personas, memories, set
 
     if (historyForResubmit.length > 0) {
         setChats(prev => prev.map(c => c.id === chatId ? { ...c, messages: historyForResubmit } : c));
-        const toolConfig = { codeExecution: false, googleSearch: settings.defaultSearch, urlContext: false };
-        _initiateStream(chatId, historyForResubmit, toolConfig, activeChat.personaId, activeChat.isStudyMode);
+        _initiateStream(chatId, historyForResubmit, activeChat.personaId, activeChat.isStudyMode);
     }
-  }, [activeChat, isLoading, settings.defaultSearch, setChats, _initiateStream]);
+  }, [activeChat, isLoading, setChats, _initiateStream]);
 
   return { 
     isLoading, 

@@ -1937,16 +1937,6 @@ body.theme-apple-dark .katex-container .katex {
   border-color: currentColor;
 }
 
-/* Translation History Modal */
-@keyframes translation-item-out {
-  from { opacity: 1; transform: translateY(0) scale(1); max-height: 100px; }
-  to { opacity: 0; transform: translateY(10px) scale(0.95); max-height: 0; padding-top: 0; padding-bottom: 0; margin-top:0; margin-bottom:0; }
-}
-.translation-history-item.leaving {
-  animation: translation-item-out 0.35s ease-out forwards;
-  pointer-events: none;
-}
-
 @keyframes apple-pulse {
   0%, 100% {
     transform: scale(1);
@@ -1957,24 +1947,6 @@ body.theme-apple-dark .katex-container .katex {
     opacity: 0.7;
   }
 }
-.translation-history-item {
-  transition: background-color 0.2s ease-out, border-color 0.2s ease-out, max-height 0.35s ease-out, opacity 0.35s ease-out, padding 0.35s ease-out, margin 0.35s ease-out;
-  max-height: 100px;
-  opacity: 1;
-  overflow: hidden;
-}
-
-.translation-history-item.hiding {
-  opacity: 0;
-  max-height: 0;
-  padding-top: 0;
-  padding-bottom: 0;
-  margin-top: 0;
-  margin-bottom: 0;
-  border-width: 0;
-  pointer-events: none;
-}
-
 /* Sidebar collapse optimizations */
 .sidebar-collapse-transition {
   transition: width 0.3s ease-in-out, opacity 0.3s ease-in-out;

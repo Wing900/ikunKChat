@@ -16,8 +16,17 @@ export const useChatData = ({ settings, isStorageLoaded, onSettingsChange }: Use
 
   useEffect(() => {
     if (isStorageLoaded) {
-      setChats(loadChats());
+      // loadChats 现在是异步的，需要从 IndexedDB 恢复附件数据
+      loadChats().then(loadedChats => {
+        console.log(`[useChatData] 加载了 ${loadedChats.length} 个聊天会话`);
+        setChats(loadedChats);
+      }).catch(error => {
+        console.error('[useChatData] 加载聊天失败:', error);
+        setChats([]);
+      });
+      
       setFolders(loadFolders());
+      
       // 恢复当前活跃的聊天
       const savedActiveChatId = loadActiveChatId();
       if (savedActiveChatId) {

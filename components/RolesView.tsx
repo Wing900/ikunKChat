@@ -31,10 +31,6 @@ const PersonaCard: React.FC<{ persona: Persona & { isHiding?: boolean }, onStart
                 </div>
                 <div>
                     <h3 className="text-lg font-bold">{persona.name}</h3>
-                    <div className="flex items-center gap-2 mt-1 text-sm text-[var(--text-color-secondary)]">
-                        {persona.tools?.googleSearch && <Icon icon="search" className="w-4 h-4" data-tooltip="Google Search Enabled" />}
-                        {persona.tools?.codeExecution && <Icon icon="code" className="w-4 h-4" data-tooltip="Code Execution Enabled" />}
-                    </div>
                 </div>
             </div>
             <p className="text-sm text-[var(--text-color-secondary)] flex-grow mb-4 h-16 overflow-hidden">{persona.bio}</p>
@@ -90,11 +86,6 @@ export const RolesView: React.FC<RolesViewProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState({
-    tools: {
-      googleSearch: undefined as boolean | undefined,
-      codeExecution: undefined as boolean | undefined,
-      urlContext: undefined as boolean | undefined,
-    },
     isDefault: undefined as boolean | undefined,
   });
 
@@ -118,15 +109,6 @@ export const RolesView: React.FC<RolesViewProps> = ({
       
       // 应用过滤器
       if (showFilters) {
-        if (filters.tools.googleSearch !== undefined) {
-          filtered = filtered.filter(p => p.tools.googleSearch === filters.tools.googleSearch);
-        }
-        if (filters.tools.codeExecution !== undefined) {
-          filtered = filtered.filter(p => p.tools.codeExecution === filters.tools.codeExecution);
-        }
-        if (filters.tools.urlContext !== undefined) {
-          filtered = filtered.filter(p => p.tools.urlContext === filters.tools.urlContext);
-        }
         if (filters.isDefault !== undefined) {
           filtered = filtered.filter(p => p.isDefault === filters.isDefault);
         }
@@ -181,48 +163,7 @@ export const RolesView: React.FC<RolesViewProps> = ({
       {/* 过滤器面板 */}
       {showFilters && (
         <div className="mb-4 p-4 bg-white/10 dark:bg-black/10 rounded-lg">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-2">工具类型</label>
-              <div className="space-y-2">
-                <label className="flex items-center">
-                  <input
-                    type="checkbox"
-                    checked={filters.tools.googleSearch === true}
-                    onChange={(e) => setFilters(prev => ({
-                      ...prev,
-                      tools: { ...prev.tools, googleSearch: e.target.checked ? true : undefined }
-                    }))}
-                    className="mr-2"
-                  />
-                  <span className="text-sm">Google搜索</span>
-                </label>
-                <label className="flex items-center">
-                  <input
-                    type="checkbox"
-                    checked={filters.tools.codeExecution === true}
-                    onChange={(e) => setFilters(prev => ({
-                      ...prev,
-                      tools: { ...prev.tools, codeExecution: e.target.checked ? true : undefined }
-                    }))}
-                    className="mr-2"
-                  />
-                  <span className="text-sm">代码执行</span>
-                </label>
-                <label className="flex items-center">
-                  <input
-                    type="checkbox"
-                    checked={filters.tools.urlContext === true}
-                    onChange={(e) => setFilters(prev => ({
-                      ...prev,
-                      tools: { ...prev.tools, urlContext: e.target.checked ? true : undefined }
-                    }))}
-                    className="mr-2"
-                  />
-                  <span className="text-sm">URL上下文</span>
-                </label>
-              </div>
-            </div>
+          <div className="grid grid-cols-1 gap-4">
             <div>
               <label className="block text-sm font-medium mb-2">角色类型</label>
               <div className="space-y-2">
@@ -263,11 +204,6 @@ export const RolesView: React.FC<RolesViewProps> = ({
             <button
               onClick={() => {
                 setFilters({
-                  tools: {
-                    googleSearch: undefined,
-                    codeExecution: undefined,
-                    urlContext: undefined,
-                  },
                   isDefault: undefined,
                 });
                 setSearchQuery('');

@@ -14,7 +14,6 @@ ${JSON.stringify(currentPersona, null, 2)}
 
 仅使用包含两个键的JSON对象响应: "personaUpdate"（包含仅更改的字段）和"explanation"（描述你操作的简短对话式字符串）。
 例如，如果用户说"让它成为海盗"，你可能会更改姓名、简介和系统提示。
-'tools'属性是一个布尔映射: { "googleSearch": boolean, "codeExecution": boolean, "urlContext": boolean }。
 `;
 
   try {
@@ -39,16 +38,7 @@ ${JSON.stringify(currentPersona, null, 2)}
                   }
                 },
                 bio: { type: Type.STRING, nullable: true },
-                systemPrompt: { type: Type.STRING, nullable: true },
-                tools: {
-                  type: Type.OBJECT,
-                  nullable: true,
-                  properties: {
-                    googleSearch: { type: Type.BOOLEAN, nullable: true },
-                    codeExecution: { type: Type.BOOLEAN, nullable: true },
-                    urlContext: { type: Type.BOOLEAN, nullable: true }
-                  }
-                }
+                systemPrompt: { type: Type.STRING, nullable: true }
               }
             },
             explanation: { type: Type.STRING }

@@ -12,7 +12,7 @@ import { ChatHeader } from './chat/ChatHeader';
 interface ChatViewProps {
   chatSession: ChatSession | null;
   personas: Persona[];
-  onSendMessage: (message: string, files: File[], toolConfig: any) => void;
+  onSendMessage: (message: string, files: File[]) => void;
   isLoading: boolean;
   onCancelGeneration: () => void;
   onSetModelForActiveChat: (model: string) => void;
@@ -54,25 +54,21 @@ export const ChatView: React.FC<ChatViewProps> = (props) => {
     chatSession?.personaId ? personas.find(p => p && p.id === chatSession.personaId) : null
   , [chatSession?.personaId, personas]);
 
-  const getDefaultToolConfig = useCallback(() => ({ codeExecution: false, googleSearch: false, urlContext: false }), []);
-  const [toolConfig, setToolConfig] = useState(getDefaultToolConfig());
-  
   const prevChatIdRef = useRef<string | null | undefined>(undefined);
   useEffect(() => {
     if (chatSession?.id !== prevChatIdRef.current) {
-        setToolConfig(getDefaultToolConfig());
         setEditingMessageId(null);
         setChatInput('');
     }
     prevChatIdRef.current = chatSession?.id;
-  }, [chatSession, getDefaultToolConfig]);
+  }, [chatSession]);
 
   useEffect(() => {
     if (isLoading || editingMessageId || !chatSession) return;
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatSession, chatSession?.messages, isLoading, editingMessageId]);
 
-  const handleSendMessageWithTools = (message: string, files: File[]) => { onSendMessage(message, files, toolConfig); setChatInput(''); };
+  const handleSendMessageWithTools = (message: string, files: File[]) => { onSendMessage(message, files); setChatInput(''); };
 
 
   const handleSaveEdit = useCallback((message: Message, newContent: string) => {
@@ -171,7 +167,7 @@ export const ChatView: React.FC<ChatViewProps> = (props) => {
         <div className={`w-full px-6 transition-all duration-300 ${props.isSidebarCollapsed ? 'max-w-6xl mx-auto' : 'max-w-[672px] mx-auto'}`}>
 
 
-          <ChatInput ref={chatInputRef} onSendMessage={handleSendMessageWithTools} isLoading={isLoading} onCancel={props.onCancelGeneration} toolConfig={toolConfig} onToolConfigChange={setToolConfig} input={chatInput} setInput={setChatInput} chatSession={chatSession} onToggleStudyMode={handleToggleStudyMode} isNextChatStudyMode={props.isNextChatStudyMode} availableModels={props.availableModels} currentModel={props.currentModel} onSetModelForActiveChat={props.onSetModelForActiveChat} />
+          <ChatInput ref={chatInputRef} onSendMessage={handleSendMessageWithTools} isLoading={isLoading} onCancel={props.onCancelGeneration} input={chatInput} setInput={setChatInput} chatSession={chatSession} onToggleStudyMode={handleToggleStudyMode} isNextChatStudyMode={props.isNextChatStudyMode} availableModels={props.availableModels} currentModel={props.currentModel} onSetModelForActiveChat={props.onSetModelForActiveChat} />
         </div>
     </main>
   );

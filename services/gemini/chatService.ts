@@ -8,8 +8,8 @@ interface Part {
   inlineData?: { mimeType: string; data: string; };
 }
 
-export function sendMessageStream(apiKeys: string[], messages: Message[], newMessage: string, attachments: FileAttachment[], model: string, settings: Settings, toolConfig: any, persona?: Persona | null, isStudyMode?: boolean, memories?: PersonaMemory[]): AsyncGenerator<GenerateContentResponse> {
-  const { formattedHistory, configForApi } = prepareChatPayload(messages, settings, toolConfig, persona, isStudyMode, memories);
+export function sendMessageStream(apiKeys: string[], messages: Message[], newMessage: string, attachments: FileAttachment[], model: string, settings: Settings, persona?: Persona | null, isStudyMode?: boolean, memories?: PersonaMemory[]): AsyncGenerator<GenerateContentResponse> {
+  const { formattedHistory, configForApi } = prepareChatPayload(messages, settings, persona, isStudyMode, memories);
   const messageParts: Part[] = attachments.map(att => ({
       inlineData: { mimeType: att.mimeType, data: att.data! }
   }));
@@ -17,7 +17,7 @@ export function sendMessageStream(apiKeys: string[], messages: Message[], newMes
 
   // 开发环境下的简化日志
   if (process.env.NODE_ENV === 'development') {
-    console.log(`[Chat] Sending message - History: ${formattedHistory.length} msgs, Attachments: ${attachments.length}`);
+    console.log(`[聊天] 发送消息 - 历史记录: ${formattedHistory.length} 条消息, 附件: ${attachments.length}`);
   }
 
   return executeStreamWithKeyRotation(apiKeys, async (ai) => {
@@ -57,39 +57,5 @@ export async function generateChatDetails(apiKeys: string[], prompt: string, mod
     console.error("[Title Gen] ❌ Error:", error);
     const fallbackTitle = prompt.substring(prompt.lastIndexOf('\n') + 1).substring(0, 40) || 'New Chat';
     return { title: fallbackTitle };
-  }
-}
-
-export async function generateSuggestedReplies(apiKeys: string[], history: Message[], model: string, settings: Settings): Promise<string[]> {
-  try {
-    const payload = {
-      model,
-      contents: [
-        ...history.map(msg => ({ role: msg.role, parts: [{ text: msg.content }] })),
-        { role: 'user' as const, parts: [{ text: '针对最后一条消息建议三个简短、简洁且相关的回复。用户正在寻找快速回复。' }] }
-      ],
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: { replies: { type: Type.ARRAY, items: { type: Type.STRING } } }
-        }
-      }
-    };
-
-    const response = await executeWithKeyRotation<GenerateContentResponse>(apiKeys, (ai) =>
-      ai.models.generateContent(payload),
-      settings.apiBaseUrl
-    );
-
-    const jsonText = response.text.trim();
-    if (jsonText) {
-      const result = JSON.parse(jsonText);
-      return result.replies || [];
-    }
-    return [];
-  } catch (error) {
-    console.error("Error generating suggested replies:", error);
-    return [];
   }
 }

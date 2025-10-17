@@ -1,5 +1,5 @@
 import { Message, Settings, Persona, PersonaMemory } from '../../types';
-import { STUDY_MODE_PROMPT, OPTIMIZE_FORMATTING_PROMPT, THINK_DEEPER_PROMPT, SEARCH_OPTIMIZER_PROMPT } from '../../data/prompts';
+import { STUDY_MODE_PROMPT, OPTIMIZE_FORMATTING_PROMPT, THINK_DEEPER_PROMPT } from '../../data/prompts';
 import { getMessageSize, getFormattedMessageSize, analyzeMessageSize } from '../../utils/messageSize';
 import { testContextTruncation } from '../../utils/testContextTruncation';
 
@@ -19,7 +19,7 @@ function createTextOnlyMessage(message: Message): Message {
   };
 }
 
-export function prepareChatPayload(history: Message[], settings: Settings, toolConfig: any, persona?: Persona | null, isStudyMode?: boolean, memories?: PersonaMemory[]) {
+export function prepareChatPayload(history: Message[], settings: Settings, persona?: Persona | null, isStudyMode?: boolean, memories?: PersonaMemory[]) {
   // 1. Determine the source of settings (persona or global)
   const settingsSource = {
     temperature: persona?.temperature ?? settings.temperature,
@@ -43,25 +43,6 @@ export function prepareChatPayload(history: Message[], settings: Settings, toolC
   if (isStudyMode) systemInstructionParts.push(STUDY_MODE_PROMPT);
   if (persona?.systemPrompt) systemInstructionParts.push(persona.systemPrompt);
 
-  const useGoogleSearch = persona?.tools.googleSearch || settings.defaultSearch;
-  const useCodeExecution = toolConfig.codeExecution || persona?.tools.codeExecution;
-
-  const toolsForApi: any[] = [];
-  let isSearchEnabled = toolConfig.googleSearch || useGoogleSearch || toolConfig.urlContext;
-
-  if (useCodeExecution) toolsForApi.push({ codeExecution: {} });
-  if (isSearchEnabled) toolsForApi.push({ googleSearch: {} });
-
-  let searchInstruction = '';
-  if (toolConfig.googleSearch) { // Explicit "Tools" search has highest priority
-    searchInstruction = 'The user has explicitly enabled Google Search for this query, so you MUST prioritize its use to answer the request and provide citations.';
-  } else if (useGoogleSearch && !toolConfig.urlContext && settings.useSearchOptimizerPrompt) { // Default search is on AND optimizer is on
-    searchInstruction = SEARCH_OPTIMIZER_PROMPT;
-  }
-
-  if (searchInstruction) {
-    systemInstructionParts.push(searchInstruction);
-  }
 
   const systemInstruction = systemInstructionParts.join('\n\n---\n\n').trim();
 
@@ -70,7 +51,6 @@ export function prepareChatPayload(history: Message[], settings: Settings, toolC
   const configOverhead = JSON.stringify({
     temperature: settingsSource.temperature,
     maxOutputTokens: settingsSource.maxOutputTokens,
-    tools: toolsForApi,
     systemInstruction: systemInstruction
   }).length;
 
@@ -78,10 +58,10 @@ export function prepareChatPayload(history: Message[], settings: Settings, toolC
   const availableForHistory = MAX_PAYLOAD_SIZE - systemInstructionSize - configOverhead;
 
   if (process.env.NODE_ENV === 'development') {
-    console.log(`[Payload Analysis] Total budget: ${(MAX_PAYLOAD_SIZE / 1024).toFixed(1)}KB`);
-    console.log(`[Payload Analysis] System instruction: ${(systemInstructionSize / 1024).toFixed(1)}KB`);
-    console.log(`[Payload Analysis] Config overhead: ${(configOverhead / 1024).toFixed(1)}KB`);
-    console.log(`[Payload Analysis] Available for history: ${(availableForHistory / 1024).toFixed(1)}KB`);
+    console.log(`[载荷分析] 总预算: ${(MAX_PAYLOAD_SIZE / 1024).toFixed(1)}KB`);
+    console.log(`[载荷分析] 系统指令: ${(systemInstructionSize / 1024).toFixed(1)}KB`);
+    console.log(`[载荷分析] 配置开销: ${(configOverhead / 1024).toFixed(1)}KB`);
+    console.log(`[载荷分析] 历史可用: ${(availableForHistory / 1024).toFixed(1)}KB`);
   }
 
   // 3. **修复** 智能历史截断策略
@@ -100,7 +80,7 @@ export function prepareChatPayload(history: Message[], settings: Settings, toolC
       // 如果加入这条消息会超出预算，先尝试降级处理
       if (currentSize + messageSize > availableForHistory) {
           if (currentSize + textOnlySize <= availableForHistory) {
-              console.warn(`[Context Truncation] Message at index ${i} was too large (${(messageSize / 1024).toFixed(1)}KB). Stripped images to ${(textOnlySize / 1024).toFixed(1)}KB to preserve context.`);
+              console.warn(`[上下文截断] 索引 ${i} 处的消息过大 (${(messageSize / 1024).toFixed(1)}KB)。移除图片以保持上下文，大小降至 ${(textOnlySize / 1024).toFixed(1)}KB。`);
               slicedHistory.unshift(textOnlyMessage);
               currentSize += textOnlySize;
           } else {
@@ -109,14 +89,14 @@ export function prepareChatPayload(history: Message[], settings: Settings, toolC
                 const truncatedMessage = { ...textOnlyMessage, content: textOnlyMessage.content?.slice(-2000) };
                 const truncatedSize = getFormattedMessageSize(truncatedMessage);
                 if (currentSize + truncatedSize <= availableForHistory) {
-                  console.warn(`[Context Truncation] Very long text message at index ${i} truncated from ${(textOnlySize / 1024).toFixed(1)}KB to ${(truncatedSize / 1024).toFixed(1)}KB`);
+                  console.warn(`[上下文截断] 索引 ${i} 处的超长文本消息从 ${(textOnlySize / 1024).toFixed(1)}KB 截断至 ${(truncatedSize / 1024).toFixed(1)}KB`);
                   slicedHistory.unshift(truncatedMessage);
                   currentSize += truncatedSize;
                   continue;
                 }
               }
 
-              console.warn(`[Context Truncation] History truncated at index ${i}. Total history size: ${(currentSize / 1024).toFixed(1)}KB. Remaining messages: ${slicedHistory.length}`);
+              console.warn(`[上下文截断] 历史记录在索引 ${i} 处截断。总历史大小: ${(currentSize / 1024).toFixed(1)}KB。剩余消息数: ${slicedHistory.length}`);
               break;
           }
       } else {
@@ -128,12 +108,12 @@ export function prepareChatPayload(history: Message[], settings: Settings, toolC
   // 调试信息：分析截断后的历史记录
   if (process.env.NODE_ENV === 'development') {
       const totalSize = slicedHistory.reduce((sum, msg) => sum + getMessageSize(msg), 0);
-      console.log(`[Context Analysis] Final history: ${slicedHistory.length} messages, ${(totalSize / 1024).toFixed(1)}KB`);
+      console.log(`[上下文分析] 最终历史: ${slicedHistory.length} 条消息, ${(totalSize / 1024).toFixed(1)}KB`);
 
       // 详细分析最大的几条消息
       const messageAnalyses = slicedHistory.map(msg => analyzeMessageSize(msg));
       const sortedAnalyses = messageAnalyses.sort((a, b) => b.total - a.total).slice(0, 3);
-      console.log(`[Context Analysis] Top 3 largest messages:`, sortedAnalyses);
+      console.log(`[上下文分析] 最大的3条消息:`, sortedAnalyses);
   }
 
   const formattedHistory = slicedHistory.map(msg => {
@@ -145,12 +125,83 @@ export function prepareChatPayload(history: Message[], settings: Settings, toolC
     }
 
     if (msg.attachments) {
+      console.log(`\n[载荷构建器] 🔍 开始处理消息附件 - 附件总数: ${msg.attachments.length}`);
+      
       // **修复** 过滤掉无效的附件（data为undefined或非字符串）
-      const validAttachments = msg.attachments.filter(att => att.data && typeof att.data === 'string');
+      // 附件有效性判断标准:
+      // 1. att.data 必须存在（不能是 undefined 或 null）
+      // 2. att.data 必须是字符串类型（Base64编码的字符串）
+      const validAttachments = msg.attachments.filter(att => {
+        const isDataExists = att.data !== undefined && att.data !== null;
+        const isDataString = typeof att.data === 'string';
+        const isValid = isDataExists && isDataString;
+        
+        if (!isValid) {
+          console.log(`[载荷构建器] 🔍 附件验证 - data存在: ${isDataExists}, data是字符串: ${isDataString}, 最终结果: ${isValid}`);
+        }
+        
+        return isValid;
+      });
+
+      console.log(`[载荷构建器] 📊 附件过滤结果 - 原始: ${msg.attachments.length}个, 有效: ${validAttachments.length}个, 无效: ${msg.attachments.length - validAttachments.length}个`);
+
+      // 详细记录被过滤的附件信息
       if (validAttachments.length !== msg.attachments.length) {
-        console.warn(`[Payload Builder] Filtered out ${msg.attachments.length - validAttachments.length} invalid attachments`);
+        console.warn(`[载荷构建器] ⚠️ 检测到无效附件，开始详细分析...`);
+
+        msg.attachments.forEach((att, index) => {
+          // 详细判断失败原因
+          const dataExists = att.data !== undefined && att.data !== null;
+          const dataIsString = typeof att.data === 'string';
+          const isValid = dataExists && dataIsString;
+          
+          if (!isValid) {
+            // 构建详细的失败原因
+            let reason = '';
+            if (!dataExists) {
+              reason = att.data === undefined ? '缺少data字段(undefined)' : '缺少data字段(null)';
+            } else if (!dataIsString) {
+              reason = `data字段类型错误，当前类型: ${typeof att.data}，期望类型: string`;
+            }
+            
+            const dataInfo = att.data === undefined ? 'undefined' : att.data === null ? 'null' : typeof att.data;
+            const mimeInfo = att.mimeType ? att.mimeType : '未知类型';
+            const nameInfo = att.name ? att.name : '未知文件名';
+
+            console.warn(`[载荷构建器] ❌ 附件[${index}] 被过滤:`);
+            console.warn(`   📄 文件名: ${nameInfo}`);
+            console.warn(`   📝 MIME类型: ${mimeInfo}`);
+            console.warn(`   💾 data信息: ${dataInfo}`);
+            console.warn(`   ❗ 过滤理由: ${reason}`);
+            console.warn(`   🔍 附件对象详情:`, {
+              id: att.id,
+              name: att.name,
+              mimeType: att.mimeType,
+              hasData: !!att.data,
+              dataType: typeof att.data,
+              dataLength: att.data ? (typeof att.data === 'string' ? att.data.length : '非字符串无法获取长度') : 0
+            });
+          } else {
+            const dataSize = att.data!.length;
+            const sizeInKB = (dataSize / 1024).toFixed(2);
+            console.log(`[载荷构建器] ✅ 附件[${index}] 有效:`);
+            console.log(`   📄 文件名: ${att.name || '未命名'}`);
+            console.log(`   📝 MIME类型: ${att.mimeType}`);
+            console.log(`   💾 数据大小: ${dataSize} 字符 (${sizeInKB} KB)`);
+          }
+        });
+      } else {
+        console.log(`[载荷构建器] ✅ 所有附件均有效，无需过滤`);
+        msg.attachments.forEach((att, index) => {
+          const dataSize = att.data!.length;
+          const sizeInKB = (dataSize / 1024).toFixed(2);
+          console.log(`[载荷构建器] 📎 附件[${index}]: ${att.name} (${att.mimeType}, ${sizeInKB} KB)`);
+        });
       }
+
+      console.log(`[载荷构建器] 🔄 将 ${validAttachments.length} 个有效附件转换为API格式...`);
       parts.push(...validAttachments.map(att => ({ inlineData: { mimeType: att.mimeType, data: att.data! } })));
+      console.log(`[载荷构建器] ✅ 附件处理完成\n`);
     }
 
     return { role: msg.role, parts: parts };
@@ -159,12 +210,11 @@ export function prepareChatPayload(history: Message[], settings: Settings, toolC
   // 3. Add new parameters to the generation config
   const configForApi: any = {
     systemInstruction: systemInstruction || undefined,
-    tools: toolsForApi.length > 0 ? toolsForApi : undefined,
     temperature: settingsSource.temperature,
     maxOutputTokens: settingsSource.maxOutputTokens,
   };
 
-  if (toolConfig.showThoughts) {
+  if (settings.showThoughts) {
     configForApi.thinkingConfig = { includeThoughts: true };
   }
 

@@ -40,11 +40,6 @@ export interface Persona {
   };
   bio: string;
   systemPrompt: string;
-  tools: {
-    googleSearch: boolean;
-    codeExecution: boolean;
-    urlContext: boolean;
-  };
   model?: string;
   temperature?: number;
   contextLength?: number;
@@ -76,16 +71,6 @@ export interface ChatSession {
   isStudyMode?: boolean;
 }
 
-export interface TranslationHistoryItem {
-  id: string;
-  sourceLang: string;
-  targetLang: string;
-  sourceText: string;
-  translatedText: string;
-  timestamp: number;
-  mode: 'natural' | 'literal';
-}
-
 export interface Settings {
   theme: 'apple-light' | 'apple-dark';
   language: 'en' | 'zh';
@@ -97,8 +82,6 @@ export interface Settings {
   defaultPersona: string;
   autoTitleGeneration: boolean;
   titleGenerationModel: string;
-  defaultSearch: boolean;
-  useSearchOptimizerPrompt: boolean;
   showThoughts: boolean;
   optimizeFormatting: boolean;
   thinkDeeper: boolean;

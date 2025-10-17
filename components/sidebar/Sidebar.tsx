@@ -26,12 +26,11 @@ interface SidebarProps {
   onOpenSettings: () => void;
   onOpenPersonas: () => void;
   onOpenArchive: () => void;
-  onOpenTranslate: () => void;
   children?: React.ReactNode;
 }
 
 export const Sidebar: React.FC<SidebarProps> = (props) => {
-  const { chats, folders, activeChatId, onSelectChat, onNewChat, onDeleteChat, onEditChat, onArchiveChat, isCollapsed, onToggleCollapse, isMobileSidebarOpen, onToggleMobileSidebar, searchQuery, onSetSearchQuery, onNewFolder, onEditFolder, onDeleteFolder, onMoveChatToFolder, onOpenSettings, onOpenPersonas, onOpenArchive, onOpenTranslate, children } = props;
+  const { chats, folders, activeChatId, onSelectChat, onNewChat, onDeleteChat, onEditChat, onArchiveChat, isCollapsed, onToggleCollapse, isMobileSidebarOpen, onToggleMobileSidebar, searchQuery, onSetSearchQuery, onNewFolder, onEditFolder, onDeleteFolder, onMoveChatToFolder, onOpenSettings, onOpenPersonas, onOpenArchive, children } = props;
   const { t } = useLocalization();
   
   const [deletingFolderId, setDeletingFolderId] = useState<string | null>(null);
@@ -203,10 +202,6 @@ export const Sidebar: React.FC<SidebarProps> = (props) => {
             <button onClick={onOpenPersonas} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-[var(--radius-2xl)] text-[var(--text-color)] hover:bg-black/10 dark:hover:bg-white/10" data-tooltip={t('personas')} data-tooltip-placement="right">
                 <Icon icon="users" className="w-5 h-5" />
                 <span className="font-semibold">{t('personas')}</span>
-            </button>
-            <button onClick={onOpenTranslate} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-[var(--radius-2xl)] text-[var(--text-color)] hover:bg-black/10 dark:hover:bg-white/10" data-tooltip={t('translate')} data-tooltip-placement="right">
-                <Icon icon="translate-logo" className="w-5 h-5" />
-                <span className="font-semibold">{t('translate')}</span>
             </button>
             <button onClick={onOpenArchive} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-[var(--radius-2xl)] text-[var(--text-color)] hover:bg-black/10 dark:hover:bg-white/10" data-tooltip={t('archiveDesc')} data-tooltip-placement="right">
                 <Icon icon="archive" className="w-5 h-5" />
