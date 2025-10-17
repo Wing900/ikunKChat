@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useRef } from 'react';
-import { ChatSession, Message, MessageRole, Settings, Persona, FileAttachment, PersonaMemory } from '../types';
+import { ChatSession, Message, MessageRole, Settings, Persona, FileAttachment } from '../types';
 import { sendMessageStream, generateChatDetails } from '../services/geminiService';
 import { fileToData } from '../utils/fileUtils';
 import { TITLE_GENERATION_PROMPT } from '../data/prompts';
@@ -9,16 +9,13 @@ interface UseChatMessagingProps {
   settings: Settings;
   activeChat: ChatSession | null;
   personas: Persona[];
-  memories: Record<string, PersonaMemory[]>;
   setChats: React.Dispatch<React.SetStateAction<ChatSession[]>>;
 
   setActiveChatId: React.Dispatch<React.SetStateAction<string | null>>;
   addToast: (message: string, type: 'success' | 'error' | 'info') => void;
-  isNextChatStudyMode: boolean;
-  setIsNextChatStudyMode: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-export const useChatMessaging = ({ settings, activeChat, personas, memories, setChats, setActiveChatId, addToast, isNextChatStudyMode, setIsNextChatStudyMode }: UseChatMessagingProps) => {
+export const useChatMessaging = ({ settings, activeChat, personas, setChats, setActiveChatId, addToast }: UseChatMessagingProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const isCancelledRef = useRef(false);
   let inactivityTimer: NodeJS.Timeout; // For stream watchdog
@@ -28,8 +25,7 @@ export const useChatMessaging = ({ settings, activeChat, personas, memories, set
     setIsLoading(false); 
   }, []);
 
-  const _initiateStream = useCallback(async (chatId: string, historyForAPI: Message[], personaId: string | null | undefined, isStudyMode?: boolean) => {
-    const personaMemories = personaId ? memories[personaId] : undefined;
+  const _initiateStream = useCallback(async (chatId: string, historyForAPI: Message[], personaId: string | null | undefined) => {
     const apiKeys = settings.apiKey && settings.apiKey.length > 0
       ? settings.apiKey
       : (process.env.API_KEY ? [process.env.API_KEY] : []);
@@ -45,7 +41,7 @@ export const useChatMessaging = ({ settings, activeChat, personas, memories, set
 
     const chatSession = activeChat && activeChat.id === chatId 
         ? activeChat 
-        : { id: chatId, messages: historyForAPI, model: settings.defaultModel, personaId, title: "New Chat", createdAt: Date.now(), folderId: null, isStudyMode };
+        : { id: chatId, messages: historyForAPI, model: settings.defaultModel, personaId, title: "New Chat", createdAt: Date.now(), folderId: null };
 
     const activePersona = chatSession.personaId ? personas.find(p => p && p.id === chatSession.personaId) : null;
 
@@ -66,7 +62,7 @@ export const useChatMessaging = ({ settings, activeChat, personas, memories, set
 
     try {
       const currentModel = chatSession.model;
-      const stream = sendMessageStream(apiKeys, historyForAPI.slice(0, -1), promptContent, promptAttachments, currentModel, settings, activePersona, chatSession.isStudyMode, personaMemories);
+      const stream = sendMessageStream(apiKeys, historyForAPI.slice(0, -1), promptContent, promptAttachments, currentModel, settings, activePersona);
       
       // --- UI Update Logic using requestAnimationFrame ---
       let animationFrameId: number | null = null;
@@ -183,7 +179,7 @@ export const useChatMessaging = ({ settings, activeChat, personas, memories, set
         setIsLoading(false);
       }
     }
-  }, [settings, setChats, activeChat, personas, memories, addToast]);
+  }, [settings, setChats, activeChat, personas, addToast]);
 
   const handleSendMessage = useCallback(async (content: string, files: File[] = []) => {
     console.log(`\n[消息发送] 📤 开始处理消息发送`);
@@ -268,7 +264,6 @@ export const useChatMessaging = ({ settings, activeChat, personas, memories, set
     let currentChatId = activeChat?.id;
     let history: Message[];
     let currentPersonaId = activeChat?.personaId;
-    let currentIsStudyMode = activeChat?.isStudyMode;
 
     const apiKeys = settings.apiKey && settings.apiKey.length > 0
       ? settings.apiKey
@@ -280,14 +275,12 @@ export const useChatMessaging = ({ settings, activeChat, personas, memories, set
     if (!currentChatId) {
       console.log(`[Chat] Creating new chat - Content: "${content.substring(0, 30)}..."`);
       currentPersonaId = settings.defaultPersona;
-      currentIsStudyMode = isNextChatStudyMode;
       const persona = personas.find(p => p.id === currentPersonaId);
-      const newChat: ChatSession = { id: crypto.randomUUID(), title: persona?.name || content.substring(0, 40) || "New Chat", icon: (persona?.avatar?.type === 'emoji' ? persona.avatar.value : '👤') || "💬", messages: [userMessage], createdAt: Date.now(), model: persona?.model || settings.defaultModel, folderId: null, personaId: currentPersonaId, isStudyMode: currentIsStudyMode };
+      const newChat: ChatSession = { id: crypto.randomUUID(), title: persona?.name || content.substring(0, 40) || "New Chat", icon: (persona?.avatar?.type === 'emoji' ? persona.avatar.value : '👤') || "💬", messages: [userMessage], createdAt: Date.now(), model: persona?.model || settings.defaultModel, folderId: null, personaId: currentPersonaId };
       currentChatId = newChat.id;
       history = newChat.messages;
       setChats(prev => [newChat, ...prev]);
       setActiveChatId(newChat.id);
-      setIsNextChatStudyMode(false);
     } else {
       console.log(`[Chat] Continuing existing chat - ID: ${currentChatId}`);
       history = [...(activeChat?.messages || []), userMessage];
@@ -309,8 +302,8 @@ export const useChatMessaging = ({ settings, activeChat, personas, memories, set
       console.log(`[Title Gen] ⏭️ Skipped - Enabled: ${settings.autoTitleGeneration}, Content: ${!!content}, Keys: ${apiKeys.length > 0}`);
     }
 
-    await _initiateStream(currentChatId, history, currentPersonaId, currentIsStudyMode);
-  }, [activeChat, settings, setChats, setActiveChatId, _initiateStream, isNextChatStudyMode, setIsNextChatStudyMode, personas]);
+    await _initiateStream(currentChatId, history, currentPersonaId);
+  }, [activeChat, settings, setChats, setActiveChatId, _initiateStream, personas]);
 
   const handleDeleteMessage = useCallback((messageId: string) => {
     if (!activeChat?.id) return;
@@ -358,7 +351,7 @@ export const useChatMessaging = ({ settings, activeChat, personas, memories, set
 
     if (historyForResubmit.length > 0) {
         setChats(prev => prev.map(c => c.id === chatId ? { ...c, messages: historyForResubmit } : c));
-        _initiateStream(chatId, historyForResubmit, activeChat.personaId, activeChat.isStudyMode);
+        _initiateStream(chatId, historyForResubmit, activeChat.personaId);
     }
   }, [activeChat, isLoading, setChats, _initiateStream]);
 
@@ -377,7 +370,7 @@ export const useChatMessaging = ({ settings, activeChat, personas, memories, set
 
     if (historyForResubmit.length > 0) {
         setChats(prev => prev.map(c => c.id === chatId ? { ...c, messages: historyForResubmit } : c));
-        _initiateStream(chatId, historyForResubmit, activeChat.personaId, activeChat.isStudyMode);
+        _initiateStream(chatId, historyForResubmit, activeChat.personaId);
     }
   }, [activeChat, isLoading, setChats, _initiateStream]);
 

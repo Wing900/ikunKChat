@@ -9,16 +9,9 @@ interface SidebarProps {
   folders: Folder[];
   activeChatId: string | null;
   onSelectChat: (id: string) => void;
-  onNewChat: () => void;
   onDeleteChat: (id: string) => void;
   onEditChat: (chat: ChatSession) => void;
   onArchiveChat: (id: string) => void;
-  isCollapsed: boolean;
-  onToggleCollapse: () => void;
-  isMobileSidebarOpen: boolean;
-  onToggleMobileSidebar: () => void;
-  searchQuery: string;
-  onSetSearchQuery: (query: string) => void;
   onNewFolder: () => void;
   onEditFolder: (folder: Folder) => void;
   onDeleteFolder: (id: string) => void;
@@ -27,15 +20,26 @@ interface SidebarProps {
   onOpenPersonas: () => void;
   onOpenArchive: () => void;
   children?: React.ReactNode;
+  // 状态变化回调（让父组件知道状态改变）
+  onSidebarStateChange?: (state: { isCollapsed: boolean; isMobileSidebarOpen: boolean }) => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = (props) => {
-  const { chats, folders, activeChatId, onSelectChat, onNewChat, onDeleteChat, onEditChat, onArchiveChat, isCollapsed, onToggleCollapse, isMobileSidebarOpen, onToggleMobileSidebar, searchQuery, onSetSearchQuery, onNewFolder, onEditFolder, onDeleteFolder, onMoveChatToFolder, onOpenSettings, onOpenPersonas, onOpenArchive, children } = props;
+  const { chats, folders, activeChatId, onSelectChat, onDeleteChat, onEditChat, onArchiveChat, onNewFolder, onEditFolder, onDeleteFolder, onMoveChatToFolder, onOpenSettings, onOpenPersonas, onOpenArchive, children, onSidebarStateChange } = props;
   const { t } = useLocalization();
   
+  // UI 状态（内部管理）
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const [deletingFolderId, setDeletingFolderId] = useState<string | null>(null);
   const [openFolderIds, setOpenFolderIds] = useState<Set<string>>(new Set());
   const [dragOverTarget, setDragOverTarget] = useState<string | null>(null);
+  
+  // 当状态改变时通知父组件
+  useEffect(() => {
+    onSidebarStateChange?.({ isCollapsed, isMobileSidebarOpen });
+  }, [isCollapsed, isMobileSidebarOpen, onSidebarStateChange]);
   
   const nonArchivedChats = useMemo(() => chats.filter(c => !c.isArchived), [chats]);
   const prevChatIdsRef = useRef<Set<string>>(new Set(nonArchivedChats.map(c => c.id)));
@@ -136,22 +140,18 @@ export const Sidebar: React.FC<SidebarProps> = (props) => {
               <Icon icon="ikunchat.svg" className="w-8 h-8 text-[var(--accent-color)]" />
               <h1 className="text-2xl font-bold text-[var(--text-color)]">ikunKChat</h1>
             </div>
-            <button onClick={onToggleCollapse} className="p-2 rounded-full hover:bg-black/10 dark:hover:bg-white/10 -mr-2 hidden md:block" aria-label={t('collapseSidebar')} data-tooltip={t('collapseSidebar')} data-tooltip-placement="left">
+            <button onClick={() => setIsCollapsed(p => !p)} className="p-2 rounded-full hover:bg-black/10 dark:hover:bg-white/10 -mr-2 hidden md:block" aria-label={t('collapseSidebar')} data-tooltip={t('collapseSidebar')} data-tooltip-placement="left">
               <Icon icon="panel-left-close" className="w-5 h-5" />
             </button>
-            <button onClick={onToggleMobileSidebar} className="p-2 rounded-full hover:bg-black/10 dark:hover:bg-white/10 -mr-2 md:hidden" aria-label={t('collapseSidebar')} data-tooltip={t('collapseSidebar')} data-tooltip-placement="left">
+            <button onClick={() => setIsMobileSidebarOpen(p => !p)} className="p-2 rounded-full hover:bg-black/10 dark:hover:bg-white/10 -mr-2 md:hidden" aria-label={t('collapseSidebar')} data-tooltip={t('collapseSidebar')} data-tooltip-placement="left">
               <Icon icon="panel-left-close" className="w-5 h-5" />
             </button>
         </div>
         {!isCollapsed && (
           <>
-            <button onClick={() => onNewChat()} className="w-full flex items-center justify-center gap-2 px-4 py-3 mb-4 text-lg font-semibold bg-[var(--accent-color)] text-[var(--accent-color-text)] rounded-[var(--radius-2xl)] transition-transform hover:scale-105 active:scale-100">
-              <Icon icon="plus" className="w-6 h-6" />
-              {t('newChat')}
-            </button>
-            <div className="sidebar-search-wrapper mb-2">
+            <div className="sidebar-search-wrapper mb-4">
               <Icon icon="search" className="sidebar-search-icon w-5 h-5" />
-              <input type="text" placeholder={t('searchHistory')} className="sidebar-search-input" value={searchQuery} onChange={(e) => onSetSearchQuery(e.target.value)} />
+              <input type="text" placeholder={t('searchHistory')} className="sidebar-search-input" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
             </div>
           </>
         )}

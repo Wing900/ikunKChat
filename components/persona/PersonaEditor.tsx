@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Persona, Settings, PersonaMemory } from '../../types';
+import { Persona, Settings } from '../../types';
 import { Icon } from '../Icon';
 import { useLocalization } from '../../contexts/LocalizationContext';
 import { fileToData } from '../../utils/fileUtils';
@@ -7,7 +7,6 @@ import { Switch } from '../Switch';
 import { useToast } from '../../contexts/ToastContext';
 import { PersonaAvatar } from '../common/PersonaAvatar';
 import { AIBuilder } from './AIBuilder';
-import { MemoryManager } from './MemoryManager';
 import { CustomSelect, SelectOption } from '../CustomSelect';
 import { formatModelName } from '../../utils/textUtils';
 
@@ -26,13 +25,9 @@ interface PersonaEditorProps {
   onClose: () => void;
   settings: Settings;
   availableModels: string[];
-  memories: PersonaMemory[];
-  onAddMemory: (personaId: string, content: string) => void;
-  onUpdateMemory: (personaId: string, memoryId: string, content: string) => void;
-  onDeleteMemory: (personaId: string, memoryId: string) => void;
 }
 
-export const PersonaEditor: React.FC<PersonaEditorProps> = ({ personaToEdit, onSave, onClose, settings, availableModels, memories, onAddMemory, onUpdateMemory, onDeleteMemory }) => {
+export const PersonaEditor: React.FC<PersonaEditorProps> = ({ personaToEdit, onSave, onClose, settings, availableModels }) => {
   const { t } = useLocalization();
   const { addToast } = useToast();
   const [persona, setPersona] = useState<Persona>(personaToEdit || newPersonaTemplate);
@@ -134,21 +129,6 @@ export const PersonaEditor: React.FC<PersonaEditorProps> = ({ personaToEdit, onS
                         </div>
                     </div>
                 </div>
-               <div className="form-group">
-                   <div className="flex justify-between items-center">
-                       <label className="font-medium">{t('personaMemory')}</label>
-                       <Switch size="sm" checked={persona.memoryEnabled ?? false} onChange={e => handleUpdate({ memoryEnabled: e.target.checked })} />
-                   </div>
-               </div>
-               {persona.memoryEnabled && persona.id && (
-                   <MemoryManager
-                       personaId={persona.id}
-                       memories={memories}
-                       onAddMemory={onAddMemory}
-                       onUpdateMemory={onUpdateMemory}
-                       onDeleteMemory={onDeleteMemory}
-                   />
-               )}
             </div>
         </div>
         <div className="persona-editor-builder-pane w-full md:w-auto h-96 md:h-auto">

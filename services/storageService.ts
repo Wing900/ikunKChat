@@ -1,4 +1,4 @@
-import { ChatSession, Folder, Settings, Persona, PersonaMemory } from '../types';
+import { ChatSession, Folder, Settings, Persona } from '../types';
 import { getAttachments } from './indexedDBService';
 
 const CHATS_KEY = 'kchat-sessions';
@@ -6,7 +6,6 @@ const FOLDERS_KEY = 'kchat-folders';
 const SETTINGS_KEY = 'kchat-settings';
 const ROLES_KEY = 'kchat-roles';
 const CUSTOM_LANGUAGES_KEY = 'kchat-custom-languages';
-const PERSONA_MEMORIES_KEY = 'kchat-persona-memories';
 const ACTIVE_CHAT_KEY = 'kchat-active-chat';
 const DATA_VERSION_KEY = 'kchat-data-version';
 const CURRENT_DATA_VERSION = '1.2.0'; // 数据版本号，用于数据迁移
@@ -303,16 +302,6 @@ export const loadCustomLanguages = (): { code: string, name: string }[] => {
     }
 };
 
-export const loadPersonaMemories = (): Record<string, PersonaMemory[]> => {
-    try {
-        const saved = localStorage.getItem(PERSONA_MEMORIES_KEY);
-        return saved ? JSON.parse(saved) : {};
-    } catch (error) {
-        console.error("Failed to load persona memories from localStorage", error);
-        return {};
-    }
-};
-
 export const loadActiveChatId = (): string | null => {
     try {
         const saved = localStorage.getItem(ACTIVE_CHAT_KEY);
@@ -448,14 +437,6 @@ export const saveCustomLanguages = (languages: { code: string, name: string }[])
     }
 };
 
-export const savePersonaMemories = (memories: Record<string, PersonaMemory[]>) => {
-    try {
-        localStorage.setItem(PERSONA_MEMORIES_KEY, JSON.stringify(memories));
-    } catch (error) {
-        console.error("Failed to save persona memories to localStorage", error);
-    }
-};
-
 export const saveActiveChatId = (activeChatId: string | null) => {
     try {
         if (activeChatId) {
@@ -469,12 +450,9 @@ export const saveActiveChatId = (activeChatId: string | null) => {
 };
 
 // --- Data Management ---
-export const exportData = (data: { chats?: ChatSession[], folders?: Folder[], settings?: Settings, personas?: Persona[], memories?: Record<string, PersonaMemory[]> }) => {
+export const exportData = (data: { chats?: ChatSession[], folders?: Folder[], settings?: Settings, personas?: Persona[] }) => {
     const isFullExport = !!data.chats;
     const dataToExport = { ...data };
-    if (data.memories) {
-        dataToExport.memories = data.memories;
-    }
     const blob = new Blob([JSON.stringify(dataToExport, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -504,14 +482,14 @@ export const exportSelectedChats = (selectedChatIds: string[], allChats: ChatSes
     URL.revokeObjectURL(url);
 };
 
-export const importData = (file: File): Promise<{ chats?: ChatSession[], folders?: Folder[], settings?: Settings, personas?: Persona[], memories?: Record<string, PersonaMemory[]> }> => {
+export const importData = (file: File): Promise<{ chats?: ChatSession[], folders?: Folder[], settings?: Settings, personas?: Persona[] }> => {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = (e) => {
             try {
                 const data = JSON.parse(e.target?.result as string);
                 // Basic validation
-                if (typeof data === 'object' && data !== null && (data.settings || data.chats || data.folders || data.personas || data.memories)) {
+                if (typeof data === 'object' && data !== null && (data.settings || data.chats || data.folders || data.personas)) {
                     resolve(data);
                 } else {
                     reject(new Error("Invalid file structure."));
@@ -531,8 +509,9 @@ export const clearAllData = () => {
     localStorage.removeItem(SETTINGS_KEY);
     localStorage.removeItem(ROLES_KEY);
     localStorage.removeItem(CUSTOM_LANGUAGES_KEY);
-    localStorage.removeItem(PERSONA_MEMORIES_KEY);
     localStorage.removeItem(ACTIVE_CHAT_KEY);
+    // 清理记忆数据（如果存在）
+    localStorage.removeItem('kchat-persona-memories');
     // We don't clear privacy consent here, as it should persist
 };
 

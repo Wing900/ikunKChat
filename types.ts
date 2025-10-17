@@ -45,30 +45,18 @@ export interface Persona {
   contextLength?: number;
   maxOutputTokens?: number;
   isNew?: boolean;
-  memoryEnabled?: boolean;
-  maxMemories?: number;
-}
-
-export interface PersonaMemory {
-  id: string;
-  personaId: string;
-  content: string;
-  createdAt: number;
-  updatedAt: number;
-  source: 'manual' | 'auto';
 }
 
 export interface ChatSession {
-  id:string;
+  id: string;
   title: string;
-  icon?: string; // Emoji icon for the chat
+  icon?: string;
   model: string;
   messages: Message[];
   createdAt: number;
   folderId: string | null;
   personaId?: string | null;
   isArchived?: boolean;
-  isStudyMode?: boolean;
 }
 
 export interface Settings {

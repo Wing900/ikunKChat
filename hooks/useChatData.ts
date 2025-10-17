@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { ChatSession, Folder, Settings } from '../types';
 import { loadChats, loadFolders, saveChats, saveFolders, loadActiveChatId, saveActiveChatId } from '../services/storageService';
+import { debounce } from '../utils/debounce';
 
 interface UseChatDataProps {
   settings: Settings;
@@ -13,12 +14,23 @@ export const useChatData = ({ settings, isStorageLoaded, onSettingsChange }: Use
   const [folders, setFolders] = useState<Folder[]>([]);
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
 
+  // 创建防抖保存函数（只创建一次）
+  const debouncedSaveChats = useRef(
+    debounce((chatsToSave: ChatSession[]) => {
+      saveChats(chatsToSave);
+    }, 1000)
+  ).current;
+
+  const debouncedSaveFolders = useRef(
+    debounce((foldersToSave: Folder[]) => {
+      saveFolders(foldersToSave);
+    }, 1000)
+  ).current;
+
 
   useEffect(() => {
     if (isStorageLoaded) {
-      // loadChats 现在是异步的，需要从 IndexedDB 恢复附件数据
       loadChats().then(loadedChats => {
-        console.log(`[useChatData] 加载了 ${loadedChats.length} 个聊天会话`);
         setChats(loadedChats);
       }).catch(error => {
         console.error('[useChatData] 加载聊天失败:', error);
@@ -26,26 +38,21 @@ export const useChatData = ({ settings, isStorageLoaded, onSettingsChange }: Use
       });
       
       setFolders(loadFolders());
-      
-      // 恢复当前活跃的聊天
-      const savedActiveChatId = loadActiveChatId();
-      if (savedActiveChatId) {
-        setActiveChatId(savedActiveChatId);
-      }
+      setActiveChatId(null);
     }
   }, [isStorageLoaded]);
 
   useEffect(() => {
-    if (isStorageLoaded) {
-      saveChats(chats);
+    if (isStorageLoaded && chats.length > 0) {
+      debouncedSaveChats(chats);
     }
-  }, [chats, isStorageLoaded]);
+  }, [chats, isStorageLoaded, debouncedSaveChats]);
 
   useEffect(() => {
-    if (isStorageLoaded) {
-      saveFolders(folders);
+    if (isStorageLoaded && folders.length > 0) {
+      debouncedSaveFolders(folders);
     }
-  }, [folders, isStorageLoaded]);
+  }, [folders, isStorageLoaded, debouncedSaveFolders]);
 
   useEffect(() => {
     if (isStorageLoaded) {
@@ -58,8 +65,8 @@ export const useChatData = ({ settings, isStorageLoaded, onSettingsChange }: Use
     if (activeChatId === id) setActiveChatId(null);
   }, [activeChatId]);
 
-  const handleUpdateChatDetails = useCallback((id: string, title: string, icon: string) => {
-    setChats(p => p.map(c => c.id === id ? { ...c, title, icon } : c));
+  const handleUpdateChatDetails = useCallback((id: string, title: string) => {
+    setChats(p => p.map(c => c.id === id ? { ...c, title } : c));
   }, []);
 
   const handleNewFolder = useCallback((id: string, name: string, icon?: string) => {
@@ -86,9 +93,7 @@ export const useChatData = ({ settings, isStorageLoaded, onSettingsChange }: Use
     }
   }, [activeChatId]);
   
-  const handleToggleStudyMode = useCallback((chatId: string, enabled: boolean) => {
-    setChats(p => p.map(c => c.id === chatId ? { ...c, isStudyMode: enabled } : c));
-  }, []);
+  
 
   const handleSetModelForActiveChat = useCallback((model: string) => {
     if (activeChatId) {
@@ -114,6 +119,6 @@ export const useChatData = ({ settings, isStorageLoaded, onSettingsChange }: Use
     handleSetModelForActiveChat,
     handleSetCurrentModel,
     handleArchiveChat,
-    handleToggleStudyMode,
+    
   };
 };

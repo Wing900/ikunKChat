@@ -1,5 +1,5 @@
-import { Message, Settings, Persona, PersonaMemory } from '../../types';
-import { STUDY_MODE_PROMPT, OPTIMIZE_FORMATTING_PROMPT, THINK_DEEPER_PROMPT } from '../../data/prompts';
+import { Message, Settings, Persona } from '../../types';
+import { OPTIMIZE_FORMATTING_PROMPT, THINK_DEEPER_PROMPT } from '../../data/prompts';
 import { getMessageSize, getFormattedMessageSize, analyzeMessageSize } from '../../utils/messageSize';
 import { testContextTruncation } from '../../utils/testContextTruncation';
 
@@ -19,7 +19,7 @@ function createTextOnlyMessage(message: Message): Message {
   };
 }
 
-export function prepareChatPayload(history: Message[], settings: Settings, persona?: Persona | null, isStudyMode?: boolean, memories?: PersonaMemory[]) {
+export function prepareChatPayload(history: Message[], settings: Settings, persona?: Persona | null) {
   // 1. Determine the source of settings (persona or global)
   const settingsSource = {
     temperature: persona?.temperature ?? settings.temperature,
@@ -34,13 +34,6 @@ export function prepareChatPayload(history: Message[], settings: Settings, perso
   // 预先计算系统指令大小
   let systemInstructionParts: string[] = [];
 
-  if (persona?.memoryEnabled && memories && memories.length > 0) {
-    const memoryHeader = "### Persona Memories (for context, not for direct response):\n";
-    const memoryContent = memories.map(mem => `- ${mem.content}`).join('\n');
-    systemInstructionParts.push(`${memoryHeader}${memoryContent}`);
-  }
-
-  if (isStudyMode) systemInstructionParts.push(STUDY_MODE_PROMPT);
   if (persona?.systemPrompt) systemInstructionParts.push(persona.systemPrompt);
 
 
