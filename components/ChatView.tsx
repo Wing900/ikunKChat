@@ -8,39 +8,61 @@ import { ChatInput, ChatInputRef } from './chat/ChatInput';
 import { useLocalization } from '../contexts/LocalizationContext';
 import { InternalView } from './common/InternalView';
 import { ChatHeader } from './chat/ChatHeader';
+import { ChatContextProvider } from '../contexts/ChatContext';
 
-interface ChatViewProps {
-  chatSession: ChatSession | null;
-  personas: Persona[];
+// 消息操作配置
+interface MessageActions {
   onSendMessage: (message: string, files: File[]) => void;
-  isLoading: boolean;
-  onCancelGeneration: () => void;
-  onSetModelForActiveChat: (model: string) => void;
-  currentModel: string;
-  onSetCurrentModel: (model: string) => void;
-  availableModels: string[];
-  isSidebarCollapsed: boolean;
-  onToggleSidebar: () => void;
-  onToggleMobileSidebar: () => void;
-  onNewChat: (personaId?: string) => void;
-  onImageClick: (src: string) => void;
-
-  settings: Settings;
   onDeleteMessage: (messageId: string) => void;
   onUpdateMessageContent: (messageId: string, newContent: string) => void;
   onRegenerate: () => void;
   onEditAndResubmit: (messageId: string, newContent: string) => void;
-  onShowCitations: (chunks: any[]) => void;
-  onDeleteChat: (id: string) => void;
-  onEditChat: (chat: ChatSession) => void;
-  onToggleStudyMode: (chatId: string, enabled: boolean) => void;
-  isNextChatStudyMode: boolean;
-  onToggleNextChatStudyMode: (enabled: boolean) => void;
   onEditMessage: (message: Message) => void;
 }
 
+// 模型配置
+interface ModelConfig {
+  currentModel: string;
+  availableModels: string[];
+  onSetCurrentModel: (model: string) => void;
+  onSetModelForActiveChat: (model: string) => void;
+}
+
+// UI 交互配置
+interface UIInteractions {
+  isSidebarCollapsed: boolean;
+  onToggleSidebar: () => void;
+  onToggleMobileSidebar: () => void;
+  onImageClick: (src: string) => void;
+  onShowCitations: (chunks: any[]) => void;
+}
+
+// 聊天管理配置
+interface ChatManagement {
+  onNewChat: (personaId?: string) => void;
+  onDeleteChat: (id: string) => void;
+  onEditChat: (chat: ChatSession) => void;
+}
+
+interface ChatViewProps {
+  // 核心数据
+  chatSession: ChatSession | null;
+  personas: Persona[];
+  settings: Settings;
+  isLoading: boolean;
+  
+  // 分组配置
+  messageActions: MessageActions;
+  modelConfig: ModelConfig;
+  uiInteractions: UIInteractions;
+  chatManagement: ChatManagement;
+  
+  // 生成控制
+  onCancelGeneration: () => void;
+}
+
 export const ChatView: React.FC<ChatViewProps> = (props) => {
-  const { chatSession, personas, onSendMessage, isLoading, settings, onNewChat } = props;
+  const { chatSession, personas, isLoading, settings, messageActions, chatManagement } = props;
   const { t } = useLocalization();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatInputRef = useRef<ChatInputRef>(null);
@@ -68,17 +90,20 @@ export const ChatView: React.FC<ChatViewProps> = (props) => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatSession, chatSession?.messages, isLoading, editingMessageId]);
 
-  const handleSendMessageWithTools = (message: string, files: File[]) => { onSendMessage(message, files); setChatInput(''); };
+  const handleSendMessageWithTools = (message: string, files: File[]) => {
+    messageActions.onSendMessage(message, files);
+    setChatInput('');
+  };
 
 
   const handleSaveEdit = useCallback((message: Message, newContent: string) => {
     if (message.role === 'user') {
-      props.onEditAndResubmit(message.id, newContent);
+      messageActions.onEditAndResubmit(message.id, newContent);
     } else {
-      props.onUpdateMessageContent(message.id, newContent);
+      messageActions.onUpdateMessageContent(message.id, newContent);
     }
     setEditingMessageId(null);
-  }, [props.onEditAndResubmit, props.onUpdateMessageContent]);
+  }, [messageActions]);
 
   const handleCancelEdit = useCallback(() => {
     setEditingMessageId(null);
@@ -88,12 +113,9 @@ export const ChatView: React.FC<ChatViewProps> = (props) => {
     navigator.clipboard.writeText(content);
   }, []);
   
+  // Study Mode 功能已移除（等待其他 AI 清理）
   const handleToggleStudyMode = (enabled: boolean) => {
-    if (chatSession) {
-      props.onToggleStudyMode(chatSession.id, enabled);
-    } else {
-      props.onToggleNextChatStudyMode(enabled);
-    }
+    console.warn('[ChatView] Study Mode feature is being removed');
   };
 
   const handleDragEnter = (e: React.DragEvent<HTMLElement>) => {
@@ -117,10 +139,16 @@ export const ChatView: React.FC<ChatViewProps> = (props) => {
   };
 
   return (
-    <main
-      className="rounded-[var(--radius-2xl)] flex flex-col h-full overflow-hidden relative"
-      onDragEnter={handleDragEnter} onDragLeave={handleDragLeave} onDragOver={(e) => {e.preventDefault(); e.stopPropagation();}} onDrop={handleDrop}
-    >
+    <ChatContextProvider value={{
+      settings,
+      personas,
+      onImageClick: props.uiInteractions.onImageClick,
+      onShowCitations: props.uiInteractions.onShowCitations
+    }}>
+      <main
+        className="rounded-[var(--radius-2xl)] flex flex-col h-full overflow-hidden relative"
+        onDragEnter={handleDragEnter} onDragLeave={handleDragLeave} onDragOver={(e) => {e.preventDefault(); e.stopPropagation();}} onDrop={handleDrop}
+      >
         <div className={`dropzone-overlay ${isDraggingOver ? 'visible' : ''}`}>
             <div className="dropzone-overlay-content">
                 <Icon icon="upload" className="w-20 h-20" />
@@ -128,23 +156,23 @@ export const ChatView: React.FC<ChatViewProps> = (props) => {
             </div>
         </div>
         
-        <ChatHeader 
-          chatSession={chatSession} 
-          onNewChat={onNewChat} 
-          availableModels={props.availableModels} 
-          onSetModelForActiveChat={props.onSetModelForActiveChat} 
-          currentModel={props.currentModel} 
-          isSidebarCollapsed={props.isSidebarCollapsed}
-          onToggleSidebar={props.onToggleSidebar}
-          onToggleMobileSidebar={props.onToggleMobileSidebar}
+        <ChatHeader
+          chatSession={chatSession}
+          onNewChat={chatManagement.onNewChat}
+          availableModels={props.modelConfig.availableModels}
+          onSetModelForActiveChat={props.modelConfig.onSetModelForActiveChat}
+          currentModel={props.modelConfig.currentModel}
+          isSidebarCollapsed={props.uiInteractions.isSidebarCollapsed}
+          onToggleSidebar={props.uiInteractions.onToggleSidebar}
+          onToggleMobileSidebar={props.uiInteractions.onToggleMobileSidebar}
         />
         
         <div className="flex-grow flex flex-col relative min-h-0">
             <InternalView active={!!chatSession}>
               <div className="flex-grow overflow-y-auto pt-1 pb-5">
-                <div className={`w-full px-6 transition-all duration-300 ${props.isSidebarCollapsed ? 'max-w-6xl mx-auto' : 'max-w-[672px] mx-auto'}`}>
+                <div className={`w-full px-6 transition-all duration-300 ${props.uiInteractions.isSidebarCollapsed ? 'max-w-6xl mx-auto' : 'max-w-[672px] mx-auto'}`}>
                   {(chatSession?.messages || []).map((msg, index) => (
-                    <MessageBubble key={msg.id} message={msg} index={index} onImageClick={props.onImageClick} settings={settings} persona={activePersona} isLastMessageLoading={isLoading && index === chatSession!.messages.length - 1} isEditing={editingMessageId === msg.id} onEditRequest={() => props.onEditMessage(msg)} onCancelEdit={handleCancelEdit} onSaveEdit={handleSaveEdit} onDelete={props.onDeleteMessage} onRegenerate={props.onRegenerate} onCopy={handleCopy} onShowCitations={props.onShowCitations} />
+                    <MessageBubble key={msg.id} message={msg} index={index} persona={activePersona} isLastMessageLoading={isLoading && index === chatSession!.messages.length - 1} isEditing={editingMessageId === msg.id} onEditRequest={() => messageActions.onEditMessage(msg)} onCancelEdit={handleCancelEdit} onSaveEdit={handleSaveEdit} onDelete={messageActions.onDeleteMessage} onRegenerate={messageActions.onRegenerate} onCopy={handleCopy} />
                   ))}
                   <div ref={messagesEndRef} />
                 </div>
@@ -153,22 +181,34 @@ export const ChatView: React.FC<ChatViewProps> = (props) => {
 
             <InternalView active={!chatSession}>
               <WelcomeView
-                currentModel={props.currentModel}
-                onSetCurrentModel={props.onSetCurrentModel}
-                availableModels={props.availableModels}
+                currentModel={props.modelConfig.currentModel}
+                onSetCurrentModel={props.modelConfig.onSetCurrentModel}
+                availableModels={props.modelConfig.availableModels}
                 personas={props.personas}
-                onStartChat={props.onNewChat}
+                onStartChat={props.chatManagement.onNewChat}
                 settings={props.settings}
-                isSidebarCollapsed={props.isSidebarCollapsed}
+                isSidebarCollapsed={props.uiInteractions.isSidebarCollapsed}
               />
             </InternalView>
         </div>
         
-        <div className={`w-full px-6 transition-all duration-300 ${props.isSidebarCollapsed ? 'max-w-6xl mx-auto' : 'max-w-[672px] mx-auto'}`}>
-
-
-          <ChatInput ref={chatInputRef} onSendMessage={handleSendMessageWithTools} isLoading={isLoading} onCancel={props.onCancelGeneration} input={chatInput} setInput={setChatInput} chatSession={chatSession} onToggleStudyMode={handleToggleStudyMode} isNextChatStudyMode={props.isNextChatStudyMode} availableModels={props.availableModels} currentModel={props.currentModel} onSetModelForActiveChat={props.onSetModelForActiveChat} />
+        <div className={`w-full px-6 transition-all duration-300 ${props.uiInteractions.isSidebarCollapsed ? 'max-w-6xl mx-auto' : 'max-w-[672px] mx-auto'}`}>
+          <ChatInput
+            ref={chatInputRef}
+            onSendMessage={handleSendMessageWithTools}
+            isLoading={isLoading}
+            onCancel={props.onCancelGeneration}
+            input={chatInput}
+            setInput={setChatInput}
+            chatSession={chatSession}
+            onToggleStudyMode={handleToggleStudyMode}
+            isNextChatStudyMode={false}
+            availableModels={props.modelConfig.availableModels}
+            currentModel={props.modelConfig.currentModel}
+            onSetModelForActiveChat={props.modelConfig.onSetModelForActiveChat}
+          />
         </div>
-    </main>
+      </main>
+    </ChatContextProvider>
   );
 };

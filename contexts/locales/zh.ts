@@ -168,10 +168,6 @@ switchModel: '切换模型',
     // Common
     close: '关闭',
 
-    // Persona Memory
-    personaMemory: '角色记忆',
-    addMemoryPlaceholder: '添加一条新记忆...',
-
     // About Settings
     about: '关于',
     versionInfo: '版本信息',

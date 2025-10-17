@@ -6,6 +6,7 @@ import { useLocalization } from '../contexts/LocalizationContext';
 import { MessageActions } from './MessageActions';
 import { getAttachment } from '../services/indexedDBService';
 import { LazyImage } from './LazyImage';
+import { useChatContext } from '../contexts/ChatContext';
 
 const TypingIndicator: React.FC<{ thoughts?: string | null }> = ({ thoughts }) => {
   const [text, setText] = useState('');
@@ -63,8 +64,6 @@ const TypingIndicator: React.FC<{ thoughts?: string | null }> = ({ thoughts }) =
 interface MessageBubbleProps {
     message: Message;
     index: number;
-    onImageClick: (src: string) => void;
-    settings: Settings;
     persona: Persona | null;
     isLastMessageLoading?: boolean;
     isEditing: boolean;
@@ -74,11 +73,11 @@ interface MessageBubbleProps {
     onDelete: (messageId: string) => void;
     onRegenerate: () => void;
     onCopy: (content: string) => void;
-    onShowCitations: (chunks: any[]) => void;
 }
 
 export const MessageBubble: React.FC<MessageBubbleProps> = React.memo((props) => {
-  const { message, index, onImageClick, settings, persona, onEditRequest, onDelete, onRegenerate, onCopy, onShowCitations, isLastMessageLoading } = props;
+  const { message, index, persona, onEditRequest, onDelete, onRegenerate, onCopy, isLastMessageLoading } = props;
+  const { settings, onImageClick, onShowCitations } = useChatContext();
   const { t } = useLocalization();
   const isUser = message.role === MessageRole.USER;
   const hasContent = message.content && message.content !== '...';
@@ -159,34 +158,43 @@ export const MessageBubble: React.FC<MessageBubbleProps> = React.memo((props) =>
             )}
             <div className={`p-2 ${isUser ? '' : 'text-[var(--text-color)]'}`}>
                 {message.attachments && message.attachments.length > 0 && (
-                  <div className="mb-2 flex flex-wrap gap-2">
+                  <div className={`mb-3 grid gap-2 ${
+                    message.attachments.length === 1 ? 'grid-cols-1' :
+                    message.attachments.length === 2 ? 'grid-cols-2' :
+                    'grid-cols-2 sm:grid-cols-3'
+                  }`}>
                     {message.attachments.map((att, i) => {
                       // 优先使用附件自带的 data，其次使用从 IndexedDB 加载的数据
                       const imageData = att.data || (att.id ? loadedAttachments[att.id] : undefined);
                       
                       return (
-                        <div key={i} className="rounded-lg overflow-hidden border border-black/10 dark:border-white/10 max-w-[200px]">
+                        <div key={i} className={`rounded-xl overflow-hidden border border-black/10 dark:border-white/10 ${
+                          message.attachments.length === 1 ? 'max-w-md' : ''
+                        }`} style={{ backgroundColor: 'rgba(0, 0, 0, 0.01)' }}>
                           {att.mimeType.startsWith('image/') && imageData ? (
                             <LazyImage
                               src={`data:${att.mimeType};base64,${imageData}`}
                               alt={att.name}
                               onClick={() => onImageClick(`data:${att.mimeType};base64,${imageData}`)}
                               style={{
-                                maxHeight: '200px',
                                 width: '100%',
-                                cursor: 'pointer'
+                                height: message.attachments.length === 1 ? 'auto' : '160px',
+                                maxHeight: message.attachments.length === 1 ? '400px' : '160px',
+                                objectFit: 'cover',
+                                cursor: 'pointer',
+                                display: 'block'
                               }}
                               showLoadingIndicator={true}
                             />
                           ) : att.mimeType.startsWith('image/') && att.id && !imageData ? (
                             // 图片加载中
-                            <div className="p-3 bg-black/10 dark:bg-white/10 flex items-center justify-center h-[100px]">
-                              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[var(--accent-color)]"></div>
+                            <div className="flex items-center justify-center h-[160px]">
+                              <div className="animate-spin rounded-full h-8 w-8 border-2 border-[var(--accent-color)] border-t-transparent"></div>
                             </div>
                           ) : (
-                            <div className="p-3 bg-black/10 dark:bg-white/10 flex items-center gap-2 text-current">
-                              <Icon icon="file" className="w-6 h-6 flex-shrink-0" />
-                              <span className="text-sm truncate">{att.name}</span>
+                            <div className="p-4 flex items-center gap-3 text-current min-h-[80px]">
+                              <Icon icon="file" className="w-8 h-8 flex-shrink-0 opacity-60" />
+                              <span className="text-sm truncate font-medium">{att.name}</span>
                             </div>
                           )}
                         </div>

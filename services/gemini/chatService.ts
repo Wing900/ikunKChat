@@ -1,5 +1,5 @@
 import { GenerateContentResponse, Type } from "@google/genai";
-import { Message, FileAttachment, Settings, Persona, PersonaMemory } from '../../types';
+import { Message, FileAttachment, Settings, Persona } from '../../types';
 import { executeWithKeyRotation, executeStreamWithKeyRotation } from './apiExecutor';
 import { prepareChatPayload } from "./payloadBuilder";
 
@@ -8,8 +8,8 @@ interface Part {
   inlineData?: { mimeType: string; data: string; };
 }
 
-export function sendMessageStream(apiKeys: string[], messages: Message[], newMessage: string, attachments: FileAttachment[], model: string, settings: Settings, persona?: Persona | null, isStudyMode?: boolean, memories?: PersonaMemory[]): AsyncGenerator<GenerateContentResponse> {
-  const { formattedHistory, configForApi } = prepareChatPayload(messages, settings, persona, isStudyMode, memories);
+export function sendMessageStream(apiKeys: string[], messages: Message[], newMessage: string, attachments: FileAttachment[], model: string, settings: Settings, persona?: Persona | null): AsyncGenerator<GenerateContentResponse> {
+  const { formattedHistory, configForApi } = prepareChatPayload(messages, settings, persona);
   const messageParts: Part[] = attachments.map(att => ({
       inlineData: { mimeType: att.mimeType, data: att.data! }
   }));

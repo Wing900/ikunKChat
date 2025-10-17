@@ -5,13 +5,13 @@ import { useLocalization } from '../contexts/LocalizationContext';
 interface EditChatModalProps {
   chat: ChatSession;
   onClose: () => void;
-  onSave: (id: string, title: string, icon: string) => void;
+  onSave: (id: string, title: string) => void;
 }
 
 export const EditChatModal: React.FC<EditChatModalProps> = ({ chat, onClose, onSave }) => {
   const { t } = useLocalization();
   const [title, setTitle] = useState(chat.title);
-  const [icon, setIcon] = useState(chat.icon || '💬');
+  
   const [isVisible, setIsVisible] = useState(false);
 
   const handleClose = () => {
@@ -21,7 +21,7 @@ export const EditChatModal: React.FC<EditChatModalProps> = ({ chat, onClose, onS
 
   const handleSave = () => {
     if (title.trim()) {
-      onSave(chat.id, title.trim(), icon);
+      onSave(chat.id, title.trim());
     }
     handleClose();
   };
@@ -45,17 +45,7 @@ export const EditChatModal: React.FC<EditChatModalProps> = ({ chat, onClose, onS
       <div className={`modal-dialog modal-dialog-sm ${isVisible ? 'visible' : ''} glass-pane rounded-[var(--radius-2xl)] p-6 flex flex-col gap-4`}>
         <h2 className="text-xl font-bold text-[var(--text-color)]">{t('editChat')}</h2>
         
-        <div>
-          <label className="text-sm font-medium text-[var(--text-color-secondary)] mb-1 block">{t('iconEmoji')}</label>
-          <input
-            type="text"
-            value={icon}
-            onChange={(e) => setIcon(e.target.value)}
-            className="input-glass"
-            maxLength={2}
-            placeholder="💬"
-          />
-        </div>
+        
 
         <div>
           <label className="text-sm font-medium text-[var(--text-color-secondary)] mb-1 block">{t('title')}</label>

@@ -13,19 +13,8 @@ export const AboutSettings: React.FC<AboutSettingsProps> = ({ versionInfo }) => 
     <div className="space-y-6 text-sm text-[var(--text-color-secondary)]">
       
       <div className="space-y-4">
-        <h3 className="font-bold text-lg text-[var(--text-color)]">{t('privacyComplianceTitle')}</h3>
-        <p>{t('privacyComplianceText')}</p>
-        
-        <h3 className="font-bold text-lg text-[var(--text-color)]">{t('privacyDataTitle')}</h3>
-        <p dangerouslySetInnerHTML={{ __html: t('privacyDataIntro') }} />
-        <ul className="list-disc list-inside space-y-2 pl-4">
-          <li dangerouslySetInnerHTML={{ __html: t('privacyDataPoint1') }} />
-          <li dangerouslySetInnerHTML={{ __html: t('privacyDataPoint2') }} />
-          <li dangerouslySetInnerHTML={{ __html: t('privacyDataPoint3') }} />
-        </ul>
-
-        <h3 className="font-bold text-lg text-[var(--text-color)]">{t('privacyUserResponsibilityTitle')}</h3>
-        <p>{t('privacyUserResponsibilityText')}</p>
+        <h3 className="font-bold text-lg text-[var(--text-color)]">隐私声明</h3>
+        <p className="text-base">本网站不会收集任何个人隐私,所有数据均存储在本地。</p>
       </div>
 
       <div className="border-t border-[var(--glass-border)] pt-6 space-y-4">
@@ -51,6 +40,30 @@ export const AboutSettings: React.FC<AboutSettingsProps> = ({ versionInfo }) => 
             <p className="text-[var(--text-color-secondary)]">{t('webmasterDesc')}</p>
           </div>
         </div>
+      </div>
+
+      <div className="border-t border-[var(--glass-border)] pt-6 space-y-4">
+        <h3 className="font-bold text-lg text-[var(--text-color)]">设计演变</h3>
+        <div className="flex items-center gap-6">
+          <div className="flex flex-col items-center gap-2">
+            <img
+              src="/ikunchat-v1.svg"
+              alt="KChat 初代图标"
+              className="w-16 h-16 p-2 rounded-lg bg-white dark:bg-gray-800 shadow-sm"
+            />
+            <span className="text-xs text-[var(--text-color-secondary)]">初代图标 (v1)</span>
+          </div>
+          <div className="text-2xl text-[var(--text-color-secondary)]">→</div>
+          <div className="flex flex-col items-center gap-2">
+            <img
+              src="/ikunchat.svg"
+              alt="KChat 当前图标"
+              className="w-16 h-16 p-2 rounded-lg bg-white dark:bg-gray-800 shadow-sm"
+            />
+            <span className="text-xs text-[var(--text-color-secondary)]">当前图标 (v2)</span>
+          </div>
+        </div>
+        <p className="text-xs text-[var(--text-color-secondary)] italic">初代图标由站长亲手设计,承载着项目鸽鸽的梦想 ✨</p>
       </div>
 
       <div className="border-t border-[var(--glass-border)] pt-6 space-y-4">

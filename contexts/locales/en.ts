@@ -168,9 +168,6 @@ switchModel: 'Switch Model',
     close: 'Close',
 
     // Persona Memory
-    personaMemory: 'Persona Memory',
-    addMemoryPlaceholder: 'Add a new memory...',
-
     // About Settings
     about: 'About',
     versionInfo: 'Version Information',
