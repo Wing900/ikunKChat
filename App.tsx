@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, lazy, Suspense, useLayoutEffect } from 'react';
+import React, { useState, useCallback, useEffect, lazy, Suspense, useLayoutEffect, useMemo } from 'react';
 import { Sidebar } from './components/sidebar/Sidebar';
 import { ChatView } from './components/ChatView';
 import { EditChatModal } from './components/EditChatModal';
@@ -31,7 +31,7 @@ import { useChatData } from './hooks/useChatData';
 import { useChatMessaging } from './hooks/useChatMessaging';
 import { useToast } from './contexts/ToastContext';
 import { usePersonas } from './hooks/usePersonas';
-import { useUIState } from './hooks/useUIState';
+import { UIStateProvider, useUIState } from './contexts/UIStateContext';
 import { exportData, importData, clearAllData, clearChatHistory, loadPrivacyConsent, savePrivacyConsent, loadLastReadVersion, saveLastReadVersion, exportSelectedChats } from './services/storageService';
 import { ViewContainer } from './components/common/ViewContainer';
 import { MessageEditModal } from './components/MessageEditModal';
@@ -71,7 +71,9 @@ const AppContainer = () => {
   const { t } = useLocalization();
   
   // UI 状态管理（模态框、抽屉等）
-  const uiState = useUIState();
+  const { 
+    isMobileSidebarOpen, toggleMobileSidebar, ...uiState 
+  } = useUIState();
 
   // 初始化 IndexedDB 并迁移旧数据
   useEffect(() => {
@@ -153,7 +155,7 @@ const AppContainer = () => {
   });
 
   // Sidebar 状态（由 Sidebar 组件管理，这里只读）
-  const [sidebarState, setSidebarState] = useState({ isCollapsed: false, isMobileSidebarOpen: false });
+  const [sidebarState, setSidebarState] = useState({ isCollapsed: false });
   
   const handleNewChat = useCallback((personaId?: string | null) => {
     if (loading) {
@@ -187,10 +189,17 @@ const AppContainer = () => {
     }
 
     setCurrentView('chat');
-  }, [settings.defaultPersona, settings.defaultModel, personas, setChats, setActiveChatId, addToast, loading]);
+    // 如果在移动端，创建新聊天后关闭侧边栏
+    if (isMobileSidebarOpen) {
+      toggleMobileSidebar();
+    }
+  }, [settings.defaultPersona, settings.defaultModel, personas, setChats, setActiveChatId, addToast, loading, isMobileSidebarOpen, toggleMobileSidebar]);
 
 // 已禁用自动创建聊天 - 让用户每次进入都看到欢迎页面
 // 用户需要点击"开始聊天"按钮来创建第一个对话
+
+// 创建一个稳定的依赖项，只有在角色ID列表实际更改时才会变化
+const personaIdsJson = useMemo(() => JSON.stringify(personas.map(p => p.id).sort()), [personas]);
 
 // Validate and fix defaultPersona after all personas are loaded
 useEffect(() => {
@@ -208,9 +217,16 @@ useEffect(() => {
     // 标记初始设置完成
     setIsInitialSetupComplete(true);
   }
-}, [personas, settings.defaultPersona, handleSettingsChange]);
+}, [personaIdsJson, settings.defaultPersona, handleSettingsChange]);
 
-const handleSelectChat = useCallback((id: string) => { setActiveChatId(id); setCurrentView('chat'); }, [setActiveChatId]);
+const handleSelectChat = useCallback((id: string) => { 
+  setActiveChatId(id); 
+  setCurrentView('chat'); 
+  // 如果在移动端，选择聊天后关闭侧边栏
+  if (isMobileSidebarOpen) {
+    toggleMobileSidebar();
+  }
+}, [setActiveChatId, isMobileSidebarOpen, toggleMobileSidebar]);
   
   const handleOpenView = (view: View) => {
     setCurrentView(view);
@@ -311,6 +327,7 @@ const handleSelectChat = useCallback((id: string) => { setActiveChatId(id); setC
             chats={chats}
             folders={folders}
             activeChatId={activeChatId}
+            isMobileSidebarOpen={isMobileSidebarOpen}
             onSelectChat={handleSelectChat}
             onDeleteChat={chatDataHandlers.handleDeleteChat}
             onEditChat={uiState.setEditingChat}
@@ -322,7 +339,8 @@ const handleSelectChat = useCallback((id: string) => { setActiveChatId(id); setC
             onOpenSettings={uiState.openSettings}
             onOpenPersonas={() => handleOpenView('personas')}
             onOpenArchive={() => handleOpenView('archive')}
-            onSidebarStateChange={setSidebarState}
+            onToggleMobileSidebar={toggleMobileSidebar}
+            onSidebarStateChange={(state) => setSidebarState({ isCollapsed: state.isCollapsed })}
           >
             <UpdateIndicator
               updateAvailable={needRefresh}
@@ -359,7 +377,7 @@ const handleSelectChat = useCallback((id: string) => { setActiveChatId(id); setC
                   uiInteractions={{
                     isSidebarCollapsed: sidebarState.isCollapsed,
                     onToggleSidebar: () => {},
-                    onToggleMobileSidebar: () => {},
+                    onToggleMobileSidebar: toggleMobileSidebar,
                     onImageClick: uiState.setLightboxImage,
                     onShowCitations: uiState.setCitationChunks,
                   }}
@@ -382,7 +400,7 @@ const handleSelectChat = useCallback((id: string) => { setActiveChatId(id); setC
                   clearError={clearError}
                   isSidebarCollapsed={sidebarState.isCollapsed}
                   onToggleSidebar={() => {}}
-                  onToggleMobileSidebar={() => {}}
+                  onToggleMobileSidebar={toggleMobileSidebar}
                 />
               </ViewContainer>
               <ViewContainer view="archive" activeView={currentView}>
@@ -395,7 +413,7 @@ const handleSelectChat = useCallback((id: string) => { setActiveChatId(id); setC
                   onClose={() => setCurrentView('chat')}
                   isSidebarCollapsed={sidebarState.isCollapsed}
                   onToggleSidebar={() => {}}
-                  onToggleMobileSidebar={() => {}}
+                  onToggleMobileSidebar={toggleMobileSidebar}
                 />
               </ViewContainer>
               <ViewContainer view="editor" activeView={currentView}>
@@ -479,7 +497,9 @@ const handleSelectChat = useCallback((id: string) => { setActiveChatId(id); setC
 export default function App() {
   return (
     <LocalizationProvider>
-      <AppContainer />
+      <UIStateProvider>
+        <AppContainer />
+      </UIStateProvider>
     </LocalizationProvider>
   );
 }

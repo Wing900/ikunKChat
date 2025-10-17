@@ -48,11 +48,11 @@ export const usePWAUpdate = (): UsePWAUpdateReturn => {
               
               // 用户进入网站后 10 秒检查一次
               setTimeout(() => {
-                console.log('[SW] 10秒后检查更新...');
+                console.log('[SW] 3秒后检查更新...');
                 reg?.update().catch(err => {
                   console.warn('[SW] 首次更新检查失败:', err);
                 });
-              }, 10 * 1000);
+              }, 3 * 1000);
               
               // 之后每小时检查一次
               setInterval(() => {

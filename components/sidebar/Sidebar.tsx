@@ -8,6 +8,7 @@ interface SidebarProps {
   chats: ChatSession[];
   folders: Folder[];
   activeChatId: string | null;
+  isMobileSidebarOpen: boolean; // 新增：接收状态
   onSelectChat: (id: string) => void;
   onDeleteChat: (id: string) => void;
   onEditChat: (chat: ChatSession) => void;
@@ -19,27 +20,26 @@ interface SidebarProps {
   onOpenSettings: () => void;
   onOpenPersonas: () => void;
   onOpenArchive: () => void;
+  onToggleMobileSidebar: () => void; // 新增：接收切换函数
   children?: React.ReactNode;
-  // 状态变化回调（让父组件知道状态改变）
-  onSidebarStateChange?: (state: { isCollapsed: boolean; isMobileSidebarOpen: boolean }) => void;
+  onSidebarStateChange?: (state: { isCollapsed: boolean }) => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = (props) => {
-  const { chats, folders, activeChatId, onSelectChat, onDeleteChat, onEditChat, onArchiveChat, onNewFolder, onEditFolder, onDeleteFolder, onMoveChatToFolder, onOpenSettings, onOpenPersonas, onOpenArchive, children, onSidebarStateChange } = props;
+  const { chats, folders, activeChatId, isMobileSidebarOpen, onSelectChat, onDeleteChat, onEditChat, onArchiveChat, onNewFolder, onEditFolder, onDeleteFolder, onMoveChatToFolder, onOpenSettings, onOpenPersonas, onOpenArchive, onToggleMobileSidebar, children, onSidebarStateChange } = props;
   const { t } = useLocalization();
   
-  // UI 状态（内部管理）
+  // UI 状态（isCollapsed 仍在内部管理）
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [deletingFolderId, setDeletingFolderId] = useState<string | null>(null);
   const [openFolderIds, setOpenFolderIds] = useState<Set<string>>(new Set());
   const [dragOverTarget, setDragOverTarget] = useState<string | null>(null);
   
-  // 当状态改变时通知父组件
+  // 当 isCollapsed 状态改变时通知父组件
   useEffect(() => {
-    onSidebarStateChange?.({ isCollapsed, isMobileSidebarOpen });
-  }, [isCollapsed, isMobileSidebarOpen, onSidebarStateChange]);
+    onSidebarStateChange?.({ isCollapsed });
+  }, [isCollapsed, onSidebarStateChange]);
   
   const nonArchivedChats = useMemo(() => chats.filter(c => !c.isArchived), [chats]);
   const prevChatIdsRef = useRef<Set<string>>(new Set(nonArchivedChats.map(c => c.id)));
@@ -143,7 +143,7 @@ export const Sidebar: React.FC<SidebarProps> = (props) => {
             <button onClick={() => setIsCollapsed(p => !p)} className="p-2 rounded-full hover:bg-black/10 dark:hover:bg-white/10 -mr-2 hidden md:block" aria-label={t('collapseSidebar')} data-tooltip={t('collapseSidebar')} data-tooltip-placement="left">
               <Icon icon="panel-left-close" className="w-5 h-5" />
             </button>
-            <button onClick={() => setIsMobileSidebarOpen(p => !p)} className="p-2 rounded-full hover:bg-black/10 dark:hover:bg-white/10 -mr-2 md:hidden" aria-label={t('collapseSidebar')} data-tooltip={t('collapseSidebar')} data-tooltip-placement="left">
+            <button onClick={onToggleMobileSidebar} className="p-2 rounded-full hover:bg-black/10 dark:hover:bg-white/10 -mr-2 md:hidden" aria-label={t('collapseSidebar')} data-tooltip={t('collapseSidebar')} data-tooltip-placement="left">
               <Icon icon="panel-left-close" className="w-5 h-5" />
             </button>
         </div>
