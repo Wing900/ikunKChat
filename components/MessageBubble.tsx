@@ -5,6 +5,7 @@ import { MarkdownRenderer } from './MarkdownRenderer';
 import { useLocalization } from '../contexts/LocalizationContext';
 import { MessageActions } from './MessageActions';
 import { getAttachment } from '../services/indexedDBService';
+import { LazyImage } from './LazyImage';
 
 const TypingIndicator: React.FC<{ thoughts?: string | null }> = ({ thoughts }) => {
   const [text, setText] = useState('');
@@ -166,9 +167,17 @@ export const MessageBubble: React.FC<MessageBubbleProps> = React.memo((props) =>
                       return (
                         <div key={i} className="rounded-lg overflow-hidden border border-black/10 dark:border-white/10 max-w-[200px]">
                           {att.mimeType.startsWith('image/') && imageData ? (
-                            <button onClick={() => onImageClick(`data:${att.mimeType};base64,${imageData}`)} className="block w-full h-full">
-                              <img src={`data:${att.mimeType};base64,${imageData}`} className="max-h-[200px] object-contain" alt={att.name} />
-                            </button>
+                            <LazyImage
+                              src={`data:${att.mimeType};base64,${imageData}`}
+                              alt={att.name}
+                              onClick={() => onImageClick(`data:${att.mimeType};base64,${imageData}`)}
+                              style={{
+                                maxHeight: '200px',
+                                width: '100%',
+                                cursor: 'pointer'
+                              }}
+                              showLoadingIndicator={true}
+                            />
                           ) : att.mimeType.startsWith('image/') && att.id && !imageData ? (
                             // 图片加载中
                             <div className="p-3 bg-black/10 dark:bg-white/10 flex items-center justify-center h-[100px]">

@@ -129,7 +129,7 @@ export const Sidebar: React.FC<SidebarProps> = (props) => {
   return (
     <>
       {/* 侧边栏主体 */}
-      <aside className={`h-full flex-col flex flex-shrink-0 transition-transform md:transition-all duration-300 ease-in-out md:relative inset-y-0 left-0 z-40 ${isMobileSidebarOpen ? 'fixed translate-x-0' : 'fixed -translate-x-full'} md:relative md:transform-none ${isCollapsed ? 'w-0 md:w-16' : 'w-80'} overflow-hidden`}>
+      <aside className={`h-full flex-col flex flex-shrink-0 transition-transform md:transition-all duration-300 ease-in-out md:relative inset-y-0 left-0 z-40 ${isMobileSidebarOpen ? 'fixed translate-x-0' : 'fixed -translate-x-full'} md:relative md:transform-none ${isCollapsed ? 'w-0 md:w-16' : 'w-80'} overflow-hidden ${!isCollapsed ? 'lg:translate-x-0 lg:fixed lg:left-0 lg:top-0 lg:h-full lg:z-40' : ''}`}>
       <div className={`glass-pane rounded-[var(--radius-2xl)] h-full flex flex-col p-4 relative ${isCollapsed ? 'md:opacity-0 md:w-16' : 'opacity-100'}`}>
         <div className="flex items-center justify-between gap-3 mb-4 px-2">
             <div className={`flex items-center gap-3 ${isCollapsed ? 'hidden' : ''}`}>
