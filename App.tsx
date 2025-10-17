@@ -157,6 +157,10 @@ const AppContainer = () => {
   // Sidebar 状态（由 Sidebar 组件管理，这里只读）
   const [sidebarState, setSidebarState] = useState({ isCollapsed: false });
   
+  const handleSidebarStateChange = useCallback((state: { isCollapsed: boolean }) => {
+    setSidebarState({ isCollapsed: state.isCollapsed });
+  }, []);
+
   const handleNewChat = useCallback((personaId?: string | null) => {
     if (loading) {
       addToast("角色数据正在加载，请稍后再试", 'info');
@@ -340,7 +344,7 @@ const handleSelectChat = useCallback((id: string) => {
             onOpenPersonas={() => handleOpenView('personas')}
             onOpenArchive={() => handleOpenView('archive')}
             onToggleMobileSidebar={toggleMobileSidebar}
-            onSidebarStateChange={(state) => setSidebarState({ isCollapsed: state.isCollapsed })}
+            onSidebarStateChange={handleSidebarStateChange}
           >
             <UpdateIndicator
               updateAvailable={needRefresh}

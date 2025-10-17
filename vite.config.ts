@@ -17,7 +17,8 @@ export default defineConfig(({ mode }) => {
         }
       },
       build: {
-        outDir: 'dist'
+        outDir: 'dist',
+        sourcemap: false
       },
       plugins: [
         VitePWA({
