@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Icon } from '../Icon';
 import { useLocalization } from '../../contexts/LocalizationContext';
+import { UpdateStatus } from '../../hooks/usePWAUpdate';
 
 interface UpdateSettingsProps {
   versionInfo: { version: string } | null;
   updateAvailable: boolean;
   isCheckingUpdate: boolean;
+  updateStatus: UpdateStatus;
   onClose: () => void;
   onCheckUpdate: () => void;
   onUpdateNow: () => void;
@@ -15,12 +17,33 @@ export const UpdateSettings: React.FC<UpdateSettingsProps> = ({
   versionInfo,
   updateAvailable,
   isCheckingUpdate,
+  updateStatus,
   onClose,
   onCheckUpdate,
   onUpdateNow
 }) => {
   const { t } = useLocalization();
   const [isVisible, setIsVisible] = useState(false);
+
+  // 根据状态显示不同的图标和文本
+  const getStatusDisplay = () => {
+    switch (updateStatus) {
+      case 'checking':
+        return { icon: 'refresh', text: '正在检查更新...', color: 'text-blue-500', spinning: true };
+      case 'available':
+        return { icon: 'download', text: '发现新版本', color: 'text-green-500', spinning: false };
+      case 'downloading':
+        return { icon: 'download', text: '正在下载更新...', color: 'text-blue-500', spinning: true };
+      case 'ready':
+        return { icon: 'check-circle', text: '准备更新', color: 'text-green-500', spinning: false };
+      case 'error':
+        return { icon: 'alert-circle', text: '检查失败', color: 'text-red-500', spinning: false };
+      default:
+        return { icon: 'info', text: '就绪', color: 'text-gray-500', spinning: false };
+    }
+  };
+
+  const statusDisplay = getStatusDisplay();
 
   useEffect(() => {
     const timer = setTimeout(() => setIsVisible(true), 10);
@@ -44,31 +67,58 @@ export const UpdateSettings: React.FC<UpdateSettingsProps> = ({
         
         <div className="flex-grow min-h-0 overflow-y-auto -mr-4 pr-4 pb-4">
           <div className="space-y-4">
+            {/* 更新状态指示器 */}
+            <div className="flex items-center justify-center gap-3 p-4 bg-[var(--bg-secondary)] rounded-2xl">
+              <Icon
+                icon={statusDisplay.icon}
+                className={`w-6 h-6 ${statusDisplay.color} ${statusDisplay.spinning ? 'animate-spin' : ''}`}
+              />
+              <span className={`font-medium ${statusDisplay.color}`}>
+                {statusDisplay.text}
+              </span>
+            </div>
+
+            {/* 检查更新按钮 */}
             <button
               onClick={onCheckUpdate}
-              disabled={isCheckingUpdate}
-              className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-[var(--accent-color)] text-[var(--accent-color-text)] rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={isCheckingUpdate || updateStatus === 'checking'}
+              className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-[var(--accent-color)] text-[var(--accent-color-text)] rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90"
             >
-              <Icon icon="download" className={`w-5 h-5 ${isCheckingUpdate ? 'animate-spin' : ''}`} />
-              <span>{isCheckingUpdate ? t('checkingUpdate') : t('checkForUpdate')}</span>
+              <Icon icon="refresh" className={`w-5 h-5 ${isCheckingUpdate ? 'animate-spin' : ''}`} />
+              <span>{isCheckingUpdate ? '检查中...' : t('checkForUpdate')}</span>
             </button>
             
             <p className="text-xs text-[var(--text-color-secondary)] px-4 text-center">
               {t('updatePrompt')}
             </p>
 
+            {/* 立即更新按钮 */}
             {updateAvailable && (
-              <button
-                onClick={onUpdateNow}
-                className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
-              >
-                <Icon icon="download" className="w-5 h-5" />
-                <span>{t('updateNow')}</span>
-              </button>
+              <div className="space-y-2">
+                <button
+                  onClick={onUpdateNow}
+                  className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-full hover:from-green-600 hover:to-green-700 transition-all shadow-lg"
+                >
+                  <Icon icon="download" className="w-5 h-5" />
+                  <span>{t('updateNow')}</span>
+                </button>
+                <p className="text-xs text-center text-green-600 dark:text-green-400">
+                  🎉 新版本已就绪，点击上方按钮立即更新
+                </p>
+              </div>
             )}
-            <p className="text-center text-xs text-[var(--text-color-secondary)] mt-4">
-              {t('currentVersion')}: {versionInfo?.version || '...'}
-            </p>
+
+            {/* 版本信息 */}
+            <div className="pt-4 border-t border-[var(--border-color)]">
+              <p className="text-center text-sm text-[var(--text-color-secondary)]">
+                {t('currentVersion')}: <span className="font-mono font-semibold text-[var(--text-color)]">{versionInfo?.version || '...'}</span>
+              </p>
+              {updateStatus === 'error' && (
+                <p className="text-center text-xs text-red-500 mt-2">
+                  ⚠️ 检查更新时出现错误，请稍后重试
+                </p>
+              )}
+            </div>
           </div>
         </div>
       </div>

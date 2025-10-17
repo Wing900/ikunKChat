@@ -21,9 +21,28 @@ export default defineConfig(({ mode }) => {
       },
       plugins: [
         VitePWA({
-          registerType: 'prompt',
+          registerType: 'autoUpdate',
           devOptions: {
             enabled: true
+          },
+          workbox: {
+            cleanupOutdatedCaches: true,
+            skipWaiting: true,
+            clientsClaim: true,
+            runtimeCaching: [
+              {
+                urlPattern: /^https:\/\/generativelanguage\.googleapis\.com\/.*/i,
+                handler: 'NetworkFirst',
+                options: {
+                  cacheName: 'gemini-api-cache',
+                  networkTimeoutSeconds: 10,
+                  expiration: {
+                    maxEntries: 50,
+                    maxAgeSeconds: 60 * 60 // 1 hour
+                  }
+                }
+              }
+            ]
           },
           manifest: {
             name: 'ikunKChat',
