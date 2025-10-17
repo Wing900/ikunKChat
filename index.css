@@ -2019,3 +2019,15 @@ body.theme-apple-dark .katex-container .katex {
   gap: 12px;
   margin-top: 24px;
 }
+
+/* Tablet Landscape Layout Improvements */
+@media screen and (min-width: 768px) and (orientation: landscape) {
+  .main-layout-container > aside {
+    /* Force the sidebar into the document flow, overriding any 'fixed' positioning from Tailwind's responsive prefixes. */
+    position: relative !important;
+    transform: none !important;
+    
+    /* Ensure consistent transition for width changes */
+    transition: width 0.3s ease-in-out;
+  }
+}

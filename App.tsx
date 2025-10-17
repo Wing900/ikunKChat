@@ -466,7 +466,7 @@ const handleSelectChat = useCallback((id: string) => { setActiveChatId(id); setI
         
         {/* 移动端遮罩层已删除 - 通过侧边栏内的关闭按钮或汉堡按钮关闭 */}
 
-          <div className="flex flex-1 h-full overflow-hidden relative">
+          <div className="main-layout-container flex flex-1 h-full overflow-hidden relative">
           {/* 侧边栏 - 直接渲染，无额外容器 */}
           <Sidebar
             chats={chats}

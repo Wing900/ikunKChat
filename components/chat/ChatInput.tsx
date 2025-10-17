@@ -132,7 +132,7 @@ export const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(({ onSendMessa
             <div className="p-2 pt-1 pb-2">
                 <ToolItem icon="graduation-cap" label={t('studyLearn')} checked={isStudyModeActive} onChange={e => onToggleStudyMode(e.target.checked)} />
             </div>
-            <input ref={fileInputRef} type="file" onChange={handleFileChange} accept="image/*,.pdf,.txt,.md,.doc,.docx" multiple className="hidden" />
+            <input ref={fileInputRef} type="file" onChange={handleFileChange} accept="image/*,.pdf,.txt,.md" multiple className="hidden" />
         </div>
         <div className="rounded-[var(--radius-2xl)] flex flex-col transition-all duration-300 focus-within:border-[var(--accent-color)] focus-within:ring-2 ring-[var(--accent-color)]" style={{backgroundColor: 'var(--glass-bg)', border: '1px solid var(--glass-border)', boxShadow: 'var(--shadow-md)'}}>
           <FilePreview files={files} onRemoveFile={handleRemoveFile} />
