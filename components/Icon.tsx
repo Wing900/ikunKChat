@@ -20,7 +20,7 @@ const icons: Record<IconName, React.FC<React.SVGProps<SVGSVGElement>>> = {
 };
 
 export const Icon: React.FC<IconProps> = ({ icon, className, ...props }) => {
-  if (icon.endsWith('.svg')) {
+  if (icon.split('?')[0].endsWith('.svg')) {
     return (
       <img
         src={`/${icon}`}
