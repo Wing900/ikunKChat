@@ -45,7 +45,8 @@ const AppContainer = () => {
   const [showUpdateSettings, setShowUpdateSettings] = useState(false);
   const [showChatExportSelector, setShowChatExportSelector] = useState(false);
   const [showChatClearSelector, setShowChatClearSelector] = useState(false);
-  const { needRefresh, updateServiceWorker } = usePWAUpdate();
+  const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
+  const { needRefresh, updateStatus, updateServiceWorker, checkForUpdates } = usePWAUpdate();
 
   const [hasConsented, setHasConsented] = useState(() => {
     const consent = loadPrivacyConsent();
@@ -106,29 +107,23 @@ const AppContainer = () => {
   };
 
   const handleCheckForUpdates = async () => {
-    if ('serviceWorker' in navigator) {
-      const registration = await navigator.serviceWorker.getRegistration();
-      if (registration) {
-        try {
-          await registration.update();
-          addToast('正在检查更新...', 'info');
-          // In dev mode, onNeedRefresh might not fire reliably.
-          // We can add a timeout to check if needRefresh becomes true.
-          // If not, we can inform the user.
-          setTimeout(() => {
-            if (!needRefresh) {
-              addToast('当前已是最新版本', 'info');
-            }
-          }, 3000); // Wait 3 seconds to see if needRefresh is triggered
-        } catch (error) {
-          console.error('[Update] Check failed:', error);
-          addToast('检查更新失败', 'error');
-        }
+    setIsCheckingUpdate(true);
+    
+    try {
+      const result = await checkForUpdates();
+      
+      if (result.error) {
+        addToast(`检查更新失败: ${result.error}`, 'error');
+      } else if (result.hasUpdate) {
+        addToast(`发现新版本 ${result.remoteVersion}，请点击更新按钮`, 'success');
       } else {
-        addToast('Service Worker 未注册', 'error');
+        addToast('当前已是最新版本', 'info');
       }
-    } else {
-      addToast('浏览器不支持 Service Worker', 'error');
+    } catch (error) {
+      console.error('[Update] Check failed:', error);
+      addToast('检查更新时发生错误', 'error');
+    } finally {
+      setIsCheckingUpdate(false);
     }
   };
 
@@ -331,7 +326,7 @@ const handleSelectChat = useCallback((id: string) => { setActiveChatId(id); setC
           >
             <UpdateIndicator
               updateAvailable={needRefresh}
-              isCheckingUpdate={false}
+              isCheckingUpdate={isCheckingUpdate}
               onClick={openUpdateSettings}
               versionInfo={versionInfo}
             />
@@ -447,8 +442,9 @@ const handleSelectChat = useCallback((id: string) => { setActiveChatId(id); setC
             onClose={closeUpdateSettings}
             onCheckUpdate={handleCheckForUpdates}
             onUpdateNow={handleUpdateNow}
-            isCheckingUpdate={false} // No longer needed
+            isCheckingUpdate={isCheckingUpdate}
             updateAvailable={needRefresh}
+            updateStatus={updateStatus}
           />
         )}
 
