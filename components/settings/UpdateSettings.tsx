@@ -29,7 +29,7 @@ export const UpdateSettings: React.FC<UpdateSettingsProps> = ({
   const getStatusDisplay = () => {
     switch (updateStatus) {
       case 'checking':
-        return { icon: 'refresh', text: '正在检查更新...', color: 'text-blue-500', spinning: true };
+        return { icon: 'history', text: '正在检查更新...', color: 'text-blue-500', spinning: true };
       case 'available':
         return { icon: 'download', text: '发现新版本', color: 'text-green-500', spinning: false };
       case 'downloading':
@@ -84,7 +84,7 @@ export const UpdateSettings: React.FC<UpdateSettingsProps> = ({
               disabled={isCheckingUpdate || updateStatus === 'checking'}
               className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-[var(--accent-color)] text-[var(--accent-color-text)] rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90"
             >
-              <Icon icon="refresh" className={`w-5 h-5 ${isCheckingUpdate ? 'animate-spin' : ''}`} />
+              <Icon icon="history" className={`w-5 h-5 ${isCheckingUpdate ? 'animate-spin' : ''}`} />
               <span>{isCheckingUpdate ? '检查中...' : t('checkForUpdate')}</span>
             </button>
             
