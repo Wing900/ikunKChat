@@ -8,6 +8,7 @@ import { GeneralSettings } from './GeneralSettings';
 import { BehaviorSettings } from './BehaviorSettings';
 import { AdvancedSettings } from './AdvancedSettings';
 import { DataManagement } from './DataManagement';
+import { PDFManagement } from './PDFManagement';
 import { AboutSettings } from './AboutSettings';
 
 interface SettingsModalProps {
@@ -128,6 +129,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ versionInfo, ...pr
                 onClearChatHistory={props.onClearChatHistory}
                 visibleIds={visibleSettingIds}
               />
+              
+              {/* PDF文档管理 */}
+              <div className="mt-6 pt-6 border-t border-[var(--border-color)]">
+                <PDFManagement visibleIds={visibleSettingIds} />
+              </div>
             </SettingsSection>
           ) : null}
 

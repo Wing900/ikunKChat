@@ -11,9 +11,10 @@ interface UpdateNoticeModalProps {
     };
   };
   onClose: () => void;
+  onDismiss?: () => void;
 }
 
-export const UpdateNoticeModal: React.FC<UpdateNoticeModalProps> = ({ versionInfo, onClose }) => {
+export const UpdateNoticeModal: React.FC<UpdateNoticeModalProps> = ({ versionInfo, onClose, onDismiss }) => {
   const { t, language } = useLocalization();
   const [isVisible, setIsVisible] = useState(false);
 
@@ -63,12 +64,22 @@ export const UpdateNoticeModal: React.FC<UpdateNoticeModalProps> = ({ versionInf
         </div>
 
         <div className="flex-shrink-0 pt-4">
-          <button 
-            onClick={handleClose} 
-            className="btn-primary w-full"
-          >
-            {t('gotIt')}
-          </button>
+          <div className="flex gap-2">
+            {onDismiss && (
+              <button
+                onClick={onDismiss}
+                className="flex-1 px-3 py-2 text-sm text-[var(--text-color)] bg-[var(--glass-bg)] rounded-[var(--radius-md)] hover:bg-[var(--hover-bg)] transition-colors"
+              >
+                {t('cancel')}
+              </button>
+            )}
+            <button
+              onClick={handleClose}
+              className={`btn-primary ${onDismiss ? 'flex-1' : 'w-full'}`}
+            >
+              {t('gotIt')}
+            </button>
+          </div>
         </div>
       </div>
     </>

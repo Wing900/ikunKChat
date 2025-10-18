@@ -88,8 +88,6 @@ export const usePWAUpdate = (): UsePWAUpdateReturn => {
         throw new Error('Service Worker 未注册');
       }
 
-      console.log('[Update] 手动触发更新检查...');
-      
       // 触发 Service Worker 更新检查
       await registration.update();
       
@@ -101,17 +99,15 @@ export const usePWAUpdate = (): UsePWAUpdateReturn => {
       const hasUpdate = !!(reg?.waiting || reg?.installing);
       
       if (hasUpdate) {
-        console.log('[Update] 发现新版本');
         setNeedRefresh(true);
         setUpdateStatus('available');
       } else {
-        console.log('[Update] 已是最新版本');
         setUpdateStatus('idle');
       }
 
       return { hasUpdate };
     } catch (error) {
-      console.error('[Update] 检查更新失败:', error);
+      console.error('Failed to check for updates:', error);
       setUpdateStatus('error');
       return {
         hasUpdate: false,
@@ -122,7 +118,6 @@ export const usePWAUpdate = (): UsePWAUpdateReturn => {
 
   // 应用更新
   const updateServiceWorker = useCallback(async (reloadPage = true) => {
-    console.log('[Update] 开始应用更新...');
     setNeedRefresh(false);
     setUpdateStatus('downloading');
 
@@ -137,7 +132,7 @@ export const usePWAUpdate = (): UsePWAUpdateReturn => {
         }
       }
     } catch (error) {
-      console.error('[Update] 应用更新失败:', error);
+      console.error('Failed to apply update:', error);
       // 即使出错也尝试刷新页面
       if (reloadPage) {
         window.location.reload();

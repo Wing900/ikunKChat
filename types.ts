@@ -12,12 +12,22 @@ export interface FileAttachment {
   data?: string; // base64 encoded string. Optional to allow for saving w/o data.
 }
 
-export interface Message {
+export interface PDFSummary {
   id: string;
+  fileName: string;
+  pageCount: number;
+  fileSize: number;
+  author?: string;
+  charCount: number;
+}
+
+export interface Message {
+  id:string;
   role: MessageRole;
   content: string;
   timestamp: number;
   attachments?: FileAttachment[];
+  pdfAttachments?: PDFSummary[];
   groundingMetadata?: any;
   thoughts?: string;
   thinkingTime?: number;

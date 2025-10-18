@@ -24,10 +24,11 @@ interface AppLayoutProps {
   onToggleMobileSidebar: () => void;
   onSidebarStateChange: (state: { isCollapsed: boolean }) => void;
 
-  // Update indicator props
+  // Update props
   updateAvailable: boolean;
   isCheckingUpdate: boolean;
-  onClickUpdateIndicator: () => void;
+  onCheckForUpdates: () => void;
+  onUpdateNow: () => void;
   versionInfo: any;
 
   // Content
@@ -55,9 +56,11 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   onOpenArchive,
   onToggleMobileSidebar,
   onSidebarStateChange,
+
   updateAvailable,
   isCheckingUpdate,
-  onClickUpdateIndicator,
+  onCheckForUpdates,
+  onUpdateNow,
   versionInfo,
   children,
 }) => {
@@ -89,7 +92,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
           <UpdateIndicator
             updateAvailable={updateAvailable}
             isCheckingUpdate={isCheckingUpdate}
-            onClick={onClickUpdateIndicator}
+            onClick={onCheckForUpdates}
             versionInfo={versionInfo}
           />
         </Sidebar>

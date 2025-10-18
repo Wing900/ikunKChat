@@ -1,10 +1,11 @@
 import React, { useState, useCallback, useRef } from 'react';
-import { ChatSession, Message, MessageRole, Settings, Persona, FileAttachment } from '../types';
+import { ChatSession, Message, MessageRole, Settings, Persona, FileAttachment, PDFSummary } from '../types';
 import { sendMessageStream, generateChatDetails } from '../services/geminiService';
 import { fileToData } from '../utils/fileUtils';
 import { TITLE_GENERATION_PROMPT } from '../data/prompts';
 import { saveAttachment } from '../services/indexedDBService';
 import { getUserFacingMessage, logError } from '../utils/errorUtils';
+import { PDFParseResult } from '../services/pdfService';
 
 interface UseChatMessagingProps {
   settings: Settings;
@@ -218,42 +219,28 @@ export const useChatMessaging = ({ settings, activeChat, personas, setChats, set
     }
   }, [settings, setChats, activeChat, personas, addToast]);
 
-  const handleSendMessage = useCallback(async (content: string, files: File[] = []) => {
-    console.log(`\n[消息发送] 📤 开始处理消息发送`);
-    console.log(`[消息发送] 📝 消息内容长度: ${content.length} 字符`);
-    console.log(`[消息发送] 📎 附件数量: ${files.length} 个`);
-    
+  const handleSendMessage = useCallback(async (content: string, files: File[] = [], pdfDocuments?: PDFParseResult[]) => {
     // 串行处理文件以避免内存峰值
     const attachments: FileAttachment[] = [];
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
-      console.log(`\n[附件处理] 🔄 处理附件 ${i + 1}/${files.length}: "${file.name}"`);
       
       try {
         const attachment = await fileToData(file);
         
-        console.log(`[附件处理] ✅ 文件转换成功`);
-        console.log(`[附件处理] 📊 附件对象 - 名称: "${attachment.name}", MIME: ${attachment.mimeType}, data存在: ${!!attachment.data}, data类型: ${typeof attachment.data}, data长度: ${attachment.data?.length || 0}`);
-        
         // 验证附件数据有效性
         if (!attachment.data || typeof attachment.data !== 'string') {
-          console.error(`[附件处理] ❌ 附件数据无效!`);
-          console.error(`[附件处理] ❌ data字段: ${attachment.data === undefined ? 'undefined' : attachment.data === null ? 'null' : typeof attachment.data}`);
           addToast(`文件 "${file.name}" 数据无效，已跳过`, 'error');
-          continue; // 跳过这个无效附件
+          continue;
         }
         
         // 生成唯一 ID 并保存到 IndexedDB
         const attachmentId = `att_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        console.log(`[附件处理] 🆔 生成附件ID: ${attachmentId}`);
         
         if (attachment.data) {
           try {
-            console.log(`[附件处理] 💾 尝试保存到IndexedDB...`);
             await saveAttachment(attachmentId, attachment.data, attachment.mimeType, attachment.name);
-            console.log(`[附件处理] ✅ IndexedDB保存成功: ${attachmentId} (${attachment.name})`);
           } catch (dbError) {
-            console.error(`[附件处理] ⚠️ IndexedDB保存失败，将使用内存存储 (${attachment.name}):`, dbError);
             // 如果 IndexedDB 保存失败，继续使用 data 字段（降级处理）
           }
         }
@@ -263,14 +250,10 @@ export const useChatMessaging = ({ settings, activeChat, personas, setChats, set
           id: attachmentId,
           name: attachment.name,
           mimeType: attachment.mimeType,
-          data: attachment.data // 保留用于当前会话显示
+          data: attachment.data
         };
         
-        console.log(`[附件处理] ✅ 附件对象创建完成`);
-        console.log(`[附件处理] 🔍 最终验证 - data存在: ${!!attachmentObject.data}, data类型: ${typeof attachmentObject.data}, data长度: ${attachmentObject.data?.length || 0}`);
-        
         attachments.push(attachmentObject);
-        console.log(`[附件处理] ✅ 附件 ${i + 1}/${files.length} 处理成功并添加到列表`);
         
       } catch (error) {
         logError(error, 'AttachmentProcessing', {
@@ -280,21 +263,39 @@ export const useChatMessaging = ({ settings, activeChat, personas, setChats, set
         });
         const friendlyMessage = getUserFacingMessage(error, '未知错误');
         addToast(`文件 "${file.name}" 处理失败: ${friendlyMessage}`, 'error');
-        // 继续处理其他文件，不因为单个文件失败而中断
       }
     }
     
-    console.log(`\n[附件处理] 📊 处理结果汇总:`);
-    console.log(`[附件处理] 📥 输入文件数: ${files.length}`);
-    console.log(`[附件处理] ✅ 成功处理数: ${attachments.length}`);
-    console.log(`[附件处理] ❌ 失败/跳过数: ${files.length - attachments.length}`);
+    // 处理PDF文档 - 提取摘要信息和全文
+    let pdfSummaries: PDFSummary[] | undefined;
+    let pdfContextForAPI = '';
     
-    // 详细列出所有成功的附件
-    attachments.forEach((att, idx) => {
-      console.log(`[附件处理] 📌 附件[${idx}] - 名称: "${att.name}", MIME: ${att.mimeType}, data有效: ${!!att.data && typeof att.data === 'string'}, 大小: ${att.data?.length || 0} 字符`);
-    });
+    if (pdfDocuments && pdfDocuments.length > 0) {
+      // 生成PDF摘要信息（用于显示在气泡中）
+      pdfSummaries = pdfDocuments.map(pdf => ({
+        id: pdf.id,
+        fileName: pdf.fileName,
+        pageCount: pdf.pageCount,
+        fileSize: pdf.fileSize,
+        author: pdf.metadata?.author,
+        charCount: pdf.extractedText.length
+      }));
       
-    const userMessage: Message = { id: crypto.randomUUID(), role: MessageRole.USER, content: content, timestamp: Date.now(), attachments };
+      // 提取PDF全文（仅用于发送给API，不保存到消息中）
+      pdfContextForAPI = pdfDocuments.map(pdf =>
+        `\n\n[PDF文档内容 - ${pdf.fileName}]\n${pdf.extractedText.substring(0, 30000)}`
+      ).join('\n');
+    }
+      
+    // 用户消息：仅保存用户输入的文本和PDF摘要，不包含PDF全文
+    const userMessage: Message = {
+      id: crypto.randomUUID(),
+      role: MessageRole.USER,
+      content: content,  // 只保存用户输入的文本
+      timestamp: Date.now(),
+      attachments,
+      pdfAttachments: pdfSummaries
+    };
     
     let currentChatId = activeChat?.id;
     let history: Message[];
@@ -317,7 +318,6 @@ export const useChatMessaging = ({ settings, activeChat, personas, setChats, set
     }
 
     if (!currentChatId) {
-      console.log(`[Chat] Creating new chat - Content: "${content.substring(0, 30)}..."`);
       currentPersonaId = settings.defaultPersona;
       const persona = personas.find(p => p.id === currentPersonaId);
       const newChat: ChatSession = { id: crypto.randomUUID(), title: persona?.name || content.substring(0, 40) || "New Chat", icon: (persona?.avatar?.type === 'emoji' ? persona.avatar.value : '👤') || "💬", messages: [userMessage], createdAt: Date.now(), model: persona?.model || settings.defaultModel, folderId: null, personaId: currentPersonaId };
@@ -326,12 +326,23 @@ export const useChatMessaging = ({ settings, activeChat, personas, setChats, set
       setChats(prev => [newChat, ...prev]);
       setActiveChatId(newChat.id);
     } else {
-      console.log(`[Chat] Continuing existing chat - ID: ${currentChatId}`);
       history = [...(activeChat?.messages || []), userMessage];
       setChats(prev => prev.map(c => c.id === currentChatId ? { ...c, messages: [...c.messages, userMessage] } : c));
     }
 
-    await _initiateStream(currentChatId, history, currentPersonaId, titleGenerationMode);
+    // 如果有PDF内容，需要将其附加到发送给API的历史记录中
+    let historyForAPI = history;
+    if (pdfContextForAPI) {
+      // 创建一个临时的用户消息副本，包含PDF全文（仅用于API）
+      const lastMessage = history[history.length - 1];
+      const messageWithPDF = {
+        ...lastMessage,
+        content: lastMessage.content + pdfContextForAPI
+      };
+      historyForAPI = [...history.slice(0, -1), messageWithPDF];
+    }
+
+    await _initiateStream(currentChatId, historyForAPI, currentPersonaId, titleGenerationMode);
   }, [activeChat, settings, setChats, setActiveChatId, _initiateStream, personas]);
 
   const handleDeleteMessage = useCallback((messageId: string) => {

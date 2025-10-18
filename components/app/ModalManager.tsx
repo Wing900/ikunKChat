@@ -4,6 +4,7 @@ import { FolderActionModal } from '../FolderActionModal';
 import { CitationDrawer } from '../CitationDrawer';
 import { MessageEditModal } from '../MessageEditModal';
 import { UpdateSettings } from '../settings/UpdateSettings';
+import { UpdateNoticeModal } from '../UpdateNoticeModal';
 import { ChatSession, Folder, Settings, Persona, Message } from '../../types';
 
 // Lazy load heavy modals
@@ -28,6 +29,11 @@ interface ModalManagerProps {
   availableModels: string[];
   personas: Persona[];
   versionInfo: any;
+
+  // Update Notice Modal
+  showUpdateNotice: boolean;
+  onCloseUpdateNotice: () => void;
+  onDismissUpdateNotice: () => void;
 
   // Edit Chat Modal
   editingChat: ChatSession | null;
@@ -96,6 +102,9 @@ export const ModalManager: React.FC<ModalManagerProps> = ({
   availableModels,
   personas,
   versionInfo,
+  showUpdateNotice,
+  onCloseUpdateNotice,
+  onDismissUpdateNotice,
   editingChat,
   onCloseEditChat,
   onSaveChatDetails,
@@ -130,6 +139,15 @@ export const ModalManager: React.FC<ModalManagerProps> = ({
 }) => {
   return (
     <>
+      {/* Update Notice Modal - 重要更新通知 */}
+      {showUpdateNotice && versionInfo && (
+        <UpdateNoticeModal
+          versionInfo={versionInfo}
+          onClose={onCloseUpdateNotice}
+          onDismiss={onDismissUpdateNotice}
+        />
+      )}
+
       {/* Lazy loaded modals */}
       <Suspense fallback={null}>
         {isSettingsOpen && (

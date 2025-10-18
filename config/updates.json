@@ -1,0 +1,46 @@
+{
+  "1.7.6": {
+    "important": true,
+    "notes": {
+      "zh": [
+        "📄 1. 增加了网站的PDF解析功能，现在可以上传PDF了",
+        "👋 2. 再次欢迎大家使用ikunChat，有任何不顺手的地方请直接向站长反馈！😊",
+        "🔍 3. 请大家自行探索角色和设置的功能，如果感觉卡顿，请及时检查设置中的数据管理，对不需要的聊天记录进行删除",
+        "🚀 4. 稍后我们将上线更完善的数据管理系统！"
+      ],
+      "en": [
+        "📄 1. Added PDF parsing functionality to the website, you can now upload PDFs",
+        "👋 2. Welcome again to ikunChat, please feel free to report any issues to the webmaster! 😊",
+        "🔍 3. Please explore the persona and settings features, if you experience lag, check data management in settings and delete unnecessary chat records",
+        "🚀 4. We will launch a more comprehensive data management system soon!"
+      ]
+    }
+  },
+  "1.7.2": {
+    "important": true,
+    "notes": {
+      "zh": [
+        "Here we come, ikunChat for you!",
+        "🚀 性能优化：优化网站加载速度，减少不必要的资源消耗，提升整体用户体验。",
+        "🧹 模式精简：删除多余的主题模式，专注于核心功能，提供更简洁的选择。",
+        "🐔 图标更新：无奈丢弃了我们的鸽鸽图标。",
+        "🎨 UI/UX 彻底革新：引入 Material Design 3 (MD3) 设计语言并融合中国风美学，大幅简化聊天界面，为用户提供更纯粹、更专注的核心聊天体验。",
+        "⚙️ 配置项极致精简：响应极简主义原则，移除了大量不必要的设置选项，采用更智能的默认值，让用户开箱即用。",
+        "➗ 内容渲染优化：升级了 KaTeX 数学公式的渲染逻辑，确保复杂公式也能清晰、美观地展示。",
+        "💬 聊天视图简化：为了让内容成为绝对主角，移除了聊天流中的用户与助手头像及名称，使对话信息更突出。",
+        "➕ 输入功能整合：将图片与文件上传功能统一集成到输入框旁的+号按钮中，简化了操作流程，使输入区域更加整洁。"
+      ],
+      "en": [
+        "Here we come, ikunChat for you!",
+        "🚀 Performance Optimization: Improved website loading speed, reduced unnecessary resource consumption, and enhanced overall user experience.",
+        "🧹 Mode Simplification: Removed redundant theme modes, focusing on core functionality for a cleaner selection.",
+        "🐔 Icon Update: Replaced with brand new pigeon icon, enhancing brand recognition and visual appeal.",
+        "🎨 UI/UX Overhaul: Introduced Material Design 3 (MD3) with Chinese aesthetics, significantly simplifying the chat interface for a purer, more focused user experience.",
+        "⚙️ Settings Streamlined: Embracing minimalism, numerous unnecessary settings have been removed in favor of smarter, more robust defaults for an out-of-the-box experience.",
+        "➗ Content Rendering Optimized: Enhanced KaTeX rendering for clear and beautiful display of complex mathematical formulas, and redesigned the 'thought chain' presentation.",
+        "💬 Simplified Chat View: To prioritize content, user and assistant avatars/names have been removed from the chat flow, making the conversation more prominent.",
+        "➕ Unified Input: Image and file upload functionalities have been consolidated into the '+' button next to the input field, streamlining the user workflow."
+      ]
+    }
+  }
+}
