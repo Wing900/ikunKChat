@@ -4,6 +4,7 @@ import type { UIState } from '../../contexts/UIStateContext';
 import type { ConfirmationState } from './appTypes';
 import type { UpdateStatus } from '../../hooks/usePWAUpdate';
 import { UpdateSettings } from '../settings/UpdateSettings';
+import { UpdateNoticeModal } from '../UpdateNoticeModal';
 import { EditChatModal } from '../EditChatModal';
 import { FolderActionModal } from '../FolderActionModal';
 import { CitationDrawer } from '../CitationDrawer';
@@ -29,6 +30,9 @@ interface AppModalsProps {
   folders: Folder[];
   availableModels: string[];
   versionInfo: any;
+  showUpdateNotice: boolean;
+  onCloseUpdateNotice: () => void;
+  onDismissUpdateNotice: () => void;
   onSettingsChange: (settings: Partial<Settings>) => void;
   onExportSettings: () => void;
   onExportAll: () => void;
@@ -63,6 +67,9 @@ export const AppModals: React.FC<AppModalsProps> = ({
   folders,
   availableModels,
   versionInfo,
+  showUpdateNotice,
+  onCloseUpdateNotice,
+  onDismissUpdateNotice,
   onSettingsChange,
   onExportSettings,
   onExportAll,
@@ -90,6 +97,15 @@ export const AppModals: React.FC<AppModalsProps> = ({
 }) => {
   return (
     <>
+      {/* 更新通知弹窗 */}
+      {showUpdateNotice && versionInfo && (
+        <UpdateNoticeModal
+          versionInfo={versionInfo}
+          onClose={onCloseUpdateNotice}
+          onDismiss={onDismissUpdateNotice}
+        />
+      )}
+
       <Suspense fallback={null}>
         {uiState.isSettingsOpen && (
           <SettingsModal

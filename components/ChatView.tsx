@@ -4,6 +4,7 @@ import { Icon } from './Icon';
 import { WelcomeView } from './WelcomeView';
 import { MessageBubble } from './MessageBubble';
 import { ChatInput, ChatInputRef } from './chat/ChatInput';
+import { PDFParseResult } from '../services/pdfService';
 
 import { useLocalization } from '../contexts/LocalizationContext';
 import { InternalView } from './common/InternalView';
@@ -12,7 +13,7 @@ import { ChatContextProvider } from '../contexts/ChatContext';
 
 // 消息操作配置
 interface MessageActions {
-  onSendMessage: (message: string, files: File[]) => void;
+  onSendMessage: (message: string, files: File[], pdfDocuments?: PDFParseResult[]) => void;
   onDeleteMessage: (messageId: string) => void;
   onUpdateMessageContent: (messageId: string, newContent: string) => void;
   onRegenerate: () => void;
@@ -90,8 +91,8 @@ export const ChatView: React.FC<ChatViewProps> = (props) => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatSession, chatSession?.messages, isLoading, editingMessageId]);
 
-  const handleSendMessageWithTools = (message: string, files: File[]) => {
-    messageActions.onSendMessage(message, files);
+  const handleSendMessageWithTools = (message: string, files: File[], pdfDocuments?: PDFParseResult[]) => {
+    messageActions.onSendMessage(message, files, pdfDocuments);
     setChatInput('');
   };
 

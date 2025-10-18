@@ -15,6 +15,7 @@ import { useChatMessaging } from '../../hooks/useChatMessaging';
 import { useToast } from '../../contexts/ToastContext';
 import { usePersonas } from '../../hooks/usePersonas';
 import { useUIState } from '../../contexts/UIStateContext';
+import { useUpdateService } from '../../services/updateService';
 import {
   exportData,
   importData,
@@ -37,12 +38,20 @@ const PRIVACY_STATEMENT_VERSION = '1.0.0';
  * Extracted from App.tsx to separate concerns
  */
 export const AppContainer: React.FC = () => {
-  const [versionInfo, setVersionInfo] = useState<any>(null);
-  const [showUpdateSettings, setShowUpdateSettings] = useState(false);
   const [showChatExportSelector, setShowChatExportSelector] = useState(false);
   const [showChatClearSelector, setShowChatClearSelector] = useState(false);
+  const [showUpdateNotice, setShowUpdateNotice] = useState(false);
   const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
   const { needRefresh, updateStatus, updateServiceWorker, checkForUpdates } = usePWAUpdate();
+
+  // 使用新的更新服务
+  const {
+    currentVersion,
+    getLatestVersion,
+    markVersionAsRead,
+    dismissVersion,
+    shouldShowUpdateNotice
+  } = useUpdateService();
 
   const [hasConsented, setHasConsented] = useState(() => {
     const consent = loadPrivacyConsent();
@@ -75,29 +84,25 @@ export const AppContainer: React.FC = () => {
     const initStorage = async () => {
       try {
         await initDB();
-        const migratedCount = await migrateAttachmentsFromLocalStorage();
-        if (migratedCount > 0) {
-          console.log(`[IndexedDB] Migrated ${migratedCount} attachments from localStorage`);
-        }
+        await migrateAttachmentsFromLocalStorage();
       } catch (error) {
-        console.error('[IndexedDB] Initialization failed:', error);
+        // Silent fail
       }
     };
     initStorage();
   }, []);
 
+  // 检查是否应该显示更新通知
   useEffect(() => {
-    const fetchVersionInfo = async () => {
-      try {
-        const res = await fetch('/version.json');
-        const data = await res.json();
-        setVersionInfo(data);
-      } catch (error) {
-        console.error('Failed to fetch version info:', error);
+    const shouldShow = shouldShowUpdateNotice();
+
+    if (shouldShow) {
+      const latestVersion = getLatestVersion();
+      if (latestVersion) {
+        setShowUpdateNotice(true);
       }
-    };
-    fetchVersionInfo();
-  }, []);
+    }
+  }, [shouldShowUpdateNotice, getLatestVersion]);
 
   const handleUpdateNow = () => {
     updateServiceWorker();
@@ -105,10 +110,10 @@ export const AppContainer: React.FC = () => {
 
   const handleCheckForUpdates = async () => {
     setIsCheckingUpdate(true);
-    
+
     try {
       const result = await checkForUpdates();
-      
+
       if (result.error) {
         addToast(`检查更新失败: ${result.error}`, 'error');
       } else if (result.hasUpdate) {
@@ -117,15 +122,29 @@ export const AppContainer: React.FC = () => {
         addToast('当前已是最新版本', 'info');
       }
     } catch (error) {
-      console.error('[Update] Check failed:', error);
       addToast('检查更新时发生错误', 'error');
     } finally {
       setIsCheckingUpdate(false);
     }
   };
 
-  const openUpdateSettings = () => setShowUpdateSettings(true);
-  const closeUpdateSettings = () => setShowUpdateSettings(false);
+  // 处理更新通知关闭
+  const handleCloseUpdateNotice = () => {
+    const latestVersion = getLatestVersion();
+    if (latestVersion) {
+      markVersionAsRead(latestVersion.version);
+    }
+    setShowUpdateNotice(false);
+  };
+
+  // 处理忽略更新通知
+  const handleDismissUpdateNotice = () => {
+    const latestVersion = getLatestVersion();
+    if (latestVersion) {
+      dismissVersion(latestVersion.version);
+    }
+    setShowUpdateNotice(false);
+  };
   
   const [currentView, setCurrentView] = useState<View>('chat');
   const [editingPersona, setEditingPersona] = useState<Persona | null>(null);
@@ -216,7 +235,6 @@ export const AppContainer: React.FC = () => {
       const isDefaultPersonaValid = personas.some((p) => p.id === currentDefaultPersonaId);
 
       if (!isDefaultPersonaValid) {
-        console.warn(`[Persona] Invalid defaultPersona: ${currentDefaultPersonaId}, resetting to first available`);
         const firstAvailablePersona = personas[0];
         if (firstAvailablePersona) {
           handleSettingsChange({ defaultPersona: firstAvailablePersona.id });
@@ -264,7 +282,6 @@ export const AppContainer: React.FC = () => {
       })
       .catch((err) => {
         addToast('Invalid backup file.', 'error');
-        console.error('[Import] Failed:', err);
       });
   };
 
@@ -347,8 +364,9 @@ export const AppContainer: React.FC = () => {
       onSidebarStateChange={handleSidebarStateChange}
       updateAvailable={needRefresh}
       isCheckingUpdate={isCheckingUpdate}
-      onClickUpdateIndicator={openUpdateSettings}
-      versionInfo={versionInfo}
+      onCheckForUpdates={handleCheckForUpdates}
+      onUpdateNow={handleUpdateNow}
+      versionInfo={getLatestVersion()}
     >
       <AppContent
         currentView={currentView}
@@ -404,7 +422,10 @@ export const AppContainer: React.FC = () => {
         onClearChatHistory={handleClearChatHistory}
         availableModels={availableModels}
         personas={personas}
-        versionInfo={versionInfo}
+        versionInfo={getLatestVersion()}
+        showUpdateNotice={showUpdateNotice}
+        onCloseUpdateNotice={handleCloseUpdateNotice}
+        onDismissUpdateNotice={handleDismissUpdateNotice}
         editingChat={uiState.editingChat}
         onCloseEditChat={uiState.closeEditChat}
         onSaveChatDetails={chatDataHandlers.handleUpdateChatDetails}
@@ -422,13 +443,7 @@ export const AppContainer: React.FC = () => {
         onCloseLightbox={() => uiState.setLightboxImage(null)}
         confirmation={confirmation}
         onCloseConfirmation={() => setConfirmation(null)}
-        showUpdateSettings={showUpdateSettings}
-        onCloseUpdateSettings={closeUpdateSettings}
-        onCheckUpdate={handleCheckForUpdates}
-        onUpdateNow={handleUpdateNow}
-        isCheckingUpdate={isCheckingUpdate}
-        updateAvailable={needRefresh}
-        updateStatus={updateStatus}
+
         showChatExportSelector={showChatExportSelector}
         onCloseChatExportSelector={() => setShowChatExportSelector(false)}
         chats={chats}

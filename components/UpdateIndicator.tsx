@@ -3,7 +3,7 @@ import { Icon } from './Icon';
 import { useLocalization } from '../contexts/LocalizationContext';
 
 interface UpdateIndicatorProps {
-  updateAvailable: boolean;
+
   isCheckingUpdate: boolean;
   onClick: () => void;
   versionInfo?: {
@@ -68,10 +68,7 @@ export const UpdateIndicator: React.FC<UpdateIndicatorProps> = ({
         />
         <span className="font-semibold">{t('update')}</span>
 
-        {/* 更新状态指示器 */}
-        {updateAvailable && (
-          <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-[var(--glass-bg)]"></span>
-        )}
+
 
         {/* 检查更新状态指示器 */}
         {isCheckingUpdate && (

@@ -19,7 +19,7 @@ export const useSettingsSearch = (searchQuery: string) => {
         'autoTitleGeneration', 'titleGenModel',
         'showThoughts', 'apiKey', 'apiBaseUrl', 'temperature',
         'contextLength', 'maxOutputTokens',
-        'streamInactivityTimeout', 'data'
+        'streamInactivityTimeout', 'data', 'pdf-management'
       ]);
       const allSectionsVisible = SECTIONS.reduce((acc, sec) => ({ ...acc, [sec]: true }), {});
       return { visibleSettingIds: allVisible, sectionVisibility: allSectionsVisible as SectionVisibility };
@@ -49,6 +49,7 @@ export const useSettingsSearch = (searchQuery: string) => {
         
         // Data
         { id: 'data', section: 'data', texts: [t('importData'), t('exportSettings'), t('exportData'), t('clearHistory'), translations.zh.importData, translations.zh.exportSettings, translations.zh.exportData, translations.zh.clearHistory] },
+        { id: 'pdf-management', section: 'data', texts: ['PDF', 'PDF文档库', 'PDF管理', 'PDF文档', '文档库', 'PDF library', 'PDF management', 'document', 'pdf files'] },
       ];
     }
     

@@ -157,6 +157,53 @@ export const MessageBubble: React.FC<MessageBubbleProps> = React.memo((props) =>
                 </div>
             )}
             <div className={`p-2 ${isUser ? '' : 'text-[var(--text-color)]'}`}>
+                {/* PDF附件卡片 */}
+                {message.pdfAttachments && message.pdfAttachments.length > 0 && (
+                  <div className="mb-3 space-y-2">
+                    {message.pdfAttachments.map((pdf, i) => (
+                      <div
+                        key={i}
+                        className="rounded-lg border border-black/10 dark:border-white/10 p-3"
+                        style={{ backgroundColor: 'rgba(239, 68, 68, 0.05)' }}
+                      >
+                        <div className="flex items-start gap-3">
+                          {/* PDF图标 */}
+                          <div style={{
+                            width: '36px',
+                            height: '36px',
+                            borderRadius: '6px',
+                            backgroundColor: '#ef4444',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0
+                          }}>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
+                              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                              <polyline points="14 2 14 8 20 8" />
+                            </svg>
+                          </div>
+                          
+                          {/* PDF信息 */}
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium text-sm truncate">{pdf.fileName}</div>
+                            <div className="flex gap-3 text-xs text-[var(--text-secondary)] mt-1">
+                              <span>📄 {pdf.pageCount} 页</span>
+                              <span>💾 {(pdf.fileSize / 1024).toFixed(1)} KB</span>
+                              <span>📝 {pdf.charCount.toLocaleString()} 字符</span>
+                            </div>
+                            {pdf.author && (
+                              <div className="text-xs text-[var(--text-secondary)] mt-1">
+                                作者: {pdf.author}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                
                 {message.attachments && message.attachments.length > 0 && (
                   <div className={`mb-3 grid gap-2 ${
                     message.attachments.length === 1 ? 'grid-cols-1' :

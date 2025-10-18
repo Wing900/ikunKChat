@@ -15,15 +15,12 @@ const LAST_READ_VERSION_KEY = 'kchat-last-read-version';
 // --- Loaders ---
 export const loadChats = async (): Promise<ChatSession[]> => {
     try {
-        console.log('[存储] 📂 开始加载聊天记录...');
         const saved = localStorage.getItem(CHATS_KEY);
         if (!saved) {
-            console.log('[存储] 📭 没有找到聊天记录');
             return [];
         }
 
         const chats: ChatSession[] = JSON.parse(saved);
-        console.log(`[存储] 📊 从localStorage加载了 ${chats.length} 个聊天`);
 
         // 收集所有需要从 IndexedDB 加载的附件 ID
         const allAttachmentIds: string[] = [];
@@ -44,40 +41,29 @@ export const loadChats = async (): Promise<ChatSession[]> => {
             });
         });
 
-        console.log(`[存储] 📎 发现 ${allAttachmentIds.length} 个需要从IndexedDB加载的附件`);
-
         // 如果有附件需要加载，从 IndexedDB 批量加载
         if (allAttachmentIds.length > 0) {
             try {
                 const attachmentDataMap = await getAttachments(allAttachmentIds);
-                console.log(`[存储] ✅ 从IndexedDB成功加载了 ${attachmentDataMap.size}/${allAttachmentIds.length} 个附件数据`);
 
                 // 将加载的数据填充回对应的附件对象
-                let restoredCount = 0;
                 chats.forEach(chat => {
                     chat.messages?.forEach(message => {
                         message.attachments?.forEach(att => {
                             if (att.id && attachmentDataMap.has(att.id)) {
                                 att.data = attachmentDataMap.get(att.id);
-                                restoredCount++;
-                                console.log(`[存储] 🔄 恢复附件数据: ${att.name} (${att.id})`);
-                            } else if (att.id && !att.data) {
-                                console.warn(`[存储] ⚠️ 附件数据丢失: ${att.name} (${att.id}) - IndexedDB中未找到`);
                             }
                         });
                     });
                 });
-
-                console.log(`[存储] ✅ 总共恢复了 ${restoredCount} 个附件的数据字段`);
             } catch (error) {
-                console.error('[存储] ❌ 从IndexedDB加载附件失败:', error);
+                console.error('Failed to load attachments from IndexedDB:', error);
             }
         }
 
-        console.log('[存储] 🎉 聊天记录加载完成');
         return chats;
     } catch (error) {
-        console.error("[存储] ❌ 加载聊天记录失败:", error);
+        console.error("Failed to load chats from localStorage:", error);
         return [];
     }
 };
@@ -331,7 +317,6 @@ export const saveChats = (chats: ChatSession[]) => {
         }));
         
         localStorage.setItem(CHATS_KEY, JSON.stringify(chatsToSave));
-        console.log('[存储] 已保存聊天到localStorage (附件保存在IndexedDB)');
     } catch (error) {
         console.error("Failed to save chats to localStorage", error);
         

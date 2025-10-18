@@ -13,11 +13,31 @@ interface KChatDB extends DBSchema {
     };
     indexes: { 'createdAt': number };
   };
+  pdfDocuments: {
+    key: string; // PDF document ID
+    value: {
+      id: string;
+      fileName: string;
+      fileSize: number;
+      pageCount: number;
+      extractedText: string;
+      parsedAt: number;
+      metadata?: {
+        title?: string;
+        author?: string;
+        subject?: string;
+        keywords?: string;
+        creationDate?: string;
+      };
+    };
+    indexes: { 'parsedAt': number; 'fileName': string };
+  };
 }
 
 const DB_NAME = 'kchat-storage';
-const DB_VERSION = 1;
+const DB_VERSION = 2; // 升级版本以支持PDF存储
 const STORE_ATTACHMENTS = 'attachments';
+const STORE_PDF_DOCUMENTS = 'pdfDocuments';
 
 let dbInstance: IDBPDatabase<KChatDB> | null = null;
 
@@ -27,26 +47,31 @@ export async function initDB(): Promise<IDBPDatabase<KChatDB>> {
 
   try {
     dbInstance = await openDB<KChatDB>(DB_NAME, DB_VERSION, {
-      upgrade(db) {
+      upgrade(db, oldVersion) {
         // 创建附件存储
         if (!db.objectStoreNames.contains(STORE_ATTACHMENTS)) {
           const store = db.createObjectStore(STORE_ATTACHMENTS, { keyPath: 'id' });
           store.createIndex('createdAt', 'createdAt');
-          console.log('[IndexedDB] Created attachments store');
+        }
+
+        // 创建PDF文档存储（版本2新增）
+        if (oldVersion < 2 && !db.objectStoreNames.contains(STORE_PDF_DOCUMENTS)) {
+          const pdfStore = db.createObjectStore(STORE_PDF_DOCUMENTS, { keyPath: 'id' });
+          pdfStore.createIndex('parsedAt', 'parsedAt');
+          pdfStore.createIndex('fileName', 'fileName');
         }
       },
       blocked() {
-        console.warn('[IndexedDB] Database upgrade blocked by another tab');
+        console.warn('Database upgrade blocked by another tab');
       },
       blocking() {
-        console.warn('[IndexedDB] This connection is blocking a database upgrade');
+        console.warn('This connection is blocking a database upgrade');
       },
     });
 
-    console.log('[IndexedDB] Database initialized successfully');
     return dbInstance;
   } catch (error) {
-    console.error('[IndexedDB] Failed to initialize database:', error);
+    console.error('Failed to initialize database:', error);
     throw error;
   }
 }
@@ -67,9 +92,8 @@ export async function saveAttachment(
       name,
       createdAt: Date.now(),
     });
-    console.log(`[IndexedDB] Saved attachment: ${id} (${name})`);
   } catch (error) {
-    console.error('[IndexedDB] Failed to save attachment:', error);
+    console.error('Failed to save attachment:', error);
     throw error;
   }
 }
@@ -94,10 +118,8 @@ export async function saveAttachments(
       ),
       tx.done,
     ]);
-
-    console.log(`[IndexedDB] Saved ${attachments.length} attachments`);
   } catch (error) {
-    console.error('[IndexedDB] Failed to save attachments:', error);
+    console.error('Failed to save attachments:', error);
     throw error;
   }
 }
@@ -109,14 +131,12 @@ export async function getAttachment(id: string): Promise<string | null> {
     const attachment = await db.get(STORE_ATTACHMENTS, id);
     
     if (attachment) {
-      console.log(`[IndexedDB] Retrieved attachment: ${id}`);
       return attachment.data;
     }
     
-    console.warn(`[IndexedDB] Attachment not found: ${id}`);
     return null;
   } catch (error) {
-    console.error('[IndexedDB] Failed to get attachment:', error);
+    console.error('Failed to get attachment:', error);
     return null;
   }
 }
@@ -136,10 +156,9 @@ export async function getAttachments(ids: string[]): Promise<Map<string, string>
       })
     );
 
-    console.log(`[IndexedDB] Retrieved ${results.size}/${ids.length} attachments`);
     return results;
   } catch (error) {
-    console.error('[IndexedDB] Failed to get attachments:', error);
+    console.error('Failed to get attachments:', error);
     return new Map();
   }
 }
@@ -149,9 +168,8 @@ export async function deleteAttachment(id: string): Promise<void> {
   try {
     const db = await initDB();
     await db.delete(STORE_ATTACHMENTS, id);
-    console.log(`[IndexedDB] Deleted attachment: ${id}`);
   } catch (error) {
-    console.error('[IndexedDB] Failed to delete attachment:', error);
+    console.error('Failed to delete attachment:', error);
     throw error;
   }
 }
@@ -166,10 +184,8 @@ export async function deleteAttachments(ids: string[]): Promise<void> {
       ...ids.map(id => tx.store.delete(id)),
       tx.done,
     ]);
-
-    console.log(`[IndexedDB] Deleted ${ids.length} attachments`);
   } catch (error) {
-    console.error('[IndexedDB] Failed to delete attachments:', error);
+    console.error('Failed to delete attachments:', error);
     throw error;
   }
 }
@@ -179,10 +195,9 @@ export async function getAllAttachmentIds(): Promise<string[]> {
   try {
     const db = await initDB();
     const keys = await db.getAllKeys(STORE_ATTACHMENTS);
-    console.log(`[IndexedDB] Found ${keys.length} attachments`);
     return keys;
   } catch (error) {
-    console.error('[IndexedDB] Failed to get attachment IDs:', error);
+    console.error('Failed to get attachment IDs:', error);
     return [];
   }
 }
@@ -192,9 +207,8 @@ export async function clearAllAttachments(): Promise<void> {
   try {
     const db = await initDB();
     await db.clear(STORE_ATTACHMENTS);
-    console.log('[IndexedDB] Cleared all attachments');
   } catch (error) {
-    console.error('[IndexedDB] Failed to clear attachments:', error);
+    console.error('Failed to clear attachments:', error);
     throw error;
   }
 }
@@ -211,7 +225,7 @@ export async function getStorageEstimate(): Promise<{ usage: number; quota: numb
     }
     return null;
   } catch (error) {
-    console.error('[IndexedDB] Failed to get storage estimate:', error);
+    console.error('Failed to get storage estimate:', error);
     return null;
   }
 }
@@ -219,11 +233,8 @@ export async function getStorageEstimate(): Promise<{ usage: number; quota: numb
 // 数据迁移：从 localStorage 迁移旧的附件数据到 IndexedDB
 export async function migrateAttachmentsFromLocalStorage(): Promise<number> {
   try {
-    console.log('[IndexedDB] Starting migration from localStorage...');
-    
     const chatsJson = localStorage.getItem('kchat-sessions');
     if (!chatsJson) {
-      console.log('[IndexedDB] No chats found in localStorage');
       return 0;
     }
 
@@ -263,12 +274,187 @@ export async function migrateAttachmentsFromLocalStorage(): Promise<number> {
       
       // 更新 localStorage 中的聊天记录（移除 data 字段）
       localStorage.setItem('kchat-sessions', JSON.stringify(chats));
-      console.log(`[IndexedDB] Migrated ${migratedCount} attachments from localStorage`);
     }
 
     return migratedCount;
   } catch (error) {
-    console.error('[IndexedDB] Migration failed:', error);
+    console.error('Migration failed:', error);
     return 0;
+  }
+}
+
+// ==================== PDF 文档操作 ====================
+
+// 保存PDF文档
+export async function savePDFDocument(pdfData: {
+  id: string;
+  fileName: string;
+  fileSize: number;
+  pageCount: number;
+  extractedText: string;
+  parsedAt: number;
+  metadata?: {
+    title?: string;
+    author?: string;
+    subject?: string;
+    keywords?: string;
+    creationDate?: string;
+  };
+}): Promise<void> {
+  try {
+    const db = await initDB();
+    await db.put(STORE_PDF_DOCUMENTS, pdfData);
+  } catch (error) {
+    console.error('Failed to save PDF document:', error);
+    throw error;
+  }
+}
+
+// 获取PDF文档
+export async function getPDFDocument(id: string): Promise<{
+  id: string;
+  fileName: string;
+  fileSize: number;
+  pageCount: number;
+  extractedText: string;
+  parsedAt: number;
+  metadata?: {
+    title?: string;
+    author?: string;
+    subject?: string;
+    keywords?: string;
+    creationDate?: string;
+  };
+} | null> {
+  try {
+    const db = await initDB();
+    const pdfDoc = await db.get(STORE_PDF_DOCUMENTS, id);
+    
+    if (pdfDoc) {
+      return pdfDoc;
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('Failed to get PDF document:', error);
+    return null;
+  }
+}
+
+// 批量获取PDF文档
+export async function getPDFDocuments(ids: string[]): Promise<Map<string, any>> {
+  try {
+    const db = await initDB();
+    const results = new Map<string, any>();
+    
+    await Promise.all(
+      ids.map(async (id) => {
+        const pdfDoc = await db.get(STORE_PDF_DOCUMENTS, id);
+        if (pdfDoc) {
+          results.set(id, pdfDoc);
+        }
+      })
+    );
+
+    return results;
+  } catch (error) {
+    console.error('Failed to get PDF documents:', error);
+    return new Map();
+  }
+}
+
+// 获取所有PDF文档列表（不含全文）
+export async function getAllPDFDocumentsList(): Promise<Array<{
+  id: string;
+  fileName: string;
+  fileSize: number;
+  pageCount: number;
+  parsedAt: number;
+}>> {
+  try {
+    const db = await initDB();
+    const allDocs = await db.getAll(STORE_PDF_DOCUMENTS);
+    
+    // 只返回元数据，不含全文
+    const list = allDocs.map(doc => ({
+      id: doc.id,
+      fileName: doc.fileName,
+      fileSize: doc.fileSize,
+      pageCount: doc.pageCount,
+      parsedAt: doc.parsedAt,
+    }));
+
+    return list;
+  } catch (error) {
+    console.error('Failed to get PDF documents list:', error);
+    return [];
+  }
+}
+
+// 删除PDF文档
+export async function deletePDFDocument(id: string): Promise<void> {
+  try {
+    const db = await initDB();
+    await db.delete(STORE_PDF_DOCUMENTS, id);
+  } catch (error) {
+    console.error('Failed to delete PDF document:', error);
+    throw error;
+  }
+}
+
+// 批量删除PDF文档
+export async function deletePDFDocuments(ids: string[]): Promise<void> {
+  try {
+    const db = await initDB();
+    const tx = db.transaction(STORE_PDF_DOCUMENTS, 'readwrite');
+    
+    await Promise.all([
+      ...ids.map(id => tx.store.delete(id)),
+      tx.done,
+    ]);
+  } catch (error) {
+    console.error('Failed to delete PDF documents:', error);
+    throw error;
+  }
+}
+
+// 清除所有PDF文档
+export async function clearAllPDFDocuments(): Promise<void> {
+  try {
+    const db = await initDB();
+    await db.clear(STORE_PDF_DOCUMENTS);
+  } catch (error) {
+    console.error('Failed to clear PDF documents:', error);
+    throw error;
+  }
+}
+
+// 搜索PDF文档（按文件名）
+export async function searchPDFDocuments(query: string): Promise<Array<{
+  id: string;
+  fileName: string;
+  fileSize: number;
+  pageCount: number;
+  parsedAt: number;
+}>> {
+  try {
+    const db = await initDB();
+    const allDocs = await db.getAll(STORE_PDF_DOCUMENTS);
+    
+    const lowerQuery = query.toLowerCase();
+    const results = allDocs
+      .filter(doc => doc.fileName.toLowerCase().includes(lowerQuery))
+      .map(doc => ({
+        id: doc.id,
+        fileName: doc.fileName,
+        fileSize: doc.fileSize,
+        pageCount: doc.pageCount,
+        parsedAt: doc.parsedAt,
+      }));
+
+    return results;
+  } catch (error) {
+    console.error('Failed to search PDF documents:', error);
+    return [];
   }
 }

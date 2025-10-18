@@ -9,8 +9,6 @@ async function generateTitleWithDedicatedAPI(prompt: string): Promise<{ title: s
   const apiKey = process.env.TITLE_API_KEY;
   const modelName = process.env.TITLE_MODEL_NAME;
 
-  console.log(`[标题生成] 检测到专用API，使用专用API进行生成。模型: ${modelName}`);
-
   try {
     const response = await fetch(apiUrl, {
       method: 'POST',
@@ -44,7 +42,7 @@ async function generateTitleWithDedicatedAPI(prompt: string): Promise<{ title: s
       throw new Error('Invalid response structure from dedicated title API');
     }
   } catch (error) {
-    console.error("[标题生成] 专用API调用失败:", error);
+    console.error("Dedicated API call failed:", error);
     // Fallback to extracting from prompt on dedicated API failure
     const fallbackTitle = prompt.substring(prompt.lastIndexOf('\n') + 1).substring(0, 40) || 'New Chat';
     return { title: fallbackTitle };
@@ -85,8 +83,6 @@ export async function generateChatDetails(apiKeys: string[], prompt: string, mod
   }
 
   // Fallback to existing Gemini logic
-  console.log(`[标题生成] 未检测到专用API，回退使用 ${model} 模型生成。`);
-  
   try {
     const payload = {
       model: model,
@@ -103,11 +99,10 @@ export async function generateChatDetails(apiKeys: string[], prompt: string, mod
       return { title };
     }
     
-    console.warn('[标题生成] ⚠️ 模型返回内容为空，使用备用标题');
     const fallbackTitle = prompt.substring(prompt.lastIndexOf('\n') + 1).substring(0, 40) || 'New Chat';
     return { title: fallbackTitle };
   } catch (error) {
-    console.error("[标题生成] ❌ 使用回退模型生成时出错:", error);
+    console.error("Failed to generate title:", error);
     const fallbackTitle = prompt.substring(prompt.lastIndexOf('\n') + 1).substring(0, 40) || 'New Chat';
     return { title: fallbackTitle };
   }

@@ -1,7 +1,7 @@
 {
   "name": "kchat",
   "private": true,
-  "version": "1.7.1",
+  "version": "1.7.6",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -19,6 +19,7 @@
     "katex": "^0.16.22",
     "marked": "^16.1.1",
     "mermaid": "^11.9.0",
+    "pdfjs-dist": "^5.4.296",
     "react": "^19.1.1",
     "react-dom": "^19.1.1"
   },
