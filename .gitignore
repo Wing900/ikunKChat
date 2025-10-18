@@ -26,3 +26,13 @@ dist-ssr
 
 
 dev-dist/
+
+# Claude AI 工具本地文件
+.claude/
+
+# 命令行产生的临时文件
+$null
+
+# Windows 系统缩略图缓存
+Thumbs.db
+ehthumbs.db

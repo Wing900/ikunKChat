@@ -45,12 +45,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({ chatSession, onNewChat, 
         <header className="pt-6 pb-4 px-3 flex-shrink-0 flex items-center justify-between gap-2 relative z-[150]">
             <div className="flex items-center gap-2 min-w-0">
                 <button
-                    onTouchStart={(e) => {
-                        e.stopPropagation();
-                        onToggleMobileSidebar();
-                    }}
                     onClick={(e) => {
-                        e.preventDefault();
                         e.stopPropagation();
                         onToggleMobileSidebar();
                     }}

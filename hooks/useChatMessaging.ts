@@ -26,7 +26,7 @@ export const useChatMessaging = ({ settings, activeChat, personas, setChats, set
     setIsLoading(false); 
   }, []);
 
-  const _initiateStream = useCallback(async (chatId: string, historyForAPI: Message[], personaId: string | null | undefined) => {
+  const _initiateStream = useCallback(async (chatId: string, historyForAPI: Message[], personaId: string | null | undefined, titleGenerationMode: 'INITIAL' | 'RECURRING' | null = null) => {
     const apiKeys = settings.apiKey && settings.apiKey.length > 0
       ? settings.apiKey
       : (process.env.API_KEY ? [process.env.API_KEY] : []);
@@ -178,6 +178,42 @@ export const useChatMessaging = ({ settings, activeChat, personas, setChats, set
       clearTimeout(inactivityTimer); // Ensure timer is cleared in finally block
       if (!isCancelledRef.current) {
         setIsLoading(false);
+
+        // New Title Generation Logic
+        if (titleGenerationMode && !streamHadError) {
+          setChats(prevChats => {
+            const currentChat = prevChats.find(c => c.id === chatId);
+            if (!currentChat) return prevChats;
+
+            let historyForTitle: Message[] = [];
+            if (titleGenerationMode === 'INITIAL') {
+              historyForTitle = currentChat.messages.slice(0, 4);
+            } else if (titleGenerationMode === 'RECURRING') {
+              historyForTitle = currentChat.messages.slice(-4);
+            }
+            
+            if (historyForTitle.length >= 2) {
+              const conversationForTitle = historyForTitle.map(m => `${m.role}: ${m.content}`).join('\n');
+              const fullPrompt = `${TITLE_GENERATION_PROMPT}\n\n**CONVERSATION:**\n${conversationForTitle}`;
+              
+              const apiKeys = settings.apiKey && settings.apiKey.length > 0
+                ? settings.apiKey
+                : (process.env.API_KEY ? [process.env.API_KEY] : []);
+
+              if (apiKeys.length > 0) {
+                const triggerReason = titleGenerationMode === 'INITIAL' ? '第二轮用户对话后' : '周期性更新';
+                console.log(`[标题生成] ✨ 触发 - ${triggerReason}`);
+                generateChatDetails(apiKeys, fullPrompt, settings.titleGenerationModel, settings).then(({ title }) => {
+                  console.log(`[标题生成] ✅ 应用 - 标题: \"${title}\"`);
+                  setChats(p => p.map(c => c.id === chatId ? { ...c, title } : c));
+                }).catch(error => {
+                  logError(error, 'TitleGeneration');
+                });
+              }
+            }
+            return prevChats;
+          });
+        }
       }
     }
   }, [settings, setChats, activeChat, personas, addToast]);
@@ -268,8 +304,17 @@ export const useChatMessaging = ({ settings, activeChat, personas, setChats, set
       ? settings.apiKey
       : (process.env.API_KEY ? [process.env.API_KEY] : []);
 
-    // 判断是否是第一条用户消息（用于标题生成）
-    const isFirstUserMessage = !currentChatId || (activeChat?.messages || []).filter(m => m.role === MessageRole.USER).length === 0;
+    const userMessagesCount = (activeChat?.messages || []).filter(m => m.role === MessageRole.USER).length;
+
+    let titleGenerationMode: 'INITIAL' | 'RECURRING' | null = null;
+    if (settings.autoTitleGeneration && !!content) {
+      const newUserMessageCount = userMessagesCount + 1;
+      if (newUserMessageCount === 2) {
+        titleGenerationMode = 'INITIAL';
+      } else if (newUserMessageCount >= 4 && newUserMessageCount % 4 === 0) {
+        titleGenerationMode = 'RECURRING';
+      }
+    }
 
     if (!currentChatId) {
       console.log(`[Chat] Creating new chat - Content: "${content.substring(0, 30)}..."`);
@@ -286,22 +331,7 @@ export const useChatMessaging = ({ settings, activeChat, personas, setChats, set
       setChats(prev => prev.map(c => c.id === currentChatId ? { ...c, messages: [...c.messages, userMessage] } : c));
     }
 
-    // 标题自动生成逻辑 - 只在第一条用户消息时触发
-    if (isFirstUserMessage && settings.autoTitleGeneration && content && apiKeys.length > 0) {
-      const persona = personas.find(p => p.id === currentPersonaId);
-      console.log(`[Title Gen] ✨ Triggering - First message, Persona: ${persona?.name || 'None'}, Model: ${settings.titleGenerationModel}`);
-      const fullPrompt = `${TITLE_GENERATION_PROMPT}\n\n**CONVERSATION:**\n${content}`;
-      generateChatDetails(apiKeys, fullPrompt, settings.titleGenerationModel, settings).then(({ title }) => {
-        console.log(`[Title Gen] ✅ Applied - Title: "${title}"`);
-        setChats(p => p.map(c => c.id === currentChatId ? { ...c, title } : c))
-      }).catch(error => {
-        logError(error, 'TitleGeneration');
-      });
-    } else if (isFirstUserMessage) {
-      console.log(`[Title Gen] ⏭️ Skipped - Enabled: ${settings.autoTitleGeneration}, Content: ${!!content}, Keys: ${apiKeys.length > 0}`);
-    }
-
-    await _initiateStream(currentChatId, history, currentPersonaId);
+    await _initiateStream(currentChatId, history, currentPersonaId, titleGenerationMode);
   }, [activeChat, settings, setChats, setActiveChatId, _initiateStream, personas]);
 
   const handleDeleteMessage = useCallback((messageId: string) => {
