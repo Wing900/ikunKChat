@@ -1,7 +1,7 @@
 import React, { createContext, useState, useCallback, useContext, useMemo, ReactNode } from 'react';
 import { ChatSession, Folder, Message } from '../types';
 
-interface UIState {
+export interface UIState {
   // 图片灯箱
   lightboxImage: string | null;
   setLightboxImage: (image: string | null) => void;
