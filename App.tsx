@@ -1,16 +1,15 @@
 import React from 'react';
-import { LocalizationProvider } from './contexts/LocalizationContext';
-import { UIStateProvider } from './contexts/UIStateContext';
+import { AppProviders } from './components/app/AppProviders';
 import { AppContainer } from './components/app/AppContainer';
 
-const App: React.FC = () => {
+/**
+ * App - Root component
+ * Sets up providers and renders the main application
+ */
+export default function App() {
   return (
-    <LocalizationProvider>
-      <UIStateProvider>
-        <AppContainer />
-      </UIStateProvider>
-    </LocalizationProvider>
+    <AppProviders>
+      <AppContainer />
+    </AppProviders>
   );
-};
-
-export default App;
+}
