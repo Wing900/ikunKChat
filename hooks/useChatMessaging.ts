@@ -4,6 +4,7 @@ import { sendMessageStream, generateChatDetails } from '../services/geminiServic
 import { fileToData } from '../utils/fileUtils';
 import { TITLE_GENERATION_PROMPT } from '../data/prompts';
 import { saveAttachment } from '../services/indexedDBService';
+import { getUserFacingMessage, logError } from '../utils/errorUtils';
 
 interface UseChatMessagingProps {
   settings: Settings;
@@ -165,11 +166,11 @@ export const useChatMessaging = ({ settings, activeChat, personas, setChats, set
         }
         setChats(prev => prev.map(c => c.id === chatId ? { ...c, messages: c.messages.map(m => m.id === modelMessage.id ? { ...m, content: fullResponse || '...', thoughts: settings.showThoughts ? accumulatedThoughts : undefined, groundingMetadata: finalGroundingMetadata, thinkingTime } : m) } : c));
       }
-    } catch(e) {
-      console.error(e);
+    } catch (error) {
+      logError(error, 'ChatStream');
       if (!isCancelledRef.current) {
         streamHadError = true;
-        const errorMessage = "Sorry, an error occurred during the request.";
+        const errorMessage = getUserFacingMessage(error, '请求过程中发生错误。');
         addToast(errorMessage, 'error');
         setChats(p => p.map(c => c.id === chatId ? { ...c, messages: c.messages.map(m => m.id === modelMessage.id ? { ...m, content: errorMessage } : m) } : c));
       }
@@ -236,15 +237,13 @@ export const useChatMessaging = ({ settings, activeChat, personas, setChats, set
         console.log(`[附件处理] ✅ 附件 ${i + 1}/${files.length} 处理成功并添加到列表`);
         
       } catch (error) {
-        console.error(`[附件处理] ❌ 处理失败 - 附件 ${i + 1}/${files.length} (${file.name}):`, error);
-        console.error(`[附件处理] ❌ 错误详情:`, {
+        logError(error, 'AttachmentProcessing', {
           fileName: file.name,
           fileType: file.type,
           fileSize: file.size,
-          errorMessage: error instanceof Error ? error.message : String(error),
-          errorStack: error instanceof Error ? error.stack : undefined
         });
-        addToast(`文件 "${file.name}" 处理失败: ${error instanceof Error ? error.message : '未知错误'}`, 'error');
+        const friendlyMessage = getUserFacingMessage(error, '未知错误');
+        addToast(`文件 "${file.name}" 处理失败: ${friendlyMessage}`, 'error');
         // 继续处理其他文件，不因为单个文件失败而中断
       }
     }
@@ -296,7 +295,7 @@ export const useChatMessaging = ({ settings, activeChat, personas, setChats, set
         console.log(`[Title Gen] ✅ Applied - Title: "${title}"`);
         setChats(p => p.map(c => c.id === currentChatId ? { ...c, title } : c))
       }).catch(error => {
-        console.error('[Title Gen] ❌ Failed:', error);
+        logError(error, 'TitleGeneration');
       });
     } else if (isFirstUserMessage) {
       console.log(`[Title Gen] ⏭️ Skipped - Enabled: ${settings.autoTitleGeneration}, Content: ${!!content}, Keys: ${apiKeys.length > 0}`);
