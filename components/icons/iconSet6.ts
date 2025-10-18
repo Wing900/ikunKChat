@@ -19,4 +19,21 @@ export const iconSet6 = {
       React.createElement('polyline', { points: "12 5 19 12 12 19" })
     )
   ),
+  'basketball': (props: React.SVGProps<SVGSVGElement>) => (
+    React.createElement('svg', { viewBox: "0 0 256 256", xmlns: "http://www.w3.org/2000/svg", ...props },
+      React.createElement('defs', null,
+        React.createElement('clipPath', { id: "clip-v61" },
+          React.createElement('circle', { cx: "128", cy: "128", r: "100" })
+        )
+      ),
+      React.createElement('g', { clipPath: "url(#clip-v61)" },
+        React.createElement('path', { d: "M28,128 C88,140 168,140 228,128 L228,228 L28,228Z", fill: "#AAAAAA" }),
+        React.createElement('path', { d: "M28,128 C88,140 168,140 228,128 L228,28 L28,28Z", fill: "#2c2c2c" }),
+        React.createElement('g', { fill: "none", stroke: "white", strokeWidth: "20", strokeLinecap: "round" },
+          React.createElement('path', { d: "M80,35 C85,80 90,110 85,135" }),
+          React.createElement('path', { d: "M176,35 C171,80 166,110 171,135" })
+        )
+      )
+    )
+  ),
 };
