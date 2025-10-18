@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useLocalization } from '../contexts/LocalizationContext';
 import { Icon } from './Icon';
 import { authService } from '../services/authService';
+import './PasswordView.css';
 
 interface PasswordViewProps {
   onVerified: (rememberMe: boolean) => void;
@@ -29,51 +30,91 @@ const PasswordView: React.FC<PasswordViewProps> = ({ onVerified }) => {
   };
 
   return (
-    <div className="flex items-center justify-center h-screen bg-gray-100 dark:bg-gray-900">
-      <form onSubmit={handlePasswordSubmit} className="p-8 bg-white rounded-2xl shadow-lg dark:bg-gray-800 w-96">
-        <div className="flex flex-col items-center justify-center mb-6">
-          <div className="w-16 h-16 mb-4 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-            <span className="text-3xl">🏀</span>
-          </div>
-          <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-200">
+    <div className="password-view-container">
+      {/* Rain drops background */}
+      <div className="rain-container" aria-hidden="true">
+        {Array.from({ length: 25 }).map((_, i) => (
+          <div
+            key={i}
+            className="rain-drop"
+            style={{
+              left: `${Math.random() * 100}%`,
+              animationDelay: `${Math.random() * 5}s`,
+              animationDuration: `${3 + Math.random() * 2}s`,
+              height: `${15 + Math.random() * 10}px`
+            }}
+          />
+        ))}
+      </div>
+
+      {/* Vertical poetry background */}
+      <div className="poetry-container" aria-hidden="true">
+        {/* Right side poetry - 天街小雨润如酥，头梳中分背带裤 */}
+        <div className="poetry-column" style={{ right: '15%', transform: `translateY(${-20 + Math.random() * 60}px)` }}>
+          天<br />街<br />小<br />雨<br />润<br />如<br />酥<br />，
+        </div>
+        <div className="poetry-column" style={{ right: '10%', transform: `translateY(${-20 + Math.random() * 60}px)` }}>
+          头<br />梳<br />中<br />分<br />背<br />带<br />裤<br />。
+        </div>
+        
+        {/* Left side poetry - 十万ikun聚一处，唱跳rap停不住 */}
+        <div className="poetry-column" style={{ left: '10%', transform: `translateY(${-20 + Math.random() * 60}px)` }}>
+          十<br />万<br />i<br />k<br />u<br />n<br />聚<br />一<br />处<br />，
+        </div>
+        <div className="poetry-column" style={{ left: '15%', transform: `translateY(${-20 + Math.random() * 60}px)` }}>
+          唱<br />跳<br />r<br />a<br />p<br />停<br />不<br />住<br />。
+        </div>
+      </div>
+
+      {/* Login card */}
+      <form onSubmit={handlePasswordSubmit} className="login-card">
+        <div className="login-header">
+          <img 
+            src="/ikunchat.svg" 
+            alt="ikunKChat" 
+            className="login-logo"
+          />
+          <h1 className="login-title">
             ikunKChat
           </h1>
         </div>
         
-        <div className="relative mb-4">
+        <div className="input-group">
           <input
             type="password"
             value={inputPassword}
             onChange={(e) => setInputPassword(e.target.value)}
-            className="w-full px-4 py-3 text-gray-700 bg-gray-100 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 transition-all"
+            className="login-input"
             placeholder="请输入真爱粉密码  谢绝小黑子"
+            autoFocus
           />
           <button
             type="submit"
-            className="absolute inset-y-0 right-0 flex items-center px-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+            className="input-submit-icon"
+            aria-label="Submit password"
           >
             <Icon icon="arrow-right" className="w-5 h-5" />
           </button>
         </div>
         
-        {error && <p className="mt-2 text-sm text-center text-red-500">{error}</p>}
+        {error && <p className="error-message">{error}</p>}
         
-        <div className="flex items-center mt-4">
+        <div className="remember-me-group">
           <input
             type="checkbox"
             id="rememberMe"
             checked={rememberMe}
             onChange={(e) => setRememberMe(e.target.checked)}
-            className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+            className="remember-checkbox"
           />
-          <label htmlFor="rememberMe" className="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">
+          <label htmlFor="rememberMe" className="remember-label">
             记住我（30天内免登录）
           </label>
         </div>
         
         <button
           type="submit"
-          className="w-full px-4 py-3 mt-4 font-medium text-white bg-blue-500 rounded-xl hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+          className="login-button"
         >
           {t('continue')}
         </button>
