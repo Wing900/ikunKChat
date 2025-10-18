@@ -3,6 +3,7 @@ import { Settings } from '../types';
 import { useLocalization } from '../contexts/LocalizationContext';
 import { getAvailableModels } from '../services/modelService';
 import { loadSettings, saveSettings } from '../services/storageService';
+import { USE_EMERGENCY_ROUTE } from '../emergency.config';
 
 const defaultSettings: Settings = {
   theme: 'apple-light',
@@ -36,11 +37,24 @@ export const useSettings = () => {
     const loadedSettings = loadSettings();
     const initialSettings = { ...defaultSettings, ...loadedSettings };
 
-    // Override API Base URL if set in environment variables
-    if (process.env.API_BASE_URL) {
-      initialSettings.apiBaseUrl = process.env.API_BASE_URL;
-    }
+    // Determine API credentials based on the emergency switch and env vars
+    const useEmergency = USE_EMERGENCY_ROUTE && process.env.FALLBACK_API_BASE_URL;
+    
+    const envApiBaseUrl = useEmergency
+      ? process.env.FALLBACK_API_BASE_URL
+      : process.env.API_BASE_URL;
+      
+    const envApiKey = useEmergency
+      ? (process.env.FALLBACK_API_KEY ? [process.env.FALLBACK_API_KEY] : [])
+      : (process.env.API_KEY ? [process.env.API_KEY] : []);
 
+    // If environment variables are providing the URL, they take precedence over any user-saved settings.
+    // This ensures the developer switch and environment variables are the source of truth.
+    if (envApiBaseUrl) {
+      initialSettings.apiBaseUrl = envApiBaseUrl;
+      initialSettings.apiKey = envApiKey;
+    }
+    
     setSettings(initialSettings);
     setLanguage(initialSettings.language);
     setIsStorageLoaded(true);
