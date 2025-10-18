@@ -47,23 +47,15 @@ const PasswordView: React.FC<PasswordViewProps> = ({ onVerified }) => {
         ))}
       </div>
 
-      {/* Vertical poetry background */}
+      {/* Animated corner poetry with rotating basketball */}
       <div className="poetry-container" aria-hidden="true">
-        {/* Right side poetry - 天街小雨润如酥，头梳中分背带裤 */}
-        <div className="poetry-column" style={{ right: '15%', transform: `translateY(${-20 + Math.random() * 60}px)` }}>
-          天<br />街<br />小<br />雨<br />润<br />如<br />酥<br />，
+        <div className="rotating-text-wrapper">
+          <p className="poetry-line poetry-line-1">天街小雨润如酥，</p>
+          <p className="poetry-line poetry-line-2">头梳中分背带裤。</p>
+          <p className="poetry-line poetry-line-3">十万ikun聚一处，</p>
+          <p className="poetry-line poetry-line-4">唱跳rap停不住。</p>
         </div>
-        <div className="poetry-column" style={{ right: '10%', transform: `translateY(${-20 + Math.random() * 60}px)` }}>
-          头<br />梳<br />中<br />分<br />背<br />带<br />裤<br />。
-        </div>
-        
-        {/* Left side poetry - 十万ikun聚一处，唱跳rap停不住 */}
-        <div className="poetry-column" style={{ left: '10%', transform: `translateY(${-20 + Math.random() * 60}px)` }}>
-          十<br />万<br />i<br />k<br />u<br />n<br />聚<br />一<br />处<br />，
-        </div>
-        <div className="poetry-column" style={{ left: '15%', transform: `translateY(${-20 + Math.random() * 60}px)` }}>
-          唱<br />跳<br />r<br />a<br />p<br />停<br />不<br />住<br />。
-        </div>
+        <Icon icon="basketball" className="w-8 h-8 text-gray-500 rotating-basketball opacity-70" />
       </div>
 
       {/* Login card */}
