@@ -90,6 +90,7 @@ export const PDFPreview: React.FC<PDFPreviewProps> = ({
 
           <div style={{
             display: 'flex',
+            flexWrap: 'wrap',
             gap: '12px',
             fontSize: '12px',
             color: 'var(--text-secondary)',
