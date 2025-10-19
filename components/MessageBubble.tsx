@@ -187,7 +187,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = React.memo((props) =>
                           {/* PDF信息 */}
                           <div className="flex-1 min-w-0">
                             <div className="font-medium text-sm truncate">{pdf.fileName}</div>
-                            <div className="flex gap-3 text-xs text-[var(--text-secondary)] mt-1">
+                            <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-[var(--text-secondary)] mt-1">
                               <span>📄 {pdf.pageCount} 页</span>
                               <span>💾 {(pdf.fileSize / 1024).toFixed(1)} KB</span>
                               <span>📝 {pdf.charCount.toLocaleString()} 字符</span>
