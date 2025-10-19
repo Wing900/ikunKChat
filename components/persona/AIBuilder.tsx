@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Persona, Settings } from '../../types';
 import { useLocalization } from '../../contexts/LocalizationContext';
 import { useToast } from '../../contexts/ToastContext';
-import { generatePersonaUpdate } from '../../services/geminiService';
+import { generatePersonaUpdate } from '../../services/llm/gemini';
 import { Icon } from '../Icon';
 
 interface BuilderMessage {

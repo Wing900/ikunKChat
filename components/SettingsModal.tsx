@@ -112,7 +112,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = (props) => {
         <div className="flex-grow min-h-0 overflow-y-auto -mr-4 pr-4 pb-4">
           {sectionVisibility.general && <h3 className="settings-section-title">{t('general')}</h3>}
           {visibleSettingIds.has('language') && <SettingsItem label={t('language')} description={t('languageDesc')}>
-            <CustomSelect options={languageOptions} selectedValue={settings.language} onSelect={(value) => onSettingsChange({ language: value as 'en' | 'zh' })} className="w-36" />
+            <CustomSelect options={languageOptions} value={settings.language} onChange={(value) => onSettingsChange({ language: value as 'en' | 'zh' })} className="w-36" />
           </SettingsItem>}
           {visibleSettingIds.has('theme') && <SettingsItem label={t('theme')} description={t('themeDesc')}>
              <div className="flex items-center p-1 rounded-full glass-pane">
@@ -126,7 +126,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = (props) => {
             <Switch size="sm" checked={settings.autoTitleGeneration} onChange={e => onSettingsChange({ autoTitleGeneration: e.target.checked })} />
           </SettingsItem>}
           {visibleSettingIds.has('titleGenModel') && <SettingsItem label={t('titleGenModel')} description={t('titleGenModelDesc')} isDisabled={!settings.autoTitleGeneration}>
-            <CustomSelect options={modelOptions} selectedValue={settings.titleGenerationModel} onSelect={(value) => onSettingsChange({ titleGenerationModel: value })} className="w-48" disabled={!settings.autoTitleGeneration}/>
+            <CustomSelect options={modelOptions} value={settings.titleGenerationModel} onChange={(value) => onSettingsChange({ titleGenerationModel: value })} className="w-48" disabled={!settings.autoTitleGeneration}/>
           </SettingsItem>}
           {visibleSettingIds.has('showThoughts') && <SettingsItem label={t('showThoughts')} description={t('showThoughtsDesc')}>
             <Switch size="sm" checked={settings.showThoughts} onChange={e => onSettingsChange({ showThoughts: e.target.checked })} />

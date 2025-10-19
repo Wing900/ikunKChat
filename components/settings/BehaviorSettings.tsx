@@ -26,7 +26,7 @@ export const BehaviorSettings: React.FC<BehaviorSettingsProps> = ({ settings, on
       )}
       {visibleIds.has('titleGenModel') && (
         <SettingsItem label={t('titleGenModel')} description={t('titleGenModelDesc')} isDisabled={!settings.autoTitleGeneration}>
-          <CustomSelect options={modelOptions} selectedValue={settings.titleGenerationModel} onSelect={(value) => onSettingsChange({ titleGenerationModel: value })} className="w-48" disabled={!settings.autoTitleGeneration}/>
+          <CustomSelect options={modelOptions} value={settings.titleGenerationModel} onChange={(value) => onSettingsChange({ titleGenerationModel: value })} className="w-48" disabled={!settings.autoTitleGeneration}/>
         </SettingsItem>
       )}
       {visibleIds.has('showThoughts') && (

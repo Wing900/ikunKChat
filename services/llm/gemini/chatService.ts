@@ -1,5 +1,5 @@
 import { GenerateContentResponse, Type } from "@google/genai";
-import { Message, FileAttachment, Settings, Persona } from '../../types';
+import { Message, FileAttachment, Settings, Persona } from '../../../types';
 import { executeWithKeyRotation, executeStreamWithKeyRotation } from './apiExecutor';
 import { prepareChatPayload } from "./payloadBuilder";
 
@@ -47,33 +47,6 @@ async function generateTitleWithDedicatedAPI(prompt: string): Promise<{ title: s
     const fallbackTitle = prompt.substring(prompt.lastIndexOf('\n') + 1).substring(0, 40) || 'New Chat';
     return { title: fallbackTitle };
   }
-}
-
-interface Part {
-  text?: string;
-  inlineData?: { mimeType: string; data: string; };
-}
-
-export function sendMessageStream(apiKeys: string[], messages: Message[], newMessage: string, attachments: FileAttachment[], model: string, settings: Settings, persona?: Persona | null): AsyncGenerator<GenerateContentResponse> {
-  const { formattedHistory, configForApi } = prepareChatPayload(messages, settings, persona);
-  const messageParts: Part[] = attachments.map(att => ({
-      inlineData: { mimeType: att.mimeType, data: att.data! }
-  }));
-  if (newMessage) messageParts.push({ text: newMessage });
-
-  // 开发环境下的简化日志
-  if (process.env.NODE_ENV === 'development') {
-    console.log(`[聊天] 发送消息 - 历史记录: ${formattedHistory.length} 条消息, 附件: ${attachments.length}`);
-  }
-
-  return executeStreamWithKeyRotation(apiKeys, async (ai) => {
-    const chat = ai.chats.create({
-      model,
-      history: formattedHistory,
-      config: configForApi,
-    });
-    return chat.sendMessageStream({ message: messageParts });
-  }, settings.apiBaseUrl);
 }
 
 export async function generateChatDetails(apiKeys: string[], prompt: string, model: string, settings: Settings): Promise<{ title: string }> {

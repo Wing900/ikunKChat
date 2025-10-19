@@ -22,12 +22,12 @@ export const GeneralSettings: React.FC<GeneralSettingsProps> = ({ settings, onSe
     <>
       {visibleIds.has('language') && (
         <SettingsItem label={t('language')} description={t('languageDesc')}>
-          <CustomSelect options={languageOptions} selectedValue={settings.language} onSelect={(value) => onSettingsChange({ language: value as 'en' | 'zh' })} className="w-36" />
+          <CustomSelect options={languageOptions} value={settings.language} onChange={(value) => onSettingsChange({ language: value as 'en' | 'zh' })} className="w-36" />
         </SettingsItem>
       )}
       {visibleIds.has('defaultPersona') && (
         <SettingsItem label={t('defaultPersona')} description={t('defaultPersonaDesc')}>
-          <CustomSelect options={personaOptions} selectedValue={settings.defaultPersona} onSelect={(value) => onSettingsChange({ defaultPersona: value as string })} className="w-48" />
+          <CustomSelect options={personaOptions} value={settings.defaultPersona} onChange={(value) => onSettingsChange({ defaultPersona: value as string })} className="w-48" />
         </SettingsItem>
       )}
       {visibleIds.has('theme') && (
@@ -37,8 +37,8 @@ export const GeneralSettings: React.FC<GeneralSettingsProps> = ({ settings, onSe
               { value: 'apple-light', label: '苹果光明' },
               { value: 'apple-dark', label: '苹果黑暗' },
             ]}
-            selectedValue={settings.theme}
-            onSelect={(value) => onSettingsChange({ theme: value as 'apple-light' | 'apple-dark' })}
+            value={settings.theme}
+            onChange={(value) => onSettingsChange({ theme: value as 'apple-light' | 'apple-dark' })}
             className="w-48"
           />
         </SettingsItem>
@@ -51,8 +51,8 @@ export const GeneralSettings: React.FC<GeneralSettingsProps> = ({ settings, onSe
               { value: 'lxgw', label: '霞鹜文楷' },
               { value: 'yozai', label: '悠哉字体' },
             ]}
-            selectedValue={settings.fontFamily}
-            onSelect={(value) => onSettingsChange({ fontFamily: value as any })}
+            value={settings.fontFamily}
+            onChange={(value) => onSettingsChange({ fontFamily: value as any })}
             className="w-48"
           />
         </SettingsItem>

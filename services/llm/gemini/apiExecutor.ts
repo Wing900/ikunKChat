@@ -1,5 +1,5 @@
 import { GoogleGenAI, GenerateContentResponse } from "@google/genai";
-import { KeyManager } from '../keyManager';
+import { KeyManager } from '../../keyManager';
 
 /**
  * Executes a non-streaming API call with key rotation and retry logic,

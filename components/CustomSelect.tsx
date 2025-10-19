@@ -10,18 +10,18 @@ export interface SelectOption {
 
 interface CustomSelectProps {
   options: SelectOption[];
-  selectedValue: string;
-  onSelect: (value: string) => void;
+  value: string;
+  onChange: (value: string) => void;
   id?: string;
   className?: string;
   disabled?: boolean;
 }
 
-export const CustomSelect: React.FC<CustomSelectProps> = ({ options, selectedValue, onSelect, id, className, disabled = false }) => {
+export const CustomSelect: React.FC<CustomSelectProps> = ({ options, value, onChange, id, className, disabled = false }) => {
   const [isOpen, setIsOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const optionsRef = useRef<HTMLDivElement>(null);
-  const selectedLabel = options.find(opt => opt.value === selectedValue)?.label || selectedValue;
+  const selectedLabel = options.find(opt => opt.value === value)?.label || value;
 
   const positionOptions = () => {
     if (!wrapperRef.current || !optionsRef.current) return;
@@ -78,14 +78,14 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({ options, selectedVal
           {options.map(option => (
             <div
               key={option.value}
-              onClick={() => { onSelect(option.value); setIsOpen(false); }}
+              onClick={() => { onChange(option.value); setIsOpen(false); }}
               className={`px-3 py-2 rounded-[var(--radius-2xl)] cursor-pointer transition-colors duration-150 ${
-                selectedValue === option.value
+                value === option.value
                   ? 'bg-[var(--accent-color)] text-[var(--accent-color-text)] font-semibold'
                   : 'text-[var(--text-color)] hover:bg-[rgba(0,122,255,0.2)] dark:hover:bg-[rgba(10,132,255,0.25)]'
               }`}
               role="option"
-              aria-selected={selectedValue === option.value}
+              aria-selected={value === option.value}
             >
               {option.label}
             </div>

@@ -69,12 +69,15 @@ export interface ChatSession {
   isArchived?: boolean;
 }
 
+import { LLMProvider } from './services/llm/types';
+
 export interface Settings {
   theme: 'apple-light' | 'apple-dark';
   language: 'en' | 'zh';
   fontFamily: 'system' | 'lxgw' | 'yozai';
   colorPalette?: string; // 调色板ID (blue, orange, green, purple, red, indigo, cyan, pink)
   customColor?: string; // 自定义颜色 (HEX格式)
+  llmProvider?: LLMProvider; // 用户选择的LLM服务商
   apiKey: string[] | null;
   defaultModel: string;
   defaultPersona: string;

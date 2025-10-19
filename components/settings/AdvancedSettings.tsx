@@ -25,8 +25,23 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({ settings, on
     onSettingsChange({ apiKey: keys });
   };
 
+  const llmProviderOptions: SelectOption[] = [
+    { value: 'gemini', label: 'Google Gemini' },
+    { value: 'openai', label: 'OpenAI' },
+  ];
+
   return (
     <>
+      {visibleIds.has('llmProvider') && (
+        <SettingsItem label={t('llmProvider')} description={t('llmProviderDesc')}>
+          <CustomSelect
+            options={llmProviderOptions}
+            value={settings.llmProvider || 'gemini'}
+            onChange={(value) => onSettingsChange({ llmProvider: value as 'gemini' | 'openai' })}
+            className="w-60"
+          />
+        </SettingsItem>
+      )}
       {visibleIds.has('apiKey') && (
         <SettingsItem label={t('apiKey')} description={t('apiKeyDesc')}>
            <textarea 
@@ -46,7 +61,13 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({ settings, on
             value={settings.apiBaseUrl || ''}
             onChange={e => onSettingsChange({ apiBaseUrl: e.target.value })}
             disabled={isApiBaseUrlSetByEnv}
-            placeholder={isApiBaseUrlSetByEnv ? t('apiKeyEnvVar') : "https://generativelanguage.googleapis.com"}
+            placeholder={
+              isApiBaseUrlSetByEnv
+                ? t('apiKeyEnvVar')
+                : settings.llmProvider === 'openai'
+                  ? 'https://api.openai.com'
+                  : 'https://generativelanguage.googleapis.com'
+            }
             className="input-glass w-60"
           />
         </SettingsItem>

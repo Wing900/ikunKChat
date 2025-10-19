@@ -25,7 +25,9 @@ export const PDFPreview: React.FC<PDFPreviewProps> = ({
         borderRadius: '8px',
         padding: '12px',
         backgroundColor: 'var(--background-secondary)',
-        marginBottom: '8px'
+        marginBottom: '8px',
+        maxWidth: '100%',
+        boxSizing: 'border-box'
       }}
     >
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>

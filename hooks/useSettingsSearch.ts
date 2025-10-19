@@ -17,7 +17,7 @@ export const useSettingsSearch = (searchQuery: string) => {
       const allVisible = new Set([
         'language', 'theme', 'defaultPersona', 'fontFamily', 'colorPalette', 'password',
         'autoTitleGeneration', 'titleGenModel',
-        'showThoughts', 'apiKey', 'apiBaseUrl', 'temperature',
+        'showThoughts', 'llmProvider', 'apiKey', 'apiBaseUrl', 'temperature',
         'contextLength', 'maxOutputTokens',
         'streamInactivityTimeout', 'data', 'pdf-management'
       ]);
@@ -41,6 +41,7 @@ export const useSettingsSearch = (searchQuery: string) => {
         { id: 'showThoughts', section: 'behavior', texts: [t('showThoughts'), t('showThoughtsDesc'), translations.zh.showThoughts, translations.zh.showThoughtsDesc] },
 
         // Advanced
+        { id: 'llmProvider', section: 'advanced', texts: [t('llmProvider'), t('llmProviderDesc'), translations.zh.llmProvider, translations.zh.llmProviderDesc] },
         { id: 'apiKey', section: 'advanced', texts: [t('apiKey'), t('apiKeyDesc'), translations.zh.apiKey, translations.zh.apiKeyDesc] },
         { id: 'apiBaseUrl', section: 'advanced', texts: [t('apiBaseUrl'), t('apiBaseUrlDesc'), translations.zh.apiBaseUrl, translations.zh.apiBaseUrlDesc] },
         { id: 'temperature', section: 'advanced', texts: [t('temperature'), t('temperatureDesc'), translations.zh.temperature, translations.zh.temperatureDesc] },
