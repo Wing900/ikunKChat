@@ -53,7 +53,7 @@ export const useSettings = () => {
 
     // 只有当用户没有手动配置 API Key 时，才使用环境变量
     // 这样用户在设置中手动填写的 key 不会被环境变量覆盖
-    const hasUserApiKey = loadedSettings.apiKey && Array.isArray(loadedSettings.apiKey) && loadedSettings.apiKey.length > 0 && loadedSettings.apiKey[0].trim() !== '';
+    const hasUserApiKey = loadedSettings?.apiKey && Array.isArray(loadedSettings.apiKey) && loadedSettings.apiKey.length > 0 && loadedSettings.apiKey[0].trim() !== '';
     const hasGeminiEnvKey = geminiApiKey && geminiApiKey.trim() && geminiApiKey.trim().length > 0;
     const hasOpenAIEnvKey = openaiApiKey && openaiApiKey.trim() && openaiApiKey.trim().length > 0;
 
