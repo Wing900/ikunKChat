@@ -8,7 +8,9 @@ export default defineConfig(({ mode }) => {
       define: {
         'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
         'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
+        'process.env.OPENAI_API_KEY': JSON.stringify(env.OPENAI_API_KEY),
         'process.env.API_BASE_URL': JSON.stringify(env.VITE_API_BASE_URL),
+        'process.env.OPENAI_API_BASE_URL': JSON.stringify(env.VITE_OPENAI_API_BASE_URL),
         'process.env.FALLBACK_API_KEY': JSON.stringify(env.VITE_FALLBACK_GEMINI_API_KEY),
         'process.env.FALLBACK_API_BASE_URL': JSON.stringify(env.VITE_FALLBACK_API_BASE_URL),
         'process.env.TITLE_API_URL': JSON.stringify(env.VITE_TITLE_API_URL),

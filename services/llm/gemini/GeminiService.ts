@@ -116,18 +116,35 @@ export class GeminiService implements ILLMService {
       // 3. 转换流的输出格式
       for await (const geminiChunk of geminiStream) {
         if (geminiChunk.candidates && geminiChunk.candidates.length > 0) {
-          const content = geminiChunk.candidates[0].content;
+          const candidate = geminiChunk.candidates[0];
+          const content = candidate.content;
+          
           if (content && content.parts && content.parts.length > 0) {
-            const text = content.parts.map(p => p.text).join('');
-            if (text) {
-              yield {
-                type: 'content',
-                payload: text,
-              };
+            // 检查是否有思考内容的标记
+            // Gemini API 在思考模式下会在 parts 中标记 thought
+            for (const part of content.parts) {
+              if (part.text) {
+                // 检查 part 的元数据，判断是 thought 还是 content
+                // @ts-ignore - thoughtMetadata 可能存在于 part 对象中
+                const isThought = part.thought || part.thoughtMetadata;
+                
+                if (isThought) {
+                  // 这是思考内容
+                  yield {
+                    type: 'thought',
+                    payload: part.text,
+                  };
+                } else {
+                  // 这是普通回复内容
+                  yield {
+                    type: 'content',
+                    payload: part.text,
+                  };
+                }
+              }
             }
           }
         }
-        // TODO: 在这里可以添加对 thoughts 和 tool_code 的处理（如果API支持）
       }
 
     } catch (error: any) {

@@ -40,19 +40,39 @@ export const useSettings = () => {
     // Determine API credentials based on the emergency switch and env vars
     const useEmergency = USE_EMERGENCY_ROUTE && process.env.FALLBACK_API_BASE_URL;
     
-    const envApiBaseUrl = useEmergency
+    // 获取 Gemini 和 OpenAI 的环境变量
+    const geminiApiKey = useEmergency
+      ? process.env.FALLBACK_API_KEY
+      : process.env.GEMINI_API_KEY;
+    const geminiApiBaseUrl = useEmergency
       ? process.env.FALLBACK_API_BASE_URL
       : process.env.API_BASE_URL;
-      
-    const envApiKey = useEmergency
-      ? (process.env.FALLBACK_API_KEY ? [process.env.FALLBACK_API_KEY] : [])
-      : (process.env.API_KEY ? [process.env.API_KEY] : []);
+    
+    const openaiApiKey = process.env.OPENAI_API_KEY;
+    const openaiApiBaseUrl = process.env.OPENAI_API_BASE_URL;
 
-    // If environment variables are providing the URL, they take precedence over any user-saved settings.
-    // This ensures the developer switch and environment variables are the source of truth.
-    if (envApiBaseUrl) {
-      initialSettings.apiBaseUrl = envApiBaseUrl;
-      initialSettings.apiKey = envApiKey;
+    // 逻辑：哪个不为空用哪个，两个都不为空则优先使用 Gemini
+    let selectedProvider: 'gemini' | 'openai' | undefined;
+    let selectedApiKey: string[] = [];
+    let selectedApiBaseUrl = '';
+
+    if (geminiApiKey) {
+      // Gemini 有配置，优先使用
+      selectedProvider = 'gemini';
+      selectedApiKey = [geminiApiKey];
+      selectedApiBaseUrl = geminiApiBaseUrl || '';
+    } else if (openaiApiKey) {
+      // Gemini 没配置，但 OpenAI 有配置
+      selectedProvider = 'openai';
+      selectedApiKey = [openaiApiKey];
+      selectedApiBaseUrl = openaiApiBaseUrl || '';
+    }
+
+    // 如果环境变量提供了配置，则覆盖用户保存的设置
+    if (selectedProvider) {
+      initialSettings.llmProvider = selectedProvider;
+      initialSettings.apiKey = selectedApiKey;
+      initialSettings.apiBaseUrl = selectedApiBaseUrl;
     }
     
     setSettings(initialSettings);
