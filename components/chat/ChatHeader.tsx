@@ -45,24 +45,19 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({ chatSession, onNewChat, 
         <header className="pt-6 pb-4 px-3 flex-shrink-0 flex items-center justify-between gap-2 relative z-[150]">
             <div className="flex items-center gap-2 min-w-0">
                 <button
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        onToggleMobileSidebar();
-                    }}
-                    className="md:hidden p-3 rounded-full hover:bg-black/10 dark:hover:bg-white/10 transition-colors active:scale-95 relative z-[9999] touch-manipulation cursor-pointer"
+                    onClick={onToggleMobileSidebar}
+                    className="md:hidden p-3 rounded-full hover:bg-black/10 dark:hover:bg-white/10 transition-colors active:scale-95"
                     style={{
                         minWidth: '48px',
                         minHeight: '48px',
-                        WebkitTapHighlightColor: 'transparent',
-                        touchAction: 'manipulation',
-                        userSelect: 'none'
+                        WebkitTapHighlightColor: 'transparent'
                     }}
                     aria-label={t('expandSidebar')}
                     data-tooltip={t('expandSidebar')}
                     data-tooltip-placement="right"
                     type="button"
                 >
-                    <Icon icon="menu" className="w-6 h-6 pointer-events-none" />
+                    <Icon icon="menu" className="w-6 h-6" />
                 </button>
                 {isSidebarCollapsed && (
                     <button

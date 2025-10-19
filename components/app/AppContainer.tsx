@@ -178,6 +178,10 @@ export const AppContainer: React.FC = () => {
     setSidebarState({ isCollapsed: state.isCollapsed });
   }, []);
 
+  const handleToggleSidebar = useCallback(() => {
+    setSidebarState(prev => ({ isCollapsed: !prev.isCollapsed }));
+  }, []);
+
   const handleNewChat = useCallback(
     (personaId?: string | null) => {
       if (loading) {
@@ -386,6 +390,7 @@ export const AppContainer: React.FC = () => {
         onSetCurrentModel={(model) => handleSettingsChange({ defaultModel: model })}
         onSetModelForActiveChat={chatDataHandlers.handleSetModelForActiveChat}
         isSidebarCollapsed={sidebarState.isCollapsed}
+        onToggleSidebar={handleToggleSidebar}
         onToggleMobileSidebar={toggleMobileSidebar}
         onImageClick={uiState.setLightboxImage}
         onShowCitations={uiState.setCitationChunks}
