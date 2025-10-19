@@ -1,6 +1,8 @@
 import React, { useState, useCallback, useRef } from 'react';
 import { ChatSession, Message, MessageRole, Settings, Persona, FileAttachment, PDFSummary } from '../types';
-import { sendMessageStream, generateChatDetails } from '../services/geminiService';
+import { generateChatDetails } from '../services/llm/gemini/chatService'; // 临时保留用于标题生成
+import { createLLMService } from '../services/llm/llmFactory';
+import { ChatRequest, StreamChunk } from '../services/llm/types';
 import { fileToData } from '../utils/fileUtils';
 import { TITLE_GENERATION_PROMPT } from '../data/prompts';
 import { saveAttachment } from '../services/indexedDBService';
@@ -33,7 +35,8 @@ export const useChatMessaging = ({ settings, activeChat, personas, setChats, set
       : (process.env.API_KEY ? [process.env.API_KEY] : []);
     
     if (apiKeys.length === 0) {
-        addToast("Please set your Gemini API key in Settings.", 'error');
+        const providerName = settings.llmProvider === 'openai' ? 'OpenAI' : 'Gemini';
+        addToast(`Please set your ${providerName} API key in Settings.`, 'error');
         setIsLoading(false);
         return;
     }
@@ -63,8 +66,23 @@ export const useChatMessaging = ({ settings, activeChat, personas, setChats, set
     const thinkingStartTime = Date.now();
 
     try {
-      const currentModel = chatSession.model;
-      const stream = sendMessageStream(apiKeys, historyForAPI.slice(0, -1), promptContent, promptAttachments, currentModel, settings, activePersona);
+      const llmService = createLLMService(settings);
+      
+      const chatRequest: ChatRequest = {
+        messages: historyForAPI,
+        model: chatSession.model,
+        persona: activePersona!,
+        config: {
+          temperature: settings.temperature,
+          maxOutputTokens: settings.maxOutputTokens,
+          contextLength: settings.contextLength,
+        },
+        apiKey: apiKeys[0], // 服务内部目前只处理单个key
+        apiBaseUrl: settings.apiBaseUrl,
+        showThoughts: settings.showThoughts,
+      };
+
+      const stream = llmService.generateContentStream(chatRequest);
       
       // --- UI Update Logic using requestAnimationFrame ---
       let animationFrameId: number | null = null;
@@ -104,54 +122,40 @@ export const useChatMessaging = ({ settings, activeChat, personas, setChats, set
       let chunkCount = 0;
 
       for await (const chunk of stream) {
-        if (isCancelledRef.current) {
-          break;
-        }
+        if (isCancelledRef.current) break;
+        
         resetInactivityTimer();
         chunkCount++;
 
-        if (chunk.text?.startsWith("Error:")) {
-          streamHadError = true;
-          fullResponse = chunk.text;
-          break;
-        }
-
-        const candidate = chunk.candidates?.[0];
-        if (candidate?.finishReason) {
-          const reason = candidate.finishReason;
-
-          if (reason === 'SAFETY') {
-            streamHadError = true;
-            fullResponse = "Google Cut It for Safety";
-            addToast("Google Cut It for Safety", 'error');
-          } else if (reason === 'MAX_TOKENS') {
-            streamHadError = true;
-            fullResponse = "Google Cut It for Max Length";
-            addToast("Google Cut It for Max Length", 'error');
-          }
-        }
-
         let hasNewContent = false;
-        if (candidate?.content?.parts) {
-          for (const part of candidate.content.parts) {
-            if ((part as any).thought) {
-              if (settings.showThoughts && part.text) { accumulatedThoughts += part.text; }
-            } else {
-              if (part.text) {
-                fullResponse += part.text;
-                hasNewContent = true;
-              }
+
+        switch (chunk.type) {
+          case 'content':
+            fullResponse += chunk.payload;
+            hasNewContent = true;
+            break;
+          case 'thought':
+            if (settings.showThoughts) {
+              accumulatedThoughts += chunk.payload;
             }
-          }
+            break;
+          case 'error':
+            streamHadError = true;
+            fullResponse = chunk.payload;
+            addToast(chunk.payload, 'error');
+            break;
+          case 'end':
+            // Stream finished gracefully
+            break;
         }
-        
+
+        if (streamHadError) break;
+
         if (hasNewContent && thinkingTime === undefined) {
           thinkingTime = (Date.now() - thinkingStartTime) / 1000;
         }
-
-        if (candidate?.groundingMetadata) { finalGroundingMetadata = candidate.groundingMetadata; }
   
-        needsUpdate = true; // Signal that an update is ready for the next animation frame
+        needsUpdate = true;
       }
 
       clearTimeout(inactivityTimer);
@@ -160,10 +164,11 @@ export const useChatMessaging = ({ settings, activeChat, personas, setChats, set
       // Final, immediate update for the complete response
       if (!isCancelledRef.current) {
         // Final check for empty response after a "STOP" reason, which can indicate a silent refusal to answer.
-        if (!streamHadError && fullResponse.trim().length === 0) {
+        if (!streamHadError && fullResponse.trim().length === 0 && chunkCount > 0) {
           streamHadError = true;
-          fullResponse = "Google Cut It for Unknown Reason";
-          addToast("Google Cut It for Unknown Reason", 'error');
+          const providerName = settings.llmProvider === 'openai' ? 'OpenAI' : 'Google';
+          fullResponse = `${providerName} did not return a message. This could be due to safety settings or other restrictions.`;
+          addToast(fullResponse, 'error');
         }
         setChats(prev => prev.map(c => c.id === chatId ? { ...c, messages: c.messages.map(m => m.id === modelMessage.id ? { ...m, content: fullResponse || '...', thoughts: settings.showThoughts ? accumulatedThoughts : undefined, groundingMetadata: finalGroundingMetadata, thinkingTime } : m) } : c));
       }

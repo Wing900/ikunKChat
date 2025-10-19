@@ -53,8 +53,8 @@ export const DataManagement: React.FC<DataManagementProps> = ({
               { value: 'hd', label: '高清' },
               { value: 'uhd', label: '超清' },
             ]}
-            selectedValue={settings.pdfQuality || 'hd'}
-            onSelect={(value) => onSettingsChange({ pdfQuality: value as any })}
+            value={settings.pdfQuality || 'hd'}
+            onChange={(value) => onSettingsChange({ pdfQuality: value as any })}
             className="w-48"
           />
         </SettingsItem>

@@ -1,7 +1,8 @@
-import { Message, Settings, Persona } from '../../types';
-import { OPTIMIZE_FORMATTING_PROMPT, THINK_DEEPER_PROMPT } from '../../data/prompts';
-import { getMessageSize, getFormattedMessageSize, analyzeMessageSize } from '../../utils/messageSize';
-import { testContextTruncation } from '../../utils/testContextTruncation';
+import { Message, Persona } from '../../../types';
+import { ModelConfig } from '../types';
+import { OPTIMIZE_FORMATTING_PROMPT, THINK_DEEPER_PROMPT } from '../../../data/prompts';
+import { getMessageSize, getFormattedMessageSize, analyzeMessageSize } from '../../../utils/messageSize';
+import { testContextTruncation } from '../../../utils/testContextTruncation';
 
 interface Part {
   text?: string;
@@ -19,12 +20,17 @@ function createTextOnlyMessage(message: Message): Message {
   };
 }
 
-export function prepareChatPayload(history: Message[], settings: Settings, persona?: Persona | null) {
+export function prepareChatPayload(
+  history: Message[],
+  config: ModelConfig,
+  persona?: Persona | null,
+  showThoughts?: boolean
+) {
   // 1. Determine the source of settings (persona or global)
   const settingsSource = {
-    temperature: persona?.temperature ?? settings.temperature,
-    maxOutputTokens: persona?.maxOutputTokens ?? settings.maxOutputTokens,
-    contextLength: persona?.contextLength ?? settings.contextLength,
+    temperature: persona?.temperature ?? config.temperature,
+    maxOutputTokens: persona?.maxOutputTokens ?? config.maxOutputTokens,
+    contextLength: persona?.contextLength ?? config.contextLength,
   };
 
   // 2. **修复** 更保守的大小限制策略
@@ -207,7 +213,7 @@ export function prepareChatPayload(history: Message[], settings: Settings, perso
     maxOutputTokens: settingsSource.maxOutputTokens,
   };
 
-  if (settings.showThoughts) {
+  if (showThoughts) {
     configForApi.thinkingConfig = { includeThoughts: true };
   }
 

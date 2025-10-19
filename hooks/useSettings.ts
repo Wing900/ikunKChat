@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Settings } from '../types';
 import { useLocalization } from '../contexts/LocalizationContext';
-import { getAvailableModels } from '../services/modelService';
+import { createLLMService } from '../services/llm/llmFactory';
 import { loadSettings, saveSettings } from '../services/storageService';
 import { USE_EMERGENCY_ROUTE } from '../emergency.config';
 
@@ -12,10 +12,10 @@ const defaultSettings: Settings = {
   colorPalette: 'neutral',
   customColor: undefined,
   apiKey: [],
-  defaultModel: 'gemini-2.5-pro-preview-05-06-maxthinking',
+  defaultModel: '',
   defaultPersona: 'default-math-assistant',
   autoTitleGeneration: true,
-  titleGenerationModel: 'gemini-2.5-flash',
+  titleGenerationModel: '',
   showThoughts: true,
   optimizeFormatting: false,
   thinkDeeper: false,
@@ -29,7 +29,7 @@ const defaultSettings: Settings = {
 
 export const useSettings = () => {
   const [settings, setSettings] = useState<Settings>(defaultSettings);
-  const [availableModels, setAvailableModels] = useState<string[]>(['gemini-2.5-pro-preview-05-06-maxthinking', 'gemini-2.5-pro', 'gemini-2.5-flash']);
+  const [availableModels, setAvailableModels] = useState<string[]>([]);
   const [isStorageLoaded, setIsStorageLoaded] = useState(false);
   const { setLanguage } = useLocalization();
 
@@ -77,19 +77,23 @@ export const useSettings = () => {
   useEffect(() => {
     const apiKeys = settings.apiKey || (process.env.API_KEY ? [process.env.API_KEY] : []);
     if (isStorageLoaded && apiKeys.length > 0) {
-      getAvailableModels(apiKeys, settings.apiBaseUrl).then(models => {
+      const llmService = createLLMService(settings);
+      llmService.getAvailableModels(apiKeys[0], settings.apiBaseUrl).then(models => {
         if (!models || models.length === 0) return;
-        const allModels = [...new Set([...models, ...availableModels])];
-        setAvailableModels(allModels);
+        setAvailableModels(models);
         setSettings(current => {
           const newDefaults: Partial<Settings> = {};
-          if (!allModels.includes(current.defaultModel)) newDefaults.defaultModel = allModels[0];
-          if (!allModels.includes(current.titleGenerationModel)) newDefaults.titleGenerationModel = allModels.find(m => m.includes('lite')) || allModels[0];
+          if (!models.includes(current.defaultModel)) {
+            newDefaults.defaultModel = models[0] || '';
+          }
+          if (!models.includes(current.titleGenerationModel)) {
+            newDefaults.titleGenerationModel = models.find(m => m.includes('flash') || m.includes('lite')) || models[0] || '';
+          }
           return Object.keys(newDefaults).length > 0 ? { ...current, ...newDefaults } : current;
         });
       });
     }
-  }, [isStorageLoaded, settings.apiKey, settings.apiBaseUrl]);
+  }, [isStorageLoaded, settings.apiKey, settings.apiBaseUrl, settings.llmProvider]);
 
   return { settings, setSettings, availableModels, isStorageLoaded };
 };

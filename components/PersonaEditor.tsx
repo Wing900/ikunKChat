@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Persona, Settings } from '../types';
 import { Icon } from './Icon';
 import { useLocalization } from '../contexts/LocalizationContext';
-import { generatePersonaUpdate } from '../services/geminiService';
+import { generatePersonaUpdate } from '../services/llm/gemini';
 import { fileToData } from '../utils/fileUtils';
 import { Switch } from './Switch';
 import { useToast } from '../contexts/ToastContext';
