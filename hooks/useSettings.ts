@@ -51,28 +51,30 @@ export const useSettings = () => {
     const openaiApiKey = process.env.OPENAI_API_KEY;
     const openaiApiBaseUrl = process.env.OPENAI_API_BASE_URL;
 
-    // 逻辑：哪个不为空用哪个，两个都不为空则优先使用 Gemini
-    let selectedProvider: 'gemini' | 'openai' | undefined;
-    let selectedApiKey: string[] = [];
-    let selectedApiBaseUrl = '';
+    // 只有当用户没有手动配置 API Key 时，才使用环境变量
+    // 这样用户在设置中手动填写的 key 不会被环境变量覆盖
+    const hasUserApiKey = loadedSettings.apiKey && Array.isArray(loadedSettings.apiKey) && loadedSettings.apiKey.length > 0 && loadedSettings.apiKey[0].trim() !== '';
+    const hasGeminiEnvKey = geminiApiKey && geminiApiKey.trim() && geminiApiKey.trim().length > 0;
+    const hasOpenAIEnvKey = openaiApiKey && openaiApiKey.trim() && openaiApiKey.trim().length > 0;
 
-    if (geminiApiKey) {
-      // Gemini 有配置，优先使用
-      selectedProvider = 'gemini';
-      selectedApiKey = [geminiApiKey];
-      selectedApiBaseUrl = geminiApiBaseUrl || '';
-    } else if (openaiApiKey) {
-      // Gemini 没配置，但 OpenAI 有配置
-      selectedProvider = 'openai';
-      selectedApiKey = [openaiApiKey];
-      selectedApiBaseUrl = openaiApiBaseUrl || '';
+    // 只有在用户没有手动配置时，才使用环境变量
+    if (!hasUserApiKey) {
+      if (hasGeminiEnvKey) {
+        // Gemini 有配置，优先使用
+        initialSettings.llmProvider = 'gemini';
+        initialSettings.apiKey = [geminiApiKey!.trim()];
+        initialSettings.apiBaseUrl = geminiApiBaseUrl || '';
+      } else if (hasOpenAIEnvKey) {
+        // Gemini 没配置，但 OpenAI 有配置
+        initialSettings.llmProvider = 'openai';
+        initialSettings.apiKey = [openaiApiKey!.trim()];
+        initialSettings.apiBaseUrl = openaiApiBaseUrl || '';
+      }
     }
-
-    // 如果环境变量提供了配置，则覆盖用户保存的设置
-    if (selectedProvider) {
-      initialSettings.llmProvider = selectedProvider;
-      initialSettings.apiKey = selectedApiKey;
-      initialSettings.apiBaseUrl = selectedApiBaseUrl;
+    
+    // 如果用户也没有设置 llmProvider，则默认使用 gemini
+    if (!initialSettings.llmProvider) {
+      initialSettings.llmProvider = 'gemini';
     }
     
     setSettings(initialSettings);

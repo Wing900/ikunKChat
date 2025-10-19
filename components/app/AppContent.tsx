@@ -32,6 +32,7 @@ interface AppContentProps {
   
   // UI interactions
   isSidebarCollapsed: boolean;
+  onToggleSidebar: () => void;
   onToggleMobileSidebar: () => void;
   onImageClick: (src: string | null) => void;
   onShowCitations: (chunks: any[] | null) => void;
@@ -82,6 +83,7 @@ export const AppContent: React.FC<AppContentProps> = ({
   onSetCurrentModel,
   onSetModelForActiveChat,
   isSidebarCollapsed,
+  onToggleSidebar,
   onToggleMobileSidebar,
   onImageClick,
   onShowCitations,
@@ -127,7 +129,7 @@ export const AppContent: React.FC<AppContentProps> = ({
           }}
           uiInteractions={{
             isSidebarCollapsed,
-            onToggleSidebar: () => {},
+            onToggleSidebar,
             onToggleMobileSidebar,
             onImageClick,
             onShowCitations,
@@ -151,7 +153,7 @@ export const AppContent: React.FC<AppContentProps> = ({
           error={personasError}
           clearError={clearPersonasError}
           isSidebarCollapsed={isSidebarCollapsed}
-          onToggleSidebar={() => {}}
+          onToggleSidebar={onToggleSidebar}
           onToggleMobileSidebar={onToggleMobileSidebar}
         />
       </ViewContainer>
@@ -165,7 +167,7 @@ export const AppContent: React.FC<AppContentProps> = ({
           onEditChat={onEditChat}
           onClose={onCloseArchive}
           isSidebarCollapsed={isSidebarCollapsed}
-          onToggleSidebar={() => {}}
+          onToggleSidebar={onToggleSidebar}
           onToggleMobileSidebar={onToggleMobileSidebar}
         />
       </ViewContainer>
