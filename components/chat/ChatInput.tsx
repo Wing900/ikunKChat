@@ -30,6 +30,11 @@ interface ChatInputProps {
   input: string;
   setInput: (value: string) => void;
   chatSession: ChatSession | null;
+<<<<<<< HEAD
+=======
+  onToggleStudyMode: (enabled: boolean) => void;
+  isNextChatStudyMode: boolean;
+>>>>>>> abb4fc710d0cdb394efd8c6759347f61f6bc403b
   availableModels: string[];
   currentModel: string;
   onSetModelForActiveChat: (model: string) => void;
@@ -40,7 +45,11 @@ export interface FileWithId {
   id: string;
 }
 
+<<<<<<< HEAD
 export const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(({ onSendMessage, isLoading, onCancel, toolConfig, onToolConfigChange, input, setInput, chatSession, availableModels, currentModel, onSetModelForActiveChat }, ref) => {
+=======
+export const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(({ onSendMessage, isLoading, onCancel, toolConfig, onToolConfigChange, input, setInput, chatSession, onToggleStudyMode, isNextChatStudyMode, availableModels, currentModel, onSetModelForActiveChat }, ref) => {
+>>>>>>> abb4fc710d0cdb394efd8c6759347f61f6bc403b
   const { t } = useLocalization();
   const { addToast } = useToast();
   const [files, setFiles] = useState<FileWithId[]>([]);
@@ -55,6 +64,10 @@ export const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(({ onSendMessa
   const mobileModelSelectorRef = useRef<HTMLDivElement>(null);
   const [isMobileView, setIsMobileView] = useState(window.innerWidth < 768);
 
+<<<<<<< HEAD
+=======
+  const isStudyModeActive = chatSession ? !!chatSession.isStudyMode : isNextChatStudyMode;
+>>>>>>> abb4fc710d0cdb394efd8c6759347f61f6bc403b
 
   useEffect(() => {
     setFiles([]);
@@ -179,7 +192,13 @@ export const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(({ onSendMessa
                 <Icon icon="paperclip" className="w-4 h-4" />
                 <span>{t('attachFile') || '上传文件（PDF自动解析）'}</span>
             </button>
+<<<<<<< HEAD
 
+=======
+            <div className="p-2 pt-1 pb-2">
+                <ToolItem icon="graduation-cap" label={t('studyLearn')} checked={isStudyModeActive} onChange={e => onToggleStudyMode(e.target.checked)} />
+            </div>
+>>>>>>> abb4fc710d0cdb394efd8c6759347f61f6bc403b
             <input ref={fileInputRef} type="file" onChange={handleFileChange} accept="image/*,.pdf,.txt,.md" multiple className="hidden" />
         </div>
         <div className="rounded-[var(--radius-2xl)] flex flex-col transition-all duration-300 focus-within:border-[var(--accent-color)] focus-within:ring-2 ring-[var(--accent-color)]" style={{backgroundColor: 'var(--glass-bg)', border: '1px solid var(--glass-border)', boxShadow: 'var(--shadow-md)'}}>
@@ -195,7 +214,11 @@ export const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(({ onSendMessa
               ))}
             </div>
           )}
+<<<<<<< HEAD
           <ActiveToolIndicator t={t} />
+=======
+          <ActiveToolIndicator isStudyMode={isStudyModeActive} t={t} />
+>>>>>>> abb4fc710d0cdb394efd8c6759347f61f6bc403b
           <div className="flex items-center p-1.5">
             <button ref={toolsButtonRef} type="button" onClick={() => setIsToolsOpen(p => !p)} className={`p-2.5 rounded-full flex-shrink-0 transition-colors mr-2 ${isToolsOpen ? 'bg-[var(--accent-color)] text-[var(--accent-color-text)]' : 'text-[var(--text-color-secondary)] hover:bg-black/10 dark:hover:bg-white/10'}`} aria-label="Tools"><Icon icon="plus" className="w-5 h-5" /></button>
             <textarea ref={textareaRef} value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={handleKeyDown} placeholder={t('typeMessage')} rows={1} maxLength={15000} className="flex-grow bg-transparent focus:outline-none resize-none max-h-48 text-[var(--text-color)] px-2 py-2.5" />

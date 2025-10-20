@@ -94,11 +94,14 @@ export const useSettings = () => {
     document.body.classList.add(`theme-${settings.theme}`);
 
     document.body.dataset.font = settings.fontFamily;
+<<<<<<< HEAD
 
     // Apply font size
     const fontSizeMultiplier = (settings.fontSize || 100) / 100;
     document.documentElement.style.setProperty('--font-size-multiplier', `${fontSizeMultiplier}`);
 
+=======
+>>>>>>> abb4fc710d0cdb394efd8c6759347f61f6bc403b
     setLanguage(settings.language);
   }, [settings, isStorageLoaded, setLanguage]);
 

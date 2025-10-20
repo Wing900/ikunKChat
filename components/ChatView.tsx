@@ -114,6 +114,13 @@ export const ChatView: React.FC<ChatViewProps> = (props) => {
     navigator.clipboard.writeText(content);
   }, []);
   
+<<<<<<< HEAD
+=======
+  // Study Mode 功能已移除（等待其他 AI 清理）
+  const handleToggleStudyMode = (enabled: boolean) => {
+    console.warn('[ChatView] Study Mode feature is being removed');
+  };
+>>>>>>> abb4fc710d0cdb394efd8c6759347f61f6bc403b
 
   const handleDragEnter = (e: React.DragEvent<HTMLElement>) => {
     e.preventDefault(); e.stopPropagation();
@@ -198,6 +205,11 @@ export const ChatView: React.FC<ChatViewProps> = (props) => {
             input={chatInput}
             setInput={setChatInput}
             chatSession={chatSession}
+<<<<<<< HEAD
+=======
+            onToggleStudyMode={handleToggleStudyMode}
+            isNextChatStudyMode={false}
+>>>>>>> abb4fc710d0cdb394efd8c6759347f61f6bc403b
             availableModels={props.modelConfig.availableModels}
             currentModel={props.modelConfig.currentModel}
             onSetModelForActiveChat={props.modelConfig.onSetModelForActiveChat}

@@ -57,6 +57,7 @@ export const GeneralSettings: React.FC<GeneralSettingsProps> = ({ settings, onSe
           />
         </SettingsItem>
       )}
+<<<<<<< HEAD
       {visibleIds.has('fontSize') && (
         <SettingsItem label={t('fontSize')} description={t('fontSizeDesc')}>
           <div className="flex items-center gap-4 w-48">
@@ -73,6 +74,8 @@ export const GeneralSettings: React.FC<GeneralSettingsProps> = ({ settings, onSe
           </div>
         </SettingsItem>
       )}
+=======
+>>>>>>> abb4fc710d0cdb394efd8c6759347f61f6bc403b
       {visibleIds.has('colorPalette') && (
         <SettingsItem label={t('colorPalette')} description={t('colorPaletteDesc')}>
           <div style={{ marginTop: '0.5rem' }}>
