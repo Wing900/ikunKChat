@@ -35,10 +35,6 @@ export const zh = {
     showThoughts: '显示思考过程',
     showThoughtsDesc: '在最终答案之前显示模型的思考过程。',
     thoughts: '思考过程',
-<<<<<<< HEAD
-=======
-    studyLearn: '学习模式',
->>>>>>> abb4fc710d0cdb394efd8c6759347f61f6bc403b
     // Modals
     editChat: '编辑对话',
     shareChat: '分享对话',
@@ -71,11 +67,8 @@ export const zh = {
     dark: '深色',
     colorPalette: '调色板',
     colorPaletteDesc: '选择一个预设主题色或自定义颜色。',
-<<<<<<< HEAD
     fontSize: '字体大小',
     fontSizeDesc: '调整整个应用的字体大小。',
-=======
->>>>>>> abb4fc710d0cdb394efd8c6759347f61f6bc403b
     customColor: '自定义颜色',
     behavior: '行为',
     advanced: '高级',

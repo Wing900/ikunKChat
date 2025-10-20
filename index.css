@@ -66,10 +66,7 @@ body {
     color: var(--md-sys-color-on-surface);
     --font-family: var(--font-family-system);
     font-family: var(--font-family);
-<<<<<<< HEAD
     font-size: calc(1rem * var(--font-size-multiplier, 1));
-=======
->>>>>>> abb4fc710d0cdb394efd8c6759347f61f6bc403b
     margin: 0;
 }
 
@@ -1037,11 +1034,7 @@ body.drawer-open .drawer {
 }
 .thinking-text {
     font-family: "Yozai", var(--font-family-system);
-<<<<<<< HEAD
     font-size: 1.1em;
-=======
-    font-size: 1.1rem;
->>>>>>> abb4fc710d0cdb394efd8c6759347f61f6bc403b
     color: transparent;
     -webkit-text-stroke: 0.5px var(--md-sys-color-on-surface-variant);
     opacity: 0.5;
