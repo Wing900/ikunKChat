@@ -35,7 +35,6 @@ export const en = {
     showThoughts: 'Show Thoughts',
     showThoughtsDesc: "Display the model's thinking process before the final answer.",
     thoughts: 'Thoughts',
-    studyLearn: 'Study and Learn',
     // Modals
     editChat: 'Edit Chat',
     shareChat: 'Share Chat',
@@ -68,6 +67,8 @@ export const en = {
     dark: 'Dark',
     colorPalette: 'Color Palette',
     colorPaletteDesc: 'Choose a preset theme color or customize your own.',
+    fontSize: 'Font Size',
+    fontSizeDesc: 'Adjust the font size for the entire application.',
     customColor: 'Custom Color',
     behavior: 'Behavior',
     advanced: 'Advanced',

@@ -15,7 +15,7 @@ export const useSettingsSearch = (searchQuery: string) => {
 
     if (!lowerQuery) {
       const allVisible = new Set([
-        'language', 'theme', 'defaultPersona', 'fontFamily', 'colorPalette', 'password',
+        'language', 'theme', 'defaultPersona', 'fontFamily', 'colorPalette', 'fontSize', 'password',
         'autoTitleGeneration', 'titleGenModel',
         'showThoughts', 'llmProvider', 'apiKey', 'apiBaseUrl', 'temperature',
         'contextLength', 'maxOutputTokens',
@@ -33,6 +33,7 @@ export const useSettingsSearch = (searchQuery: string) => {
         { id: 'defaultPersona', section: 'general', texts: [t('defaultPersona'), t('defaultPersonaDesc'), translations.zh.defaultPersona, translations.zh.defaultPersonaDesc] },
         { id: 'fontFamily', section: 'general', texts: [t('fontFamily'), t('fontFamilyDesc'), translations.zh.fontFamily, translations.zh.fontFamilyDesc] },
         { id: 'colorPalette', section: 'general', texts: [t('colorPalette'), t('colorPaletteDesc'), t('customColor'), translations.zh.colorPalette, translations.zh.colorPaletteDesc, translations.zh.customColor, '调色板', '主题色', '颜色', 'color', 'palette', 'theme color'] },
+        { id: 'fontSize', section: 'general', texts: [t('fontSize'), t('fontSizeDesc'), translations.zh.fontSize, translations.zh.fontSizeDesc, '字体大小', 'font size'] },
         { id: 'password', section: 'general', texts: [t('password'), t('passwordDesc'), translations.zh.password, translations.zh.passwordDesc] },
         
         // Behavior

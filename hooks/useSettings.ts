@@ -25,6 +25,7 @@ const defaultSettings: Settings = {
   contextLength: 50,
   password: undefined,
   pdfQuality: 'hd',
+  fontSize: 100,
 };
 
 export const useSettings = () => {
@@ -93,6 +94,11 @@ export const useSettings = () => {
     document.body.classList.add(`theme-${settings.theme}`);
 
     document.body.dataset.font = settings.fontFamily;
+
+    // Apply font size
+    const fontSizeMultiplier = (settings.fontSize || 100) / 100;
+    document.documentElement.style.setProperty('--font-size-multiplier', `${fontSizeMultiplier}`);
+
     setLanguage(settings.language);
   }, [settings, isStorageLoaded, setLanguage]);
 

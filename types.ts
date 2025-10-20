@@ -93,4 +93,5 @@ export interface Settings {
   password?: string;
   pdfQuality?: 'sd' | 'hd' | 'uhd';
   streamInactivityTimeout?: number;
+  fontSize?: number;
 }

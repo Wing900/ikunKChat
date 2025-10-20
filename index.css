@@ -66,6 +66,7 @@ body {
     color: var(--md-sys-color-on-surface);
     --font-family: var(--font-family-system);
     font-family: var(--font-family);
+    font-size: calc(1rem * var(--font-size-multiplier, 1));
     margin: 0;
 }
 
@@ -1033,7 +1034,7 @@ body.drawer-open .drawer {
 }
 .thinking-text {
     font-family: "Yozai", var(--font-family-system);
-    font-size: 1.1rem;
+    font-size: 1.1em;
     color: transparent;
     -webkit-text-stroke: 0.5px var(--md-sys-color-on-surface-variant);
     opacity: 0.5;
@@ -1519,7 +1520,7 @@ body.drawer-open .drawer {
 .markdown-content {
     line-height: 1.7;
     word-wrap: break-word;
-    font-size: 1rem;
+    font-size: inherit;
 }
 .markdown-content > *:first-child { margin-top: 0; }
 .markdown-content > *:last-child { margin-bottom: 0; }

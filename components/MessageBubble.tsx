@@ -131,7 +131,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = React.memo((props) =>
   return (
       <div
         className={`flex flex-col items-start mt-6 ${isBeingDeleted ? 'deleting' : ''}`}>
-        <div className={`max-w-full text-base flex flex-col relative transition-all duration-300 group ${isUser ? 'user-bubble' : 'model-bubble'} items-start`}>
+        <div className={`max-w-full flex flex-col relative transition-all duration-300 group ${isUser ? 'user-bubble' : 'model-bubble'} items-start`}>
           <div className="overflow-hidden">
             {hasThoughts && (
                 <div className={`thoughts-container ${isThoughtsOpen ? 'expanded' : ''}`}>
@@ -141,7 +141,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = React.memo((props) =>
                                 <Icon icon="brain" className="w-4 h-4" />
                                 <span>{t('thoughts')}</span>
                                 {message.thinkingTime && (
-                                    <span className="ml-2 text-xs text-[var(--text-color-secondary)]">({message.thinkingTime.toFixed(2)}s)</span>
+                                    <span className="ml-2 text-[var(--text-color-secondary)]">({message.thinkingTime.toFixed(2)}s)</span>
                                 )}
                                 <Icon icon="chevron-down" className={`w-4 h-4 transition-transform duration-200 ml-auto ${isThoughtsOpen ? 'rotate-180' : ''}`} />
                             </>

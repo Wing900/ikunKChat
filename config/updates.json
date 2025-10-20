@@ -1,4 +1,20 @@
 {
+  "1.7.7": {
+    "date": "10.21",
+    "important": false,
+    "notes": {
+      "zh": [
+        "1. 🚀 网站删除了学习模式，大家别学习了，玩起来！！",
+        "2. ✨ 增加字体大小调节功能，希望大家多去设置逛逛，好的设置会让你用的更顺手",
+        "3. 📐 数学助手的输出的公式会更好看，讨论数学问题建议使用。"
+      ],
+      "en": [
+        "1. 🚀 Removed the 'Study Mode' from the website. Stop studying and have fun!!",
+        "2. ✨ Added a font size adjustment feature. We hope you'll explore the settings more, as good settings will make your experience smoother.",
+        "3. 📐 The formulas output by the math assistant will look better. It's recommended for discussing mathematical problems."
+      ]
+    }
+  },
   "1.7.6": {
     "important": true,
     "notes": {

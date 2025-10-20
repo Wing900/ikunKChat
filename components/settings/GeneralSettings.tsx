@@ -57,6 +57,22 @@ export const GeneralSettings: React.FC<GeneralSettingsProps> = ({ settings, onSe
           />
         </SettingsItem>
       )}
+      {visibleIds.has('fontSize') && (
+        <SettingsItem label={t('fontSize')} description={t('fontSizeDesc')}>
+          <div className="flex items-center gap-4 w-48">
+            <input
+              type="range"
+              min="70"
+              max="130"
+              step="10"
+              value={settings.fontSize || 100}
+              onChange={(e) => onSettingsChange({ fontSize: parseInt(e.target.value, 10) })}
+              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+            />
+            <span className="text-sm text-gray-500 dark:text-gray-400">{settings.fontSize || 100}%</span>
+          </div>
+        </SettingsItem>
+      )}
       {visibleIds.has('colorPalette') && (
         <SettingsItem label={t('colorPalette')} description={t('colorPaletteDesc')}>
           <div style={{ marginTop: '0.5rem' }}>
