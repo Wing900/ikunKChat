@@ -25,7 +25,6 @@ export const AboutSettings: React.FC<AboutSettingsProps> = ({ versionInfo }) => 
               src="/webmaster-avatar.png"
               alt="Webmaster Avatar"
               className="w-full h-full object-cover"
-              crossOrigin="anonymous"
               onLoad={(e) => {
                 const target = e.target as HTMLImageElement;
                 console.log('[AboutSettings] ✅ 站长头像加载成功');
