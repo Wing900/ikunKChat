@@ -19,7 +19,22 @@
 
 点击本文档顶部的 "Deploy with Vercel" 按钮，根据提示填入下方的环境变量即可。
 
-### 2. 本地部署
+### 2. Docker 部署
+
+⚠️ **重要提示：不建议使用 Hugging Face Spaces 部署，因为可能导致静态资源（图片文件）损坏。**
+
+```bash
+# 克隆仓库
+git clone https://github.com/Wing900/ikunKChat.git
+cd ikunKChat
+
+# 使用 docker-compose 部署
+docker-compose up -d
+
+# 访问 http://localhost:8080
+```
+
+### 3. 本地部署
 
 **克隆仓库**
 
