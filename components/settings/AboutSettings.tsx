@@ -25,8 +25,11 @@ export const AboutSettings: React.FC<AboutSettingsProps> = ({ versionInfo }) => 
               src="/webmaster-avatar.png"
               alt="Webmaster Avatar"
               className="w-full h-full object-cover"
-              onLoad={() => {
+              crossOrigin="anonymous"
+              onLoad={(e) => {
+                const target = e.target as HTMLImageElement;
                 console.log('[AboutSettings] ✅ 站长头像加载成功');
+                console.log('[AboutSettings] 图片实际尺寸:', target.naturalWidth, 'x', target.naturalHeight);
               }}
               onError={(e) => {
                 const target = e.target as HTMLImageElement;
@@ -34,6 +37,20 @@ export const AboutSettings: React.FC<AboutSettingsProps> = ({ versionInfo }) => 
                 console.error('[AboutSettings] 图片路径:', target.src);
                 console.error('[AboutSettings] 当前URL:', window.location.href);
                 console.error('[AboutSettings] BASE_URL:', document.baseURI);
+                
+                // 尝试直接fetch检查响应
+                fetch(target.src)
+                  .then(res => {
+                    console.error('[AboutSettings] Fetch状态:', res.status, res.statusText);
+                    console.error('[AboutSettings] Content-Type:', res.headers.get('content-type'));
+                    console.error('[AboutSettings] Content-Length:', res.headers.get('content-length'));
+                    return res.blob();
+                  })
+                  .then(blob => {
+                    console.error('[AboutSettings] Blob类型:', blob.type, '大小:', blob.size);
+                  })
+                  .catch(err => console.error('[AboutSettings] Fetch错误:', err));
+                
                 target.style.display = 'none';
                 const parent = target.parentElement;
                 if (parent) {
