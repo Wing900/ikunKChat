@@ -25,8 +25,15 @@ export const AboutSettings: React.FC<AboutSettingsProps> = ({ versionInfo }) => 
               src="/webmaster-avatar.png"
               alt="Webmaster Avatar"
               className="w-full h-full object-cover"
+              onLoad={() => {
+                console.log('[AboutSettings] ✅ 站长头像加载成功');
+              }}
               onError={(e) => {
                 const target = e.target as HTMLImageElement;
+                console.error('[AboutSettings] ❌ 站长头像加载失败');
+                console.error('[AboutSettings] 图片路径:', target.src);
+                console.error('[AboutSettings] 当前URL:', window.location.href);
+                console.error('[AboutSettings] BASE_URL:', document.baseURI);
                 target.style.display = 'none';
                 const parent = target.parentElement;
                 if (parent) {
@@ -50,6 +57,8 @@ export const AboutSettings: React.FC<AboutSettingsProps> = ({ versionInfo }) => 
               src="/ikunchat-v1.svg"
               alt="KChat 初代图标"
               className="w-16 h-16 p-2 rounded-lg bg-white dark:bg-gray-800 shadow-sm"
+              onLoad={() => console.log('[AboutSettings] ✅ 初代图标加载成功')}
+              onError={() => console.error('[AboutSettings] ❌ 初代图标加载失败: /ikunchat-v1.svg')}
             />
             <span className="text-xs text-[var(--text-color-secondary)]">初代图标 (v1)</span>
           </div>
@@ -59,6 +68,8 @@ export const AboutSettings: React.FC<AboutSettingsProps> = ({ versionInfo }) => 
               src="/ikunchat.svg"
               alt="KChat 当前图标"
               className="w-16 h-16 p-2 rounded-lg bg-white dark:bg-gray-800 shadow-sm"
+              onLoad={() => console.log('[AboutSettings] ✅ 当前图标加载成功')}
+              onError={() => console.error('[AboutSettings] ❌ 当前图标加载失败: /ikunchat.svg')}
             />
             <span className="text-xs text-[var(--text-color-secondary)]">当前图标 (v2)</span>
           </div>

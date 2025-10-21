@@ -23,9 +23,19 @@ export default defineConfig(({ mode }) => {
           '@': path.resolve(__dirname, '.'),
         }
       },
+      publicDir: 'public',
       build: {
         outDir: 'dist',
-        sourcemap: false
+        sourcemap: false,
+        assetsInlineLimit: 0,
+        rollupOptions: {
+          output: {
+            assetFileNames: (assetInfo) => {
+              console.log('[Vite Build] 处理资源:', assetInfo.name);
+              return 'assets/[name]-[hash][extname]';
+            }
+          }
+        }
       },
       plugins: [
         VitePWA({
