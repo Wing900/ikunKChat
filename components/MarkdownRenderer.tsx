@@ -38,11 +38,10 @@ renderer.code = ({ text: code, lang }: { text: string; lang?: string; }): string
 };
 
 // Override for task lists to provide custom styling.
-// In newer versions of marked, the listitem renderer receives a single token object.
+// In newer versions of marked, we need to use item.tokens to render nested content properly.
 renderer.listitem = (item: Tokens.ListItem): string => {
-    // We need to manually parse the inner content of the list item.
-    // `item.text` is the raw markdown content. `marked.parseInline` will handle it.
-    const textAsHtml = marked.parseInline(item.text);
+    // Use the parser to render the tokens, which includes nested lists
+    const textAsHtml = item.tokens ? marked.parser(item.tokens) : item.text;
 
     if (item.task) {
         // Handle GFM task list items.
@@ -50,14 +49,14 @@ renderer.listitem = (item: Tokens.ListItem): string => {
         return `<li class="task-list-item">${checkboxHtml}<div>${textAsHtml}</div></li>`;
     }
     
-    // Handle regular list items.
+    // Handle regular list items with nested content.
     return `<li>${textAsHtml}</li>`;
 };
 
 
 marked.setOptions({
     gfm: true,
-    breaks: false,
+    breaks: true,
     renderer: renderer,
 });
 
