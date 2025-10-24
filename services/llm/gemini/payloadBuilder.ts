@@ -57,10 +57,10 @@ export function prepareChatPayload(
   const availableForHistory = MAX_PAYLOAD_SIZE - systemInstructionSize - configOverhead;
 
   if (process.env.NODE_ENV === 'development') {
-    console.log(`[载荷分析] 总预算: ${(MAX_PAYLOAD_SIZE / 1024).toFixed(1)}KB`);
-    console.log(`[载荷分析] 系统指令: ${(systemInstructionSize / 1024).toFixed(1)}KB`);
-    console.log(`[载荷分析] 配置开销: ${(configOverhead / 1024).toFixed(1)}KB`);
-    console.log(`[载荷分析] 历史可用: ${(availableForHistory / 1024).toFixed(1)}KB`);
+    console.log(`载荷分析 - 总预算: ${(MAX_PAYLOAD_SIZE / 1024).toFixed(1)}KB`);
+    console.log(`载荷分析 - 系统指令: ${(systemInstructionSize / 1024).toFixed(1)}KB`);
+    console.log(`载荷分析 - 配置开销: ${(configOverhead / 1024).toFixed(1)}KB`);
+    console.log(`载荷分析 - 历史可用: ${(availableForHistory / 1024).toFixed(1)}KB`);
   }
 
   // 3. **修复** 智能历史截断策略
@@ -79,7 +79,7 @@ export function prepareChatPayload(
       // 如果加入这条消息会超出预算，先尝试降级处理
       if (currentSize + messageSize > availableForHistory) {
           if (currentSize + textOnlySize <= availableForHistory) {
-              console.warn(`[上下文截断] 索引 ${i} 处的消息过大 (${(messageSize / 1024).toFixed(1)}KB)。移除图片以保持上下文，大小降至 ${(textOnlySize / 1024).toFixed(1)}KB。`);
+              console.warn(`上下文截断 - 消息过大 (${(messageSize / 1024).toFixed(1)}KB)，降级为文本 (${(textOnlySize / 1024).toFixed(1)}KB)`);
               slicedHistory.unshift(textOnlyMessage);
               currentSize += textOnlySize;
           } else {
@@ -88,14 +88,14 @@ export function prepareChatPayload(
                 const truncatedMessage = { ...textOnlyMessage, content: textOnlyMessage.content?.slice(-2000) };
                 const truncatedSize = getFormattedMessageSize(truncatedMessage);
                 if (currentSize + truncatedSize <= availableForHistory) {
-                  console.warn(`[上下文截断] 索引 ${i} 处的超长文本消息从 ${(textOnlySize / 1024).toFixed(1)}KB 截断至 ${(truncatedSize / 1024).toFixed(1)}KB`);
+                  console.warn(`上下文截断 - 超长文本从 ${(textOnlySize / 1024).toFixed(1)}KB 截断至 ${(truncatedSize / 1024).toFixed(1)}KB`);
                   slicedHistory.unshift(truncatedMessage);
                   currentSize += truncatedSize;
                   continue;
                 }
               }
 
-              console.warn(`[上下文截断] 历史记录在索引 ${i} 处截断。总历史大小: ${(currentSize / 1024).toFixed(1)}KB。剩余消息数: ${slicedHistory.length}`);
+              console.warn(`上下文截断 - 历史记录在索引 ${i} 处截断，总大小: ${(currentSize / 1024).toFixed(1)}KB，保留 ${slicedHistory.length} 条消息`);
               break;
           }
       } else {
@@ -107,12 +107,7 @@ export function prepareChatPayload(
   // 调试信息：分析截断后的历史记录
   if (process.env.NODE_ENV === 'development') {
       const totalSize = slicedHistory.reduce((sum, msg) => sum + getMessageSize(msg), 0);
-      console.log(`[上下文分析] 最终历史: ${slicedHistory.length} 条消息, ${(totalSize / 1024).toFixed(1)}KB`);
-
-      // 详细分析最大的几条消息
-      const messageAnalyses = slicedHistory.map(msg => analyzeMessageSize(msg));
-      const sortedAnalyses = messageAnalyses.sort((a, b) => b.total - a.total).slice(0, 3);
-      console.log(`[上下文分析] 最大的3条消息:`, sortedAnalyses);
+      console.log(`上下文分析 - 最终历史: ${slicedHistory.length} 条消息, ${(totalSize / 1024).toFixed(1)}KB`);
   }
 
   const formattedHistory = slicedHistory.map(msg => {
@@ -124,8 +119,6 @@ export function prepareChatPayload(
     }
 
     if (msg.attachments) {
-      console.log(`\n[载荷构建器] 🔍 开始处理消息附件 - 附件总数: ${msg.attachments.length}`);
-      
       // **修复** 过滤掉无效的附件（data为undefined或非字符串）
       // 附件有效性判断标准:
       // 1. att.data 必须存在（不能是 undefined 或 null）
@@ -135,18 +128,20 @@ export function prepareChatPayload(
         const isDataString = typeof att.data === 'string';
         const isValid = isDataExists && isDataString;
         
-        if (!isValid) {
-          console.log(`[载荷构建器] 🔍 附件验证 - data存在: ${isDataExists}, data是字符串: ${isDataString}, 最终结果: ${isValid}`);
+        if (!isValid && process.env.NODE_ENV === 'development') {
+          console.log(`附件验证失败 - data存在: ${isDataExists}, data是字符串: ${isDataString}`);
         }
         
         return isValid;
       });
 
-      console.log(`[载荷构建器] 📊 附件过滤结果 - 原始: ${msg.attachments.length}个, 有效: ${validAttachments.length}个, 无效: ${msg.attachments.length - validAttachments.length}个`);
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`附件过滤结果 - 原始: ${msg.attachments.length}个, 有效: ${validAttachments.length}个`);
+      }
 
       // 详细记录被过滤的附件信息
       if (validAttachments.length !== msg.attachments.length) {
-        console.warn(`[载荷构建器] ⚠️ 检测到无效附件，开始详细分析...`);
+        console.warn(`检测到无效附件`);
 
         msg.attachments.forEach((att, index) => {
           // 详细判断失败原因
@@ -167,40 +162,12 @@ export function prepareChatPayload(
             const mimeInfo = att.mimeType ? att.mimeType : '未知类型';
             const nameInfo = att.name ? att.name : '未知文件名';
 
-            console.warn(`[载荷构建器] ❌ 附件[${index}] 被过滤:`);
-            console.warn(`   📄 文件名: ${nameInfo}`);
-            console.warn(`   📝 MIME类型: ${mimeInfo}`);
-            console.warn(`   💾 data信息: ${dataInfo}`);
-            console.warn(`   ❗ 过滤理由: ${reason}`);
-            console.warn(`   🔍 附件对象详情:`, {
-              id: att.id,
-              name: att.name,
-              mimeType: att.mimeType,
-              hasData: !!att.data,
-              dataType: typeof att.data,
-              dataLength: att.data ? (typeof att.data === 'string' ? att.data.length : '非字符串无法获取长度') : 0
-            });
-          } else {
-            const dataSize = att.data!.length;
-            const sizeInKB = (dataSize / 1024).toFixed(2);
-            console.log(`[载荷构建器] ✅ 附件[${index}] 有效:`);
-            console.log(`   📄 文件名: ${att.name || '未命名'}`);
-            console.log(`   📝 MIME类型: ${att.mimeType}`);
-            console.log(`   💾 数据大小: ${dataSize} 字符 (${sizeInKB} KB)`);
+            console.warn(`附件[${index}] 被过滤 - 文件名: ${nameInfo}, MIME类型: ${mimeInfo}, data信息: ${dataInfo}, 过滤理由: ${reason}`);
           }
-        });
-      } else {
-        console.log(`[载荷构建器] ✅ 所有附件均有效，无需过滤`);
-        msg.attachments.forEach((att, index) => {
-          const dataSize = att.data!.length;
-          const sizeInKB = (dataSize / 1024).toFixed(2);
-          console.log(`[载荷构建器] 📎 附件[${index}]: ${att.name} (${att.mimeType}, ${sizeInKB} KB)`);
         });
       }
 
-      console.log(`[载荷构建器] 🔄 将 ${validAttachments.length} 个有效附件转换为API格式...`);
       parts.push(...validAttachments.map(att => ({ inlineData: { mimeType: att.mimeType, data: att.data! } })));
-      console.log(`[载荷构建器] ✅ 附件处理完成\n`);
     }
 
     return { role: msg.role, parts: parts };

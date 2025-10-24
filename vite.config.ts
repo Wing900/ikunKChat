@@ -31,7 +31,6 @@ export default defineConfig(({ mode }) => {
         rollupOptions: {
           output: {
             assetFileNames: (assetInfo) => {
-              console.log('[Vite Build] 处理资源:', assetInfo.name);
               return 'assets/[name]-[hash][extname]';
             }
           }

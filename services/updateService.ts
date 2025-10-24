@@ -202,7 +202,7 @@ export const useUpdateService = () => {
 export const debugUpdateService = {
   // 获取当前状态摘要
   getStatus: () => {
-    console.log('======== UPDATE SERVICE DEBUG STATUS ========');
+    console.log('UPDATE SERVICE DEBUG STATUS');
     console.log(`Current Version: ${updateService.getCurrentVersion()}`);
     console.log(`Latest Version: ${updateService.getLatestVersion()?.version || 'none'}`);
     console.log(`User Preferences:`, updateService.getUserPreferences());
@@ -212,12 +212,12 @@ export const debugUpdateService = {
     Object.entries(updateService.getAllUpdates()).forEach(([version, info]) => {
       console.log(`  ${version}: important=${info.important}, notes=${info.notes.zh?.length || 0} items`);
     });
-    console.log('======== UPDATE SERVICE DEBUG STATUS END ========');
+    console.log('UPDATE SERVICE DEBUG STATUS END');
   },
 
   // 重置用户偏好（用于测试）
   resetPreferences: () => {
-    console.log('[Debug] Resetting user preferences to default');
+    console.log('Resetting user preferences to default');
     const defaultPrefs = {
       lastReadVersion: '',
       dismissedVersions: [],
@@ -228,13 +228,13 @@ export const debugUpdateService = {
 
   // 模拟读取某个版本
   markVersionAsRead: (version: string) => {
-    console.log(`[Debug] Force marking version ${version} as read`);
+    console.log(`Force marking version ${version} as read`);
     updateService.markVersionAsRead(version);
   },
 
   // 模拟忽略某个版本
   dismissVersion: (version: string) => {
-    console.log(`[Debug] Force dismissing version ${version}`);
+    console.log(`Force dismissing version ${version}`);
     updateService.dismissVersion(version);
   }
 };
@@ -245,5 +245,5 @@ if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
     ...(window as any).kchatDebug,
     update: debugUpdateService
   };
-  console.log('[UpdateService] Debug functions available at window.kchatDebug.update');
+  console.log('UpdateService debug functions available');
 }
