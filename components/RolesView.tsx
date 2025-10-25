@@ -222,9 +222,9 @@ export const RolesView: React.FC<RolesViewProps> = ({
                     key={p.id}
                     persona={p}
                     index={i}
-                    onStartChat={() => p && onStartChat(p.id)}
-                    onEdit={() => p && onEditPersona(p)}
-                    onDelete={() => p && onDeletePersona(p.id)}
+                    onStartChat={() => onStartChat(p.id)}
+                    onEdit={() => onEditPersona(p)}
+                    onDelete={() => onDeletePersona(p.id)}
                 />
             ))}
             <CreatePersonaCard onClick={onCreatePersona} index={personas.filter(p => p).length} isHiding={createCardIsHiding} />

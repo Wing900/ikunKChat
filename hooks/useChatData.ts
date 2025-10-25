@@ -38,7 +38,7 @@ export const useChatData = ({ settings, isStorageLoaded, onSettingsChange }: Use
       });
       
       setFolders(loadFolders());
-      setActiveChatId(null);
+      setActiveChatId(loadActiveChatId());
     }
   }, [isStorageLoaded]);
 

@@ -135,6 +135,15 @@ export const AppContainer: React.FC = () => {
     handleOpenView('personas');
   };
 
+  // 从角色页面开始聊天：创建新聊天并自动跳转
+  const handleStartChatFromPersonas = (personaId?: string | null) => {
+    handleNewChat(personaId);
+    handleOpenView('chat');
+    if (isMobileSidebarOpen) {
+      toggleMobileSidebar();
+    }
+  };
+
   // 认证检查
   if (hasPassword && !isAuthenticated) {
     return <PasswordView onVerified={handleVerified} />;
@@ -199,7 +208,7 @@ export const AppContainer: React.FC = () => {
         onNewChat={handleNewChat}
         onDeleteChat={chatDataHandlers.handleDeleteChat}
         onEditChat={uiState.setEditingChat}
-        onStartChat={handleNewChat}
+        onStartChat={handleStartChatFromPersonas}
         onEditPersona={handleOpenEditor}
         onCreatePersona={() => handleOpenEditor(null)}
         onDeletePersona={deletePersona}
