@@ -1,4 +1,16 @@
 {
+  "1.8.0": {
+    "date": "10.30",
+    "important": false,
+    "notes": {
+      "zh": [
+        "🐛 修复了空回复误报问题：优化了响应检测逻辑，现在只有在真正没有任何内容返回时才会提示错误"
+      ],
+      "en": [
+        "🐛 Fixed false empty response errors: Optimized response detection logic, now only shows errors when truly no content is returned"
+      ]
+    }
+  },
   "1.7.9": {
     "date": "10.23",
     "important": true,

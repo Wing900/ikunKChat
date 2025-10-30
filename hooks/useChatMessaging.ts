@@ -164,7 +164,8 @@ export const useChatMessaging = ({ settings, activeChat, personas, setChats, set
       // Final, immediate update for the complete response
       if (!isCancelledRef.current) {
         // Final check for empty response after a "STOP" reason, which can indicate a silent refusal to answer.
-        if (!streamHadError && fullResponse.trim().length === 0 && chunkCount > 0) {
+        // 只在既没有主回复内容也没有思考内容时才报错
+        if (!streamHadError && fullResponse.trim().length === 0 && accumulatedThoughts.trim().length === 0 && chunkCount > 0) {
           streamHadError = true;
           const providerName = settings.llmProvider === 'openai' ? 'OpenAI' : 'Google';
           fullResponse = `${providerName} did not return a message. This could be due to safety settings or other restrictions.`;
