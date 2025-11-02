@@ -55,10 +55,43 @@ export const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(({ onSendMessa
   const mobileModelSelectorRef = useRef<HTMLDivElement>(null);
   const [isMobileView, setIsMobileView] = useState(window.innerWidth < 768);
 
-   useEffect(() => {
+  // 处理剪贴板粘贴事件
+  const handlePaste = async (e: ClipboardEvent) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+
+    const imageFiles: File[] = [];
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      if (item.type.startsWith('image/')) {
+        const file = item.getAsFile();
+        if (file) {
+          imageFiles.push(file);
+        }
+      }
+    }
+
+    if (imageFiles.length > 0) {
+      e.preventDefault();
+      await addFiles(imageFiles);
+    }
+  };
+
+  useEffect(() => {
     setFiles([]);
     setPdfDocuments([]);
   }, [chatSession?.id]);
+
+  // 监听剪贴板粘贴事件
+  useEffect(() => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    textarea.addEventListener('paste', handlePaste as any);
+    return () => {
+      textarea.removeEventListener('paste', handlePaste as any);
+    };
+  }, []);
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';

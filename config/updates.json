@@ -1,4 +1,22 @@
 {
+  "1.8.1": {
+    "date": "11.03",
+    "important": true,
+    "notes": {
+      "zh": [
+        "⚠️ 【重要通知】服务暂停公告",
+        "💰 由于11月份上游AI供应商价格大幅增加，站长已无法承受每天的用量成本",
+        "⏰ 本站将于 11月4日 早上8:00 暂停服务",
+        "🔄 关于后续服务继续的问题，站长还在想办法中，感谢大家的支持"
+      ],
+      "en": [
+        "⚠️ [Important Notice] Service Suspension Announcement",
+        "💰 Due to significant price increases from upstream AI providers in November, the webmaster can no longer sustain the daily usage costs",
+        "⏰ This site will suspend service on November 4th at 8:00 AM",
+        "🔄 Regarding the continuation of future services, the webmaster is still working on solutions"
+      ]
+    }
+  },
   "1.8.0": {
     "date": "10.30",
     "important": false,
