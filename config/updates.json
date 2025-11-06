@@ -1,4 +1,18 @@
 {
+  "1.8.2": {
+    "date": "11.06",
+    "important": false,
+    "notes": {
+      "zh": [
+        "✨ 新增了 “Graphviz 助手” 角色，引导用户轻松创建图表。",
+        "🧹 移除了 “研究助理”、“创意作家”、“代码伙伴”、“旅行规划师” 等几个不常用的角色。"
+      ],
+      "en": [
+        "✨ Added 'Graphviz Assistant' persona to guide users in creating charts easily.",
+        "🧹 Removed several less-used personas such as 'Research Assistant', 'Creative Writer', 'Code Buddy', and 'Travel Planner'."
+      ]
+    }
+  },
   "1.8.1": {
     "date": "11.03",
     "important": true,
