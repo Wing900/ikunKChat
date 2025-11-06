@@ -18,7 +18,7 @@ export const useSettingsSearch = (searchQuery: string) => {
         'language', 'theme', 'defaultPersona', 'fontFamily', 'colorPalette', 'fontSize', 'password',
         'autoTitleGeneration', 'titleGenModel',
         'showThoughts', 'llmProvider', 'apiKey', 'apiBaseUrl', 'temperature',
-        'contextLength', 'maxOutputTokens',
+        'contextLength', 'maxOutputTokens', 'activationCode',
         'streamInactivityTimeout', 'data', 'pdf-management'
       ]);
       const allSectionsVisible = SECTIONS.reduce((acc, sec) => ({ ...acc, [sec]: true }), {});
@@ -47,6 +47,7 @@ export const useSettingsSearch = (searchQuery: string) => {
         { id: 'apiBaseUrl', section: 'advanced', texts: [t('apiBaseUrl'), t('apiBaseUrlDesc'), translations.zh.apiBaseUrl, translations.zh.apiBaseUrlDesc] },
         { id: 'temperature', section: 'advanced', texts: [t('temperature'), t('temperatureDesc'), translations.zh.temperature, translations.zh.temperatureDesc] },
         { id: 'contextLength', section: 'advanced', texts: [t('contextLength'), t('contextLengthDesc'), translations.zh.contextLength, translations.zh.contextLengthDesc] },
+        { id: 'activationCode', section: 'advanced', texts: ['月授权码', '激活码', '授权', 'activation', 'license', 'code', '解锁', 'unlock', 'pro'] },
         { id: 'streamInactivityTimeout', section: 'advanced', texts: [t('streamInactivityTimeout'), t('streamInactivityTimeoutDesc'), translations.zh.streamInactivityTimeout, translations.zh.streamInactivityTimeoutDesc] },
         
         // Data

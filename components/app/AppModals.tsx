@@ -9,6 +9,7 @@ import { EditChatModal } from '../EditChatModal';
 import { FolderActionModal } from '../FolderActionModal';
 import { CitationDrawer } from '../CitationDrawer';
 import { MessageEditModal } from '../MessageEditModal';
+import { InfoModal } from '../InfoModal';
 
 const SettingsModal = lazy(() => import('../settings/SettingsModal').then(module => ({ default: module.SettingsModal })));
 const ImageLightbox = lazy(() => import('../ImageLightbox').then(module => ({ default: module.ImageLightbox })));
@@ -201,6 +202,14 @@ export const AppModals: React.FC<AppModalsProps> = ({
             onClearSelected={onClearSelectedChats}
           />
         </Suspense>
+      )}
+
+      {uiState.infoModal && (
+        <InfoModal
+          title={uiState.infoModal.title}
+          message={uiState.infoModal.message}
+          onClose={uiState.closeInfoModal}
+        />
       )}
     </>
   );

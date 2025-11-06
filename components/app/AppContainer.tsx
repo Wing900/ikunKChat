@@ -266,6 +266,11 @@ export const AppContainer: React.FC = () => {
         onClearSelectedChats={(selectedChatIds) => 
           handleClearSelectedChats(selectedChatIds, chats, activeChatId, setActiveChatId, setChats)
         }
+        infoModal={uiState.infoModal}
+        onCloseInfoModal={uiState.closeInfoModal}
+        isOverQuotaModalOpen={uiState.isOverQuotaModalOpen}
+        overQuotaMessage={uiState.overQuotaMessage}
+        onCloseOverQuotaModal={uiState.hideOverQuotaModal}
       />
     </AppLayout>
   );

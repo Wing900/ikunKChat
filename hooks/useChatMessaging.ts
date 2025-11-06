@@ -8,6 +8,9 @@ import { TITLE_GENERATION_PROMPT } from '../data/prompts';
 import { saveAttachment } from '../services/indexedDBService';
 import { getUserFacingMessage, logError } from '../utils/errorUtils';
 import { PDFParseResult } from '../services/pdfService';
+import { checkCanSendMessage, consumeUsageQuota } from '../services/licensingService';
+
+import { useUIState } from '../contexts/UIStateContext';
 
 interface UseChatMessagingProps {
   settings: Settings;
@@ -20,6 +23,7 @@ interface UseChatMessagingProps {
 }
 
 export const useChatMessaging = ({ settings, activeChat, personas, setChats, setActiveChatId, addToast }: UseChatMessagingProps) => {
+  const { showOverQuotaModal } = useUIState();
   const [isLoading, setIsLoading] = useState(false);
   const isCancelledRef = useRef(false);
   let inactivityTimer: NodeJS.Timeout; // For stream watchdog
@@ -226,6 +230,13 @@ export const useChatMessaging = ({ settings, activeChat, personas, setChats, set
   }, [settings, setChats, activeChat, personas, addToast]);
 
   const handleSendMessage = useCallback(async (content: string, files: File[] = [], pdfDocuments?: PDFParseResult[]) => {
+    // ========== 激活码和使用配额检查 ==========
+    const licenseCheck = await checkCanSendMessage();
+    if (!licenseCheck.canSend) {
+      showOverQuotaModal(licenseCheck.reason || '无法发送消息');
+      return;
+    }
+    
     // 串行处理文件以避免内存峰值
     const attachments: FileAttachment[] = [];
     for (let i = 0; i < files.length; i++) {
@@ -348,8 +359,11 @@ export const useChatMessaging = ({ settings, activeChat, personas, setChats, set
       historyForAPI = [...history.slice(0, -1), messageWithPDF];
     }
 
+    // 消费使用配额（仅对免费用户生效）
+    await consumeUsageQuota();
+    
     await _initiateStream(currentChatId, historyForAPI, currentPersonaId, titleGenerationMode);
-  }, [activeChat, settings, setChats, setActiveChatId, _initiateStream, personas]);
+  }, [activeChat, settings, setChats, setActiveChatId, _initiateStream, personas, showOverQuotaModal]);
 
   const handleDeleteMessage = useCallback((messageId: string) => {
     if (!activeChat?.id) return;

@@ -95,3 +95,31 @@ export interface Settings {
   streamInactivityTimeout?: number;
   fontSize?: number;
 }
+
+// ==================== 激活码和许可证相关类型 ====================
+
+export type ActivationType = 'free' | 'permanent' | 'monthly';
+
+export interface LicenseInfo {
+  activationCode: string | null;      // 用户输入的激活码
+  activationType: ActivationType;      // 激活类型
+  activatedAt: string | null;          // 激活时间 (ISO string)
+}
+
+export interface UsageQuota {
+  date: string;                        // 日期 (YYYY-MM-DD)
+  count: number;                       // 当日已使用次数
+}
+
+export interface ActivationCodes {
+  permanent: string[];                 // 永久激活码列表
+  monthly: string[];                   // 月度激活码列表
+}
+
+export interface LicenseCheckResult {
+  canSend: boolean;                    // 是否可以发送消息
+  reason?: string;                     // 不能发送的原因
+  remainingCount?: number;             // 剩余次数（仅免费用户）
+  usedCount?: number;                  // 已使用次数（仅免费用户）
+  totalLimit?: number;                 // 总限制次数（仅免费用户）
+}

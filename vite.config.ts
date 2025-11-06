@@ -16,7 +16,9 @@ export default defineConfig(({ mode }) => {
         'process.env.TITLE_API_URL': JSON.stringify(env.VITE_TITLE_API_URL),
         'process.env.TITLE_API_KEY': JSON.stringify(env.VITE_TITLE_API_KEY),
         'process.env.TITLE_MODEL_NAME': JSON.stringify(env.VITE_TITLE_MODEL_NAME),
-        'import.meta.env.VITE_ACCESS_PASSWORD': JSON.stringify(env.VITE_ACCESS_PASSWORD)
+        'import.meta.env.VITE_ACCESS_PASSWORD': JSON.stringify(env.VITE_ACCESS_PASSWORD),
+        'import.meta.env.VITE_ACTIVATION_CODES': JSON.stringify(env.VITE_ACTIVATION_CODES),
+        'import.meta.env.VITE_FREE_DAILY_LIMIT': JSON.stringify(env.VITE_FREE_DAILY_LIMIT)
       },
       resolve: {
         alias: {

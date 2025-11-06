@@ -5,6 +5,8 @@ import { CitationDrawer } from '../CitationDrawer';
 import { MessageEditModal } from '../MessageEditModal';
 import { UpdateSettings } from '../settings/UpdateSettings';
 import { UpdateNoticeModal } from '../UpdateNoticeModal';
+import { InfoModal } from '../InfoModal';
+import { OverQuotaModal } from '../OverQuotaModal';
 import { ChatSession, Folder, Settings, Persona, Message } from '../../types';
 
 // Lazy load heavy modals
@@ -83,6 +85,15 @@ interface ModalManagerProps {
   showChatClearSelector: boolean;
   onCloseChatClearSelector: () => void;
   onClearSelectedChats: (chatIds: string[]) => void;
+
+  // Info Modal
+  infoModal: { title: string; message: string } | null;
+  onCloseInfoModal: () => void;
+
+  // Over Quota Modal
+  isOverQuotaModalOpen: boolean;
+  overQuotaMessage: string;
+  onCloseOverQuotaModal: () => void;
 }
 
 /**
@@ -136,6 +147,11 @@ export const ModalManager: React.FC<ModalManagerProps> = ({
   showChatClearSelector,
   onCloseChatClearSelector,
   onClearSelectedChats,
+  infoModal,
+  onCloseInfoModal,
+  isOverQuotaModalOpen,
+  overQuotaMessage,
+  onCloseOverQuotaModal,
 }) => {
   return (
     <>
@@ -145,6 +161,23 @@ export const ModalManager: React.FC<ModalManagerProps> = ({
           versionInfo={versionInfo}
           onClose={onCloseUpdateNotice}
           onDismiss={onDismissUpdateNotice}
+        />
+      )}
+
+      {/* Info Modal */}
+      {infoModal && (
+        <InfoModal
+          title={infoModal.title}
+          message={infoModal.message}
+          onClose={onCloseInfoModal}
+        />
+      )}
+
+      {/* Over Quota Modal */}
+      {isOverQuotaModalOpen && (
+        <OverQuotaModal
+          overQuotaMessage={overQuotaMessage}
+          onClose={onCloseOverQuotaModal}
         />
       )}
 

@@ -1,6 +1,11 @@
 import React, { createContext, useState, useCallback, useContext, useMemo, ReactNode } from 'react';
 import { ChatSession, Folder, Message } from '../types';
 
+export interface InfoModalData {
+  title: string;
+  message: string;
+}
+
 export interface UIState {
   // 图片灯箱
   lightboxImage: string | null;
@@ -36,6 +41,17 @@ export interface UIState {
   setEditingMessage: (message: Message | null) => void;
   closeEditMessage: () => void;
   
+  // 信息弹窗
+  infoModal: InfoModalData | null;
+  showInfoModal: (title: string, message: string) => void;
+  closeInfoModal: () => void;
+
+  // 超额弹窗
+  isOverQuotaModalOpen: boolean;
+  overQuotaMessage: string;
+  showOverQuotaModal: (message: string) => void;
+  hideOverQuotaModal: () => void;
+  
   // 关闭所有
   closeAllModals: () => void;
 }
@@ -50,6 +66,9 @@ export const UIStateProvider: React.FC<{ children: ReactNode }> = ({ children })
   const [citationChunks, setCitationChunks] = useState<any[] | null>(null);
   const [editingMessage, setEditingMessage] = useState<Message | null>(null);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [infoModal, setInfoModal] = useState<InfoModalData | null>(null);
+  const [isOverQuotaModalOpen, setIsOverQuotaModalOpen] = useState(false);
+  const [overQuotaMessage, setOverQuotaMessage] = useState('');
 
   const openSettings = useCallback(() => setIsSettingsOpen(true), []);
   const closeSettings = useCallback(() => setIsSettingsOpen(false), []);
@@ -59,6 +78,18 @@ export const UIStateProvider: React.FC<{ children: ReactNode }> = ({ children })
   const closeEditFolder = useCallback(() => setEditingFolder(null), []);
   const closeCitations = useCallback(() => setCitationChunks(null), []);
   const closeEditMessage = useCallback(() => setEditingMessage(null), []);
+  const showInfoModal = useCallback((title: string, message: string) => {
+    setInfoModal({ title, message });
+  }, []);
+  const closeInfoModal = useCallback(() => setInfoModal(null), []);
+  const showOverQuotaModal = useCallback((message: string) => {
+    setOverQuotaMessage(message);
+    setIsOverQuotaModalOpen(true);
+  }, []);
+  const hideOverQuotaModal = useCallback(() => {
+    setIsOverQuotaModalOpen(false);
+    setOverQuotaMessage('');
+  }, []);
 
   const closeAllModals = useCallback(() => {
     setLightboxImage(null);
@@ -67,6 +98,8 @@ export const UIStateProvider: React.FC<{ children: ReactNode }> = ({ children })
     setEditingFolder(null);
     setCitationChunks(null);
     setEditingMessage(null);
+    setInfoModal(null);
+    setIsOverQuotaModalOpen(false);
   }, []);
 
   const value = useMemo(() => ({
@@ -77,12 +110,17 @@ export const UIStateProvider: React.FC<{ children: ReactNode }> = ({ children })
     editingFolder, setEditingFolder, openNewFolder, closeEditFolder,
     citationChunks, setCitationChunks, closeCitations,
     editingMessage, setEditingMessage, closeEditMessage,
+    infoModal, showInfoModal, closeInfoModal,
+    isOverQuotaModalOpen, overQuotaMessage, showOverQuotaModal, hideOverQuotaModal,
     closeAllModals
   }), [
-    lightboxImage, isSettingsOpen, isMobileSidebarOpen, editingChat, 
-    editingFolder, citationChunks, editingMessage,
-    openSettings, closeSettings, toggleMobileSidebar, closeEditChat, 
-    openNewFolder, closeEditFolder, closeCitations, closeEditMessage, closeAllModals
+    lightboxImage, isSettingsOpen, isMobileSidebarOpen, editingChat,
+    editingFolder, citationChunks, editingMessage, infoModal,
+    isOverQuotaModalOpen, overQuotaMessage,
+    openSettings, closeSettings, toggleMobileSidebar, closeEditChat,
+    openNewFolder, closeEditFolder, closeCitations, closeEditMessage,
+    showInfoModal, closeInfoModal, showOverQuotaModal, hideOverQuotaModal,
+    closeAllModals
   ]);
 
   return (
