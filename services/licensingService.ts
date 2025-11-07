@@ -332,7 +332,7 @@ export async function checkCanSendMessage(): Promise<LicenseCheckResult> {
     if (quota.count >= limit) {
       return {
         canSend: false,
-        reason: `✨ 感谢您对 ikunKchat 的支持！\n\n您已是月度用户，每日可享受 ${limit} 次对话额度。今日额度已用尽，请明天再来或联系站长获取更多支持。`,
+        reason: `✨ 感谢您对 ikunKchat 的支持！\n\n您已是月度用户，今日额度已用尽，请明天再来或联系站长获取更多支持。`,
         remainingCount: 0,
         usedCount: quota.count,
         totalLimit: limit
