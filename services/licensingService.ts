@@ -355,15 +355,17 @@ export async function checkCanSendMessage(): Promise<LicenseCheckResult> {
       canSend: false,
       reason: `🥰 谢谢你对 ikunKchat 的热情！
 
-由于上游涨价，11月运营的成本站长仅仅靠公益的心已经维持不住了，每个月的零花有点超支了 
+由于上游涨价，11月运营的成本站长仅仅靠公益的心已经维持不住了，每个月的零花过于超支了 
 
 本着不做商业化的原则，我是想关掉本站的，但是有的朋友说很好用，就保留了一定的免费额度 ✨
+
+足够问一些作业题了！！！
 
 如果你现在还想用，可以：
 • 🔄 换一个设备还能再有免费额度
 • 💰 愿意分摊成本，联系站长进行付费使用
 
-（如果真的有需求再这样吧，因为成本真的贵）`,
+（如果真的觉得很离不开再这样吧，因为成本真的贵，bin无奈）`,
       remainingCount: 0,
       usedCount: quota.count,
       totalLimit: limit
