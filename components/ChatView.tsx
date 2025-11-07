@@ -74,12 +74,20 @@ export const ChatView: React.FC<ChatViewProps> = (props) => {
   const [renderStartTime, setRenderStartTime] = useState<number>(0);
   
   // 分批渲染状态
-  const [visibleMessageCount, setVisibleMessageCount] = useState(10); // 初始显示10条
+  const [visibleMessageCount, setVisibleMessageCount] = useState(15); // 初始显示15条
   const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const BATCH_SIZE = 10; // 每批加载10条消息
+  const BATCH_SIZE = 15; // 每批加载15条消息
+  const scrollHeightBeforeLoad = useRef(0);
   
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [chatInput, setChatInput] = useState('');
+
+  const scrollToBottom = useCallback(() => {
+    // 使用 setTimeout 确保在 DOM 更新后再滚动
+    setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'auto', block: 'end' });
+    }, 0);
+  }, []);
 
   const activePersona = useMemo(() =>
     chatSession?.personaId ? personas.find(p => p && p.id === chatSession.personaId) : null
@@ -90,14 +98,21 @@ export const ChatView: React.FC<ChatViewProps> = (props) => {
     if (chatSession?.id !== prevChatIdRef.current) {
         setEditingMessageId(null);
         setChatInput('');
+        // 切换对话时，重置可见消息数量并滚动到底部
+        setVisibleMessageCount(BATCH_SIZE);
+        scrollToBottom(); // 1. 切换聊天时滚动
     }
     prevChatIdRef.current = chatSession?.id;
-  }, [chatSession]);
+  }, [chatSession, scrollToBottom]);
 
+  // 3. AI 回复完成时滚动
+  const prevIsLoading = useRef(isLoading);
   useEffect(() => {
-    if (isLoading || editingMessageId || !chatSession) return;
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [chatSession, chatSession?.messages, isLoading, editingMessageId]);
+    if (prevIsLoading.current && !isLoading) {
+      scrollToBottom();
+    }
+    prevIsLoading.current = isLoading;
+  }, [isLoading, scrollToBottom]);
 
   // 详细性能监控状态
   const [performanceBreakdown, setPerformanceBreakdown] = useState<{
@@ -123,8 +138,7 @@ export const ChatView: React.FC<ChatViewProps> = (props) => {
       // 记录开始渲染的性能点
       performance.mark('render-start');
       
-      // 重置分批渲染状态
-      setVisibleMessageCount(Math.min(10, chatSession.messages.length));
+      // This line is removed to prevent resetting scroll on new messages.
       
       // 模拟JSON读取时间（实际上数据已经在内存中）
       const jsonStart = performance.now();
@@ -141,7 +155,8 @@ export const ChatView: React.FC<ChatViewProps> = (props) => {
   useEffect(() => {
     if (renderStartTime > 0 && chatSession?.messages) {
       const totalRenderTime = performance.now() - renderStartTime;
-      const visibleMessages = chatSession.messages.slice(0, visibleMessageCount);
+      const messages = chatSession.messages || [];
+      const visibleMessages = messages.slice(Math.max(messages.length - visibleMessageCount, 0));
       
       // 详细计算数学公式数量和解析时间
       const mathCount = visibleMessages.reduce((count, msg) => {
@@ -203,30 +218,22 @@ export const ChatView: React.FC<ChatViewProps> = (props) => {
     }
   }, [chatSession?.messages, visibleMessageCount, renderStartTime, performanceBreakdown]);
 
-  // 滚动检测：自动加载更多消息
+  // 滚动检测：向上滚动加载更多历史消息
   const handleScroll = useCallback(() => {
-    if (!scrollContainerRef.current || !chatSession?.messages) return;
-    
+    if (isLoadingMore || !scrollContainerRef.current || !chatSession?.messages) return;
+
     const container = scrollContainerRef.current;
-    const { scrollTop, scrollHeight, clientHeight } = container;
-    
-    // 当滚动到距离底部100px时，加载更多消息
-    const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
-    if (distanceFromBottom < 100 && !isLoadingMore) {
-      const remainingMessages = chatSession.messages.length - visibleMessageCount;
-      if (remainingMessages > 0) {
+    // 当滚动到顶部时加载更多
+    if (container.scrollTop < 100) {
+      const totalMessages = chatSession.messages.length;
+      if (visibleMessageCount < totalMessages) {
         setIsLoadingMore(true);
-        // 模拟加载延迟，避免过于频繁的渲染
-        setTimeout(() => {
-          setVisibleMessageCount(prev => {
-            const newCount = Math.min(prev + BATCH_SIZE, chatSession.messages.length);
-            setIsLoadingMore(false);
-            return newCount;
-          });
-        }, 100);
+        // 保存当前滚动高度，用于后续恢复位置
+        scrollHeightBeforeLoad.current = container.scrollHeight;
+        setVisibleMessageCount(prev => Math.min(prev + BATCH_SIZE, totalMessages));
       }
     }
-  }, [chatSession?.messages, visibleMessageCount, isLoadingMore]);
+  }, [isLoadingMore, chatSession?.messages, visibleMessageCount]);
 
   useEffect(() => {
     const container = scrollContainerRef.current;
@@ -235,6 +242,16 @@ export const ChatView: React.FC<ChatViewProps> = (props) => {
     container.addEventListener('scroll', handleScroll, { passive: true });
     return () => container.removeEventListener('scroll', handleScroll);
   }, [handleScroll]);
+
+  // 在加载更多消息后恢复滚动位置
+  React.useLayoutEffect(() => {
+    if (isLoadingMore && scrollContainerRef.current) {
+      const newScrollHeight = scrollContainerRef.current.scrollHeight;
+      const scrollOffset = newScrollHeight - scrollHeightBeforeLoad.current;
+      scrollContainerRef.current.scrollTop += scrollOffset;
+      setIsLoadingMore(false);
+    }
+  }, [visibleMessageCount, isLoadingMore]); // 依赖于消息数量变化
 
   // 添加快捷性能分析功能
   useEffect(() => {
@@ -282,6 +299,7 @@ export const ChatView: React.FC<ChatViewProps> = (props) => {
   const handleSendMessageWithTools = (message: string, files: File[], pdfDocuments?: PDFParseResult[]) => {
     messageActions.onSendMessage(message, files, pdfDocuments);
     setChatInput('');
+    scrollToBottom(); // 2. 发送消息时滚动
   };
 
 
@@ -356,15 +374,17 @@ export const ChatView: React.FC<ChatViewProps> = (props) => {
               <div className="flex-grow overflow-y-auto pt-1 pb-5" ref={scrollContainerRef}>
                 <div className={`w-full px-6 transition-all duration-300 ${props.uiInteractions.isSidebarCollapsed ? 'max-w-6xl mx-auto' : 'max-w-[672px] mx-auto'}`}>
                   {/* 分批渲染消息 */}
-                  {(chatSession?.messages || [])
-                    .slice(0, visibleMessageCount)
-                    .map((msg, index) => (
+                  {/* 渲染可见消息 */}
+                  {useMemo(() => {
+                    const messages = chatSession?.messages || [];
+                    const visibleMessages = messages.slice(Math.max(messages.length - visibleMessageCount, 0));
+                    return visibleMessages.map((msg, index) => (
                       <MessageBubble
                         key={msg.id}
                         message={msg}
-                        index={index}
+                        index={index} // 这个 index 现在是相对于 visibleMessages 的
                         persona={activePersona}
-                        isLastMessageLoading={isLoading && index === chatSession!.messages.length - 1}
+                        isLastMessageLoading={isLoading && index === visibleMessages.length - 1 && msg.id === messages[messages.length - 1].id}
                         isEditing={editingMessageId === msg.id}
                         onEditRequest={() => messageActions.onEditMessage(msg)}
                         onCancelEdit={handleCancelEdit}
@@ -373,9 +393,10 @@ export const ChatView: React.FC<ChatViewProps> = (props) => {
                         onRegenerate={messageActions.onRegenerate}
                         onCopy={handleCopy}
                         isInVirtualView={false}
-                        isBatchRendered={index >= 10} // 标记是否为后续批次渲染
+                        isBatchRendered={index < BATCH_SIZE}
                       />
-                    ))}
+                    ));
+                  }, [chatSession?.messages, visibleMessageCount, isLoading, editingMessageId, activePersona, messageActions, handleCancelEdit, handleSaveEdit, handleCopy])}
                   
                   <div ref={messagesEndRef} />
                 </div>
