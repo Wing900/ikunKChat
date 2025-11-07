@@ -206,7 +206,6 @@ export const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(({ onSendMessa
   return (
     <form onSubmit={handleSubmit} className="p-2 pt-0 flex flex-col relative">
         <div ref={toolsWrapperRef} className={`tool-selector-options ${isToolsOpen ? 'visible' : ''}`} style={{backgroundColor: 'var(--glass-bg)', border: '1px solid var(--glass-border)', boxShadow: 'var(--shadow-md)'}}>
-            <div className="my-1 mx-2 h-[1px] bg-[var(--glass-border)]"></div>
             <button type="button" onClick={() => fileInputRef.current?.click()} className="w-full p-2 text-left hover:bg-black/10 dark:hover:bg-white/10 flex items-center gap-3 text-[var(--text-color)]">
                 <Icon icon="paperclip" className="w-4 h-4" />
                 <span>{t('attachFile') || '上传文件（PDF自动解析）'}</span>

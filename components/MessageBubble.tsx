@@ -73,6 +73,8 @@ interface MessageBubbleProps {
     onDelete: (messageId: string) => void;
     onRegenerate: () => void;
     onCopy: (content: string) => void;
+    isInVirtualView?: boolean; // 虚拟滚动标识
+    isBatchRendered?: boolean; // 是否为分批渲染的消息
 }
 
 export const MessageBubble: React.FC<MessageBubbleProps> = React.memo((props) => {
@@ -257,7 +259,13 @@ export const MessageBubble: React.FC<MessageBubbleProps> = React.memo((props) =>
                       {/* Rendered View */}
                       <div className={`col-start-1 row-start-1 grid transition-all duration-300 ease-in-out ${isRawView ? 'grid-rows-[0fr] opacity-0' : 'grid-rows-[1fr] opacity-100'}`} aria-hidden={isRawView}>
                         <div className="overflow-hidden break-words text-justify">
-                            <MarkdownRenderer content={message.content} theme={settings.theme} />
+                            <MarkdownRenderer
+                              content={message.content}
+                              theme={settings.theme}
+                              isInVirtualView={props.isInVirtualView}
+                              messageId={message.id}
+                              isBatchRendered={props.isBatchRendered}
+                            />
                         </div>
                       </div>
                       {/* Raw View */}

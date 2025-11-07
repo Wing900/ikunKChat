@@ -1,11 +1,41 @@
 {
+  "1.8.4": {
+    "date": "11.07",
+    "important": true,
+    "notes": {
+      "zh": [
+        "🚀 重大性能优化：解决了包含大量数学公式的长对话历史记录加载卡顿问题",
+        "⚡ 分批渲染：初始只渲染前10条消息，滚动时自动加载更多，大幅提升加载速度",
+        "📊 性能监控：新增详细性能分析，按Ctrl+Shift+P可查看渲染各阶段耗时",
+        "🔧 公式渲染：优化KaTeX渲染逻辑，提升复杂数学公式的显示效果和性能"
+      ],
+      "en": [
+        "🚀 Major Performance Optimization: Fixed lag issues with long chat history containing many mathematical formulas",
+        "⚡ Batch Rendering: Initially renders only first 10 messages, loads more on scroll, significantly improving loading speed",
+        "📊 Performance Monitoring: Added detailed performance analysis, press Ctrl+Shift+P to view rendering stage timing",
+        "🔧 Formula Rendering: Optimized KaTeX rendering logic for better display and performance of complex math formulas"
+      ]
+    }
+  },
+  "1.8.3": {
+    "date": "11.07",
+    "important": true,
+    "notes": {
+      "zh": [
+        "⚠️ 无奈于成本，引入限额"
+      ],
+      "en": [
+        "⚠️ Due to cost constraints, usage limits have been introduced"
+      ]
+    }
+  },
   "1.8.2": {
     "date": "11.06",
     "important": false,
     "notes": {
       "zh": [
-        "✨ 新增了 “Graphviz 助手” 角色，引导用户轻松创建图表。",
-        "🧹 移除了 “研究助理”、“创意作家”、“代码伙伴”、“旅行规划师” 等几个不常用的角色。"
+        "✨ 新增了 \"Graphviz 助手\" 角色，引导用户轻松创建图表。",
+        "🧹 移除了 \"研究助理\"、\"创意作家\"、\"代码伙伴\"、\"旅行规划师\" 等几个不常用的角色。"
       ],
       "en": [
         "✨ Added 'Graphviz Assistant' persona to guide users in creating charts easily.",

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useCallback } from 'react';
+import React, { useEffect, useRef, useCallback, useState } from 'react';
 import { marked } from 'marked';
 import type { Tokens } from 'marked';
 import mermaid from 'mermaid';
@@ -21,7 +21,15 @@ renderer.code = ({ text: code, lang }: { text: string; lang?: string; }): string
         return `<div class="mermaid">${codeString}</div>`;
     }
     
-    const highlightedCode = hljs.highlight(codeString, { language }).value;
+    // 安全转义代码内容
+    const safeCodeString = codeString
+        .replace(/&/g, '&')
+        .replace(/</g, '<')
+        .replace(/>/g, '>')
+        .replace(/"/g, '"')
+        .replace(/'/g, '&#x27;');
+    
+    const highlightedCode = hljs.highlight(safeCodeString, { language }).value;
 
     return `
         <div class="code-block-wrapper">
@@ -73,10 +81,22 @@ if (typeof DOMPurify !== 'undefined') {
 interface MarkdownRendererProps {
   content: string;
   theme: 'light' | 'dark';
+  isInVirtualView?: boolean; // 是否在虚拟视图中
+  messageId?: string; // 消息ID用于追踪
+  isBatchRendered?: boolean; // 是否为分批渲染的消息
 }
 
-export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, theme }) => {
+export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
+  content,
+  theme,
+  isInVirtualView = false,
+  messageId,
+  isBatchRendered = false
+}) => {
   const contentRef = useRef<HTMLDivElement>(null);
+  const [isVisible, setIsVisible] = useState(true);
+  const [mathRendered, setMathRendered] = useState(false);
+  const observerRef = useRef<IntersectionObserver | null>(null);
 
   const handleCopyClick = useCallback((e: MouseEvent) => {
     const button = (e.target as HTMLElement).closest('.code-block-copy-btn');
@@ -302,6 +322,169 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, the
     }
 
   }, [content, theme, handleCopyClick]);
+
+  // 分批渲染优化：对于后续批次的消息，延迟渲染公式
+  useEffect(() => {
+    if (isBatchRendered) {
+      // 对于分批渲染的消息，延迟150ms开始公式渲染
+      const timer = setTimeout(() => {
+        if (!mathRendered) {
+          renderMathExpressions();
+          setMathRendered(true);
+        }
+      }, 150);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [isBatchRendered, mathRendered]);
+
+  // 懒加载逻辑：只在组件可见时进行公式渲染
+  useEffect(() => {
+    if (!contentRef.current) return;
+
+    // 如果不在虚拟视图中，直接渲染
+    if (!isInVirtualView) {
+      setIsVisible(true);
+      return;
+    }
+
+    // 使用Intersection Observer检测可见性
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        setIsVisible(entry.isIntersecting);
+        
+        // 当组件变得可见且数学公式还没有渲染时，开始渲染
+        if (entry.isIntersecting && !mathRendered) {
+          setTimeout(() => {
+            renderMathExpressions();
+            setMathRendered(true);
+          }, 100); // 延迟100ms渲染，避免频繁触发
+        }
+      },
+      {
+        root: null,
+        rootMargin: '100px', // 提前100px开始渲染
+        threshold: 0.1
+      }
+    );
+
+    observerRef.current = observer;
+    observer.observe(contentRef.current);
+
+    return () => {
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+      }
+    };
+  }, [isInVirtualView, content, mathRendered]);
+
+  // 独立的公式渲染函数
+  const renderMathExpressions = useCallback(() => {
+    if (!contentRef.current) return;
+
+    const currentRef = contentRef.current;
+    
+    // 检查是否已经有占位符
+    if (currentRef.textContent?.includes('MATH_PLACEHOLDER_')) {
+      // 如果有占位符，直接处理
+      processMathPlaceholders(currentRef);
+    } else {
+      // 如果没有占位符，说明公式已经在主渲染流程中处理过了
+      console.log('Math expressions already rendered in main flow');
+    }
+  }, []);
+
+  // 处理数学占位符的函数
+  const processMathPlaceholders = useCallback((container: HTMLElement) => {
+    // 使用TreeWalker找到包含占位符的文本节点
+    const walker = document.createTreeWalker(
+        container,
+        NodeFilter.SHOW_TEXT,
+        {
+            acceptNode: (node) => {
+                let parent = node.parentElement;
+                while (parent && parent !== container) {
+                    if (parent.tagName === 'CODE' ||
+                        parent.tagName === 'PRE' ||
+                        parent.classList.contains('code-block-wrapper') ||
+                        parent.classList.contains('code-block-header')) {
+                        return NodeFilter.FILTER_REJECT;
+                    }
+                    parent = parent.parentElement;
+                }
+                return NodeFilter.FILTER_ACCEPT;
+            }
+        }
+    );
+
+    const textNodes: Text[] = [];
+    let currentNode: Node | null;
+    while (currentNode = walker.nextNode()) {
+        textNodes.push(currentNode as Text);
+    }
+
+    // 处理文本节点中的占位符
+    textNodes.forEach(node => {
+        const text = node.textContent || '';
+        if (!text.includes('MATH_PLACEHOLDER_')) {
+            return;
+        }
+
+        const fragment = document.createDocumentFragment();
+        let lastIndex = 0;
+        let match;
+        const placeholderRegex = /MATH_PLACEHOLDER_(\d+)/g;
+
+        while ((match = placeholderRegex.exec(text)) !== null) {
+            if (match.index > lastIndex) {
+                fragment.appendChild(document.createTextNode(text.slice(lastIndex, match.index)));
+            }
+
+            const placeholderIdx = parseInt(match[1], 10);
+            // 创建占位符的span元素
+            const span = document.createElement('span');
+            span.className = 'katex-placeholder';
+            span.setAttribute('data-math-placeholder', `math-${messageId}-${placeholderIdx}`);
+            span.textContent = match[0]; // 临时占位符
+            fragment.appendChild(span);
+
+            lastIndex = match.index + match[0].length;
+        }
+
+        if (lastIndex < text.length) {
+            fragment.appendChild(document.createTextNode(text.slice(lastIndex)));
+        }
+
+        if (lastIndex > 0) {
+            node.replaceWith(fragment);
+        }
+    });
+
+    // 异步渲染KaTeX
+    requestIdleCallback(() => {
+        container.querySelectorAll('[data-math-placeholder]').forEach((span, index) => {
+            const placeholderElement = span as HTMLElement;
+            const content = placeholderElement.textContent || '';
+            
+            // 清理并渲染
+            placeholderElement.textContent = '';
+            
+            try {
+                katex.render(content.replace('MATH_PLACEHOLDER_', ''), placeholderElement, {
+                    throwOnError: false,
+                    displayMode: false, // 简化模式
+                    errorColor: '#cc0000',
+                    strict: false,
+                    trust: true
+                });
+            } catch (error) {
+                console.error('KaTeX rendering error:', error);
+                placeholderElement.textContent = `[Math Error: ${content}]`;
+            }
+        });
+    });
+  }, [messageId]);
 
   return <div ref={contentRef} className="markdown-content" />;
 };
