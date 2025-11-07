@@ -135,7 +135,7 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({ settings, on
       {visibleIds.has('activationCode') && (
         <SettingsItem
           label="月授权码"
-          description="输入月授权码以解锁无限制使用"
+          description="输入月授权码以解锁更多使用次数"
         >
           <div className="flex gap-2 w-60">
             <input
