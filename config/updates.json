@@ -1,4 +1,22 @@
 {
+  "1.8.4": {
+    "date": "11.07",
+    "important": true,
+    "notes": {
+      "zh": [
+        "🚀 重大性能优化：解决了包含大量数学公式的长对话历史记录加载卡顿问题",
+        "⚡ 分批渲染：初始只渲染前10条消息，滚动时自动加载更多，大幅提升加载速度",
+        "📊 性能监控：新增详细性能分析，按Ctrl+Shift+P可查看渲染各阶段耗时",
+        "🔧 公式渲染：优化KaTeX渲染逻辑，提升复杂数学公式的显示效果和性能"
+      ],
+      "en": [
+        "🚀 Major Performance Optimization: Fixed lag issues with long chat history containing many mathematical formulas",
+        "⚡ Batch Rendering: Initially renders only first 10 messages, loads more on scroll, significantly improving loading speed",
+        "📊 Performance Monitoring: Added detailed performance analysis, press Ctrl+Shift+P to view rendering stage timing",
+        "🔧 Formula Rendering: Optimized KaTeX rendering logic for better display and performance of complex math formulas"
+      ]
+    }
+  },
   "1.8.3": {
     "date": "11.07",
     "important": true,
