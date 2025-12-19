@@ -124,12 +124,15 @@ export const useAppData = (
       const persona = selectedPersonaId ? personas.find((p) => p && p.id === selectedPersonaId) : null;
 
       if (persona) {
+        // 优先级：用户最后选择的模型 > 角色默认模型 > 系统默认模型
+        const modelToUse = settings.lastSelectedModel ?? persona.model ?? settings.defaultModel;
+        
         const newChatSession: ChatSession = {
           id: crypto.randomUUID(),
           title: persona.name || 'New Persona Chat',
           messages: [],
           createdAt: Date.now(),
-          model: persona.model ?? settings.defaultModel,
+          model: modelToUse,
           folderId: null,
           personaId: persona.id,
         };

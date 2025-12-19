@@ -326,7 +326,9 @@ export const useChatMessaging = ({ settings, activeChat, personas, setChats, set
     if (!currentChatId) {
       currentPersonaId = settings.defaultPersona;
       const persona = personas.find(p => p.id === currentPersonaId);
-      const newChat: ChatSession = { id: crypto.randomUUID(), title: persona?.name || content.substring(0, 40) || "New Chat", icon: (persona?.avatar?.type === 'emoji' ? persona.avatar.value : '👤') || "💬", messages: [userMessage], createdAt: Date.now(), model: persona?.model || settings.defaultModel, folderId: null, personaId: currentPersonaId };
+      // 优先级：用户最后选择的模型 > 角色默认模型 > 系统默认模型
+      const modelToUse = settings.lastSelectedModel ?? persona?.model ?? settings.defaultModel;
+      const newChat: ChatSession = { id: crypto.randomUUID(), title: persona?.name || content.substring(0, 40) || "New Chat", icon: (persona?.avatar?.type === 'emoji' ? persona.avatar.value : '👤') || "💬", messages: [userMessage], createdAt: Date.now(), model: modelToUse, folderId: null, personaId: currentPersonaId };
       currentChatId = newChat.id;
       history = newChat.messages;
       setChats(prev => [newChat, ...prev]);

@@ -99,7 +99,8 @@ export const useChatData = ({ settings, isStorageLoaded, onSettingsChange }: Use
     if (activeChatId) {
       setChats(p => p.map(c => c.id === activeChatId ? { ...c, model } : c));
     }
-    onSettingsChange({ defaultModel: model });
+    // 保存用户最后选择的模型，用于新建聊天时的记忆功能
+    onSettingsChange({ defaultModel: model, lastSelectedModel: model });
   }, [activeChatId, onSettingsChange]);
 
   // This function is now handled by a callback passed from App.tsx to ChatView

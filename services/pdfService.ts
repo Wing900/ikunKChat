@@ -5,8 +5,8 @@
 
 import * as pdfjsLib from 'pdfjs-dist';
 
-// 配置 PDF.js worker - 使用esm.sh CDN
-pdfjsLib.GlobalWorkerOptions.workerSrc = `https://esm.sh/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.js`;
+// 配置 PDF.js worker - 使用 jsdelivr CDN
+pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.js`;
 
 export interface PDFParseResult {
   id: string;
