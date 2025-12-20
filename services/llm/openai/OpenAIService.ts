@@ -51,7 +51,7 @@ export class OpenAIService implements ILLMService {
    * 调用 OpenAI 兼容 API 生成内容流
    */
   async *generateContentStream(request: ChatRequest): AsyncGenerator<StreamChunk, void, unknown> {
-    const { model, persona, config, apiKey, apiBaseUrl } = request;
+    const { model, persona, config, apiKey, apiBaseUrl, showThoughts } = request;
     
     const baseUrl = (apiBaseUrl?.trim() || 'https://api.openai.com').replace(/\/$/, '');
     const url = `${baseUrl}/v1/chat/completions`;
@@ -64,6 +64,8 @@ export class OpenAIService implements ILLMService {
       stream: true,
     };
 
+    let streamEnded = false;
+
     try {
       const response = await fetch(url, {
         method: 'POST',
@@ -75,8 +77,14 @@ export class OpenAIService implements ILLMService {
       });
 
       if (!response.ok) {
-        const errorBody = await response.json();
-        throw new Error(`OpenAI API Error: ${errorBody.error?.message || response.statusText}`);
+        let errorMessage = `OpenAI API Error (${response.status})`;
+        try {
+          const errorBody = await response.json();
+          errorMessage = errorBody.error?.message || response.statusText;
+        } catch (e) {
+          errorMessage = response.statusText;
+        }
+        throw new Error(errorMessage);
       }
 
       // 处理 Server-Sent Events (SSE)
@@ -99,25 +107,55 @@ export class OpenAIService implements ILLMService {
           if (line.startsWith('data: ')) {
             const data = line.substring(6);
             if (data.trim() === '[DONE]') {
-              return; // 流结束
+              streamEnded = true;
+              break; // 流结束，跳出循环
             }
             try {
               const parsed = JSON.parse(data);
-              const delta = parsed.choices?.[0]?.delta?.content;
-              if (delta) {
-                yield { type: 'content', payload: delta };
+              const choice = parsed.choices?.[0];
+              
+              if (choice) {
+                const delta = choice.delta;
+                const finishReason = choice.finish_reason;
+                
+                // 处理思维链内容（o1系列模型）
+                // OpenAI o1模型使用 reasoning_content 字段
+                if (delta?.reasoning_content && showThoughts) {
+                  yield { type: 'thought', payload: delta.reasoning_content };
+                }
+                
+                // 处理普通回复内容
+                if (delta?.content) {
+                  yield { type: 'content', payload: delta.content };
+                }
+
+                // 检查结束原因
+                if (finishReason) {
+                  if (finishReason === 'length') {
+                    console.warn('OpenAI: Response truncated due to max_tokens limit');
+                  } else if (finishReason === 'content_filter') {
+                    console.warn('OpenAI: Response filtered due to content policy');
+                  }
+                  streamEnded = true;
+                }
               }
             } catch (e) {
               console.error("Failed to parse SSE data chunk:", data);
             }
           }
         }
+        
+        if (streamEnded) break;
       }
 
     } catch (error: any) {
       console.error("Error in OpenAI stream:", error);
-      yield { type: 'error', payload: error.message };
+      yield {
+        type: 'error',
+        payload: error.message || 'An unknown error occurred in the OpenAI service.'
+      };
     } finally {
+      // 确保流的末尾有一个 'end' 信号
       yield { type: 'end', payload: '' };
     }
   }
