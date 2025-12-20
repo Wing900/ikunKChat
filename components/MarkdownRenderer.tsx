@@ -137,23 +137,40 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
     if (!contentRef.current) return;
     const currentRef = contentRef.current;
 
-// --- Step 1: Extract and protect math expressions before Markdown parsing ---
+// --- Step 1: Protect code blocks and extract math expressions ---
     let processedContent = content || '';
     const mathPlaceholders: { id: string; content: string; isDisplay: boolean }[] = [];
+    const codeBlockPlaceholders: { id: string; content: string }[] = [];
     let placeholderIndex = 0;
+    let codeBlockIndex = 0;
 
+    // 首先保护代码块（包括行内代码和代码块）
+    // 保护代码块 ```...```（必须在行内代码之前处理）
+    processedContent = processedContent.replace(/```[\s\S]*?```/g, (match) => {
+      const id = `CODE_BLOCK_PLACEHOLDER_${codeBlockIndex++}`;
+      codeBlockPlaceholders.push({ id, content: match });
+      return id;
+    });
+
+    // 保护行内代码 `...`（使用更精确的匹配，避免跨行）
+    processedContent = processedContent.replace(/`([^`]+?)`/g, (match) => {
+      const id = `CODE_BLOCK_PLACEHOLDER_${codeBlockIndex++}`;
+      codeBlockPlaceholders.push({ id, content: match });
+      return id;
+    });
+
+    // 现在提取数学表达式（代码块已被保护）
     // Extract display math ($$...$$ and \[...\])
-    // 关键修正：只替换公式本身，不捕获或改变周围的换行和空格，以保护 Markdown 列表结构。
     processedContent = processedContent.replace(/\$\$([\s\S]*?)\$\$/g, (match, content) => {
-    const id = `MATH_PLACEHOLDER_${placeholderIndex++}`;
-    mathPlaceholders.push({ id, content: content, isDisplay: true });
-    return id;
+      const id = `MATH_PLACEHOLDER_${placeholderIndex++}`;
+      mathPlaceholders.push({ id, content: content, isDisplay: true });
+      return id;
     });
 
     processedContent = processedContent.replace(/\\\[([\s\S]*?)\\\]/g, (match, content) => {
-    const id = `MATH_PLACEHOLDER_${placeholderIndex++}`;
-    mathPlaceholders.push({ id, content: content, isDisplay: true });
-    return id;
+      const id = `MATH_PLACEHOLDER_${placeholderIndex++}`;
+      mathPlaceholders.push({ id, content: content, isDisplay: true });
+      return id;
     });
 
     // Extract inline math ($...$ and \(...\))
@@ -167,6 +184,11 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
       const id = `MATH_PLACEHOLDER_${placeholderIndex++}`;
       mathPlaceholders.push({ id, content: content, isDisplay: false });
       return id;
+    });
+
+    // 恢复代码块
+    codeBlockPlaceholders.forEach(({ id, content }) => {
+      processedContent = processedContent.replace(id, content);
     });
 
     // --- Step 2: Parse Markdown to HTML ---
