@@ -5,7 +5,7 @@ import imageCompression from 'browser-image-compression';
 const compressionOptions = {
   maxSizeMB: 1,       // 限制最大文件大小为 1MB
   maxWidthOrHeight: 1920, // 限制最大宽度或高度
-  useWebWorker: true,   // 使用Web Worker以避免UI阻塞
+  useWebWorker: false,   // 禁用Web Worker以避免消息通道错误
 };
 
 export const fileToData = async (file: File): Promise<FileAttachment> => {
