@@ -13,8 +13,15 @@ interface AdvancedSettingsProps {
   availableModels: string[];
 }
 
-const isApiKeySetByEnv = false;
-const isApiBaseUrlSetByEnv = false;
+// 检测环境变量中是否已设置 API Key 和 Base URL
+const isApiKeySetByEnv = !!(
+  process.env.GEMINI_API_KEY ||
+  process.env.OPENAI_API_KEY
+);
+const isApiBaseUrlSetByEnv = !!(
+  process.env.API_BASE_URL ||
+  process.env.OPENAI_API_BASE_URL
+);
 
 export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({ settings, onSettingsChange, visibleIds, availableModels }) => {
   const { t } = useLocalization();
@@ -44,8 +51,8 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({ settings, on
       )}
       {visibleIds.has('apiKey') && (
         <SettingsItem label={t('apiKey')} description={t('apiKeyDesc')}>
-           <textarea 
-              value={(settings.apiKey || []).join('\n')}
+           <textarea
+              value={isApiKeySetByEnv ? '' : (settings.apiKey || []).join('\n')}
               onChange={handleApiKeyChange}
               disabled={isApiKeySetByEnv}
               placeholder={isApiKeySetByEnv ? t('apiKeyEnvVar') : t('apiKeyPlaceholder')}
@@ -58,7 +65,7 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({ settings, on
         <SettingsItem label={t('apiBaseUrl')} description={t('apiBaseUrlDesc')}>
           <input
             type="text"
-            value={settings.apiBaseUrl || ''}
+            value={isApiBaseUrlSetByEnv ? '' : (settings.apiBaseUrl || '')}
             onChange={e => onSettingsChange({ apiBaseUrl: e.target.value })}
             disabled={isApiBaseUrlSetByEnv}
             placeholder={

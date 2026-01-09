@@ -27,8 +27,10 @@ dist-ssr
 
 dev-dist/
 
-# Claude AI 工具本地文件
+# AI 工具本地文件
 .claude/
+.iflow/
+*.iflow
 
 # 命令行产生的临时文件
 $null

@@ -34,7 +34,21 @@ export const DataManagement: React.FC<DataManagementProps> = ({
   
   const handleImportClick = () => importFileRef.current?.click();
   const handleFileImport = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files?.[0]) onImport(e.target.files[0]);
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    // 过滤 AI 工具相关文件
+    const fileName = file.name.toLowerCase();
+    const aiToolPatterns = ['.claude', '.iflow', 'claude', 'iflow'];
+    const isAIToolFile = aiToolPatterns.some(pattern => fileName.includes(pattern));
+    
+    if (isAIToolFile) {
+      alert('不支持导入 AI 工具相关文件');
+      e.target.value = ''; // 清空文件选择
+      return;
+    }
+    
+    onImport(file);
   };
 
   if (!visibleIds.has('data')) return null;
