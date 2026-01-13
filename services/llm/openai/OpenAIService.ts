@@ -113,11 +113,11 @@ export class OpenAIService implements ILLMService {
             try {
               const parsed = JSON.parse(data);
               const choice = parsed.choices?.[0];
-              
+
               if (choice) {
                 const delta = choice.delta;
                 const finishReason = choice.finish_reason;
-                
+
                 // 处理思维链内容（o1系列模型）
                 // OpenAI o1模型使用 reasoning_content 字段
                 if (delta?.reasoning_content && showThoughts) {
