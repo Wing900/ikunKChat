@@ -60,7 +60,7 @@ export class OpenAIService implements ILLMService {
       model,
       messages: prepareOpenAIPayload(request.messages, persona),
       temperature: config.temperature,
-      max_tokens: config.maxOutputTokens,
+      max_tokens: Math.min(config.maxOutputTokens, 65536),
       stream: true,
     };
 
