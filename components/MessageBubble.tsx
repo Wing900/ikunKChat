@@ -94,21 +94,27 @@ export const MessageBubble: React.FC<MessageBubbleProps> = React.memo((props) =>
   // 用于存储从 IndexedDB 加载的图片数据
   const [loadedAttachments, setLoadedAttachments] = useState<Record<string, string>>({});
 
+  // 缓存附件ID数组，避免对象引用导致useEffect重复执行
+  const attachmentIds = React.useMemo(() =>
+    message.attachments?.map(att => att.id).filter(Boolean) || [],
+    [message.attachments]
+  );
+
   const handleDelete = () => { setIsBeingDeleted(true); setTimeout(() => onDelete(message.id), 350); };
 
   // 从 IndexedDB 加载缺失的附件数据
   useEffect(() => {
     const loadMissingAttachments = async () => {
       if (!message.attachments) return;
-      
+
       const attachmentsToLoad = message.attachments.filter(
         att => att.id && !att.data && att.mimeType.startsWith('image/')
       );
-      
+
       if (attachmentsToLoad.length === 0) return;
-      
+
       const loaded: Record<string, string> = {};
-      
+
       for (const att of attachmentsToLoad) {
         if (att.id) {
           try {
@@ -121,14 +127,14 @@ export const MessageBubble: React.FC<MessageBubbleProps> = React.memo((props) =>
           }
         }
       }
-      
+
       if (Object.keys(loaded).length > 0) {
         setLoadedAttachments(prev => ({ ...prev, ...loaded }));
       }
     };
-    
+
     loadMissingAttachments();
-  }, [message.id, message.attachments]);
+  }, [message.id, attachmentIds]);
 
   return (
       <div

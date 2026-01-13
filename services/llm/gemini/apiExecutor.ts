@@ -2,6 +2,65 @@ import { GoogleGenAI, GenerateContentResponse } from "@google/genai";
 import { KeyManager } from '../../keyManager';
 
 /**
+ * 将请求URL转换为代理URL（如果有配置）
+ */
+function getProxiedUrl(urlString: string, apiEndpoint?: string): string {
+    if (!apiEndpoint?.trim()) return urlString;
+
+    try {
+        const proxyUrl = new URL(apiEndpoint);
+        if (urlString.includes('generativelanguage.googleapis.com')) {
+            const originalUrl = new URL(urlString);
+            const finalProxyUrl = new URL(proxyUrl);
+
+            const newPathname = (finalProxyUrl.pathname.replace(/\/$/, '') + originalUrl.pathname).replace(/\/\//g, '/');
+            finalProxyUrl.pathname = newPathname;
+            finalProxyUrl.search = originalUrl.search;
+
+            return finalProxyUrl.toString();
+        }
+    } catch (e) {
+        console.error("提供的 API Base URL 无效:", apiEndpoint, e);
+    }
+    return urlString;
+}
+
+/**
+ * 打印400错误的详细分析
+ */
+function log400ErrorDetails(error: unknown, apiKeySuffix: string): void {
+    console.error('API 400错误详情:', {
+        errorMessage: error instanceof Error ? error.message : String(error),
+        errorCode: error instanceof Error && (error as any).code,
+        apiKeySuffix
+    });
+
+    // 尝试从错误消息中提取请求信息
+    try {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        const errorData = JSON.parse(errorMessage);
+        console.error('解析后的错误数据:', errorData);
+
+        // 尝试分析错误原因
+        if (errorData.error?.message?.includes('data:')) {
+            const nestedError = JSON.parse(errorData.error.message.replace('data:', '').trim());
+            console.error('嵌套错误详情:', nestedError);
+
+            // 分析可能的400错误原因
+            if (nestedError.error?.code === 400) {
+                console.warn('400错误可能原因分析:');
+                console.warn('1. 请求体过大 - 可能是历史消息或图片太多');
+                console.warn('2. 代理服务器限制 - 可能有限制');
+                console.warn('3. 消息格式问题 - 某些历史消息可能在截断过程中格式错误');
+                console.warn('4. Token超限 - 虽然有截断机制，但可能不够激进');
+            }
+        }
+    } catch (parseError) {
+        console.error('无法解析错误消息为JSON格式');
+    }
+}
+
+/**
  * Executes a non-streaming API call with key rotation and retry logic,
  * proxying requests to a custom endpoint if provided.
  */
@@ -15,91 +74,32 @@ export async function executeWithKeyRotation<T>(
         throw new Error("未提供 API 密钥。请联系站长获取。");
     }
 
-    const originalFetch = window.fetch;
-    let proxyActive = false;
     const trimmedApiEndpoint = apiEndpoint?.trim();
 
-    if (trimmedApiEndpoint) {
+    for (let i = 0; i < keyManager.getTotalKeys(); i++) {
+        const { key } = keyManager.getNextKey();
+        if (!key) continue;
+
         try {
-            const proxyUrl = new URL(trimmedApiEndpoint);
-            proxyActive = true;
-            window.fetch = (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
-                let urlString = input instanceof Request ? input.url : String(input);
-                if (urlString.includes('generativelanguage.googleapis.com')) {
-                    const originalUrl = new URL(urlString);
-                    const finalProxyUrl = new URL(proxyUrl);
-                    
-                    const newPathname = (finalProxyUrl.pathname.replace(/\/$/, '') + originalUrl.pathname).replace(/\/\//g, '/');
-                    finalProxyUrl.pathname = newPathname;
-                    finalProxyUrl.search = originalUrl.search;
-                    
-                    urlString = finalProxyUrl.toString();
-                }
-                return originalFetch(urlString, init);
-            };
-        } catch (e) {
-            console.error("提供的 API Base URL 无效:", trimmedApiEndpoint, e);
-        }
-    }
-    
-    try {
-        for (let i = 0; i < keyManager.getTotalKeys(); i++) {
-            const { key } = keyManager.getNextKey();
-            if (!key) continue;
+            const ai = new GoogleGenAI({ apiKey: key });
+            const result = await operation(ai);
+            keyManager.saveSuccessIndex();
+            return result;
+        } catch (error) {
+            console.warn(`API 调用失败，密钥 ...${key.slice(-4)}，尝试下一个密钥。错误:`, error);
 
-            try {
-                const ai = new GoogleGenAI({ apiKey: key });
-                const result = await operation(ai);
-                keyManager.saveSuccessIndex();
-                return result;
-            } catch (error) {
-                console.warn(`API 调用失败，密钥 ...${key.slice(-4)}，尝试下一个密钥。错误:`, error);
+            // 如果是400错误，打印请求体详情
+            if (error instanceof Error && (error.message.includes('400') || (error as any).code === 400)) {
+                log400ErrorDetails(error, `...${key.slice(-4)}`);
+            }
 
-                // 如果是400错误，打印请求体详情
-                if (error.message?.includes('400') || error.code === 400) {
-                    console.error('API 400错误详情:', {
-                        errorMessage: error.message,
-                        errorCode: error.code,
-                        errorStack: error.stack,
-                        apiKeySuffix: `...${key.slice(-4)}`
-                    });
-
-                    // 尝试从错误消息中提取请求信息
-                    try {
-                        const errorData = JSON.parse(error.message);
-                        console.error('解析后的错误数据:', errorData);
-
-                        // 尝试分析错误原因
-                        if (errorData.error?.message?.includes('data:')) {
-                            const nestedError = JSON.parse(errorData.error.message.replace('data:', '').trim());
-                            console.error('嵌套错误详情:', nestedError);
-
-                            // 分析可能的400错误原因
-                            if (nestedError.error?.code === 400) {
-                                console.warn('💡 400错误可能原因分析:');
-                                console.warn('1. 请求体过大 - 可能是历史消息或图片太多');
-                                console.warn('2. 代理服务器限制 - geminibin.zeabur.app 可能有更严格的请求大小限制');
-                                console.warn('3. 消息格式问题 - 某些历史消息可能在截断过程中格式错误');
-                                console.warn('4. Token超限 - 虽然有截断机制，但可能不够激进');
-                            }
-                        }
-                    } catch (parseError) {
-                        console.error('无法解析错误消息为JSON格式');
-                    }
-                }
-
-                if (i === keyManager.getTotalKeys() - 1) {
-                    console.error("所有 API 密钥都失败了。如问题持续，请联系站长。");
-                    throw error;
-                }
+            if (i === keyManager.getTotalKeys() - 1) {
+                console.error("所有 API 密钥都失败了。如问题持续，请联系站长。");
+                throw error;
             }
         }
-        throw new Error("所有 API 密钥都失败了。如问题持续，请联系站长。");
-    } finally {
-        if (proxyActive) {
-            window.fetch = originalFetch;
-        }
     }
+    throw new Error("所有 API 密钥都失败了。如问题持续，请联系站长。");
 }
 
 
@@ -118,94 +118,32 @@ export async function* executeStreamWithKeyRotation<T extends GenerateContentRes
         return;
     }
 
-    const originalFetch = window.fetch;
-    let proxyActive = false;
-    const trimmedApiEndpoint = apiEndpoint?.trim();
+    let lastError: unknown = null;
+    let success = false;
+    for (let i = 0; i < keyManager.getTotalKeys(); i++) {
+        const { key } = keyManager.getNextKey();
+        if (!key) continue;
 
-    if (trimmedApiEndpoint) {
         try {
-            const proxyUrl = new URL(trimmedApiEndpoint);
-            proxyActive = true;
-            window.fetch = (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
-                let urlString = input instanceof Request ? input.url : String(input);
-                if (urlString.includes('generativelanguage.googleapis.com')) {
-                    const originalUrl = new URL(urlString);
-                    const finalProxyUrl = new URL(proxyUrl);
-                    
-                    const newPathname = (finalProxyUrl.pathname.replace(/\/$/, '') + originalUrl.pathname).replace(/\/\//g, '/');
-                    finalProxyUrl.pathname = newPathname;
-                    finalProxyUrl.search = originalUrl.search;
+            const ai = new GoogleGenAI({ apiKey: key });
+            const stream = await operation(ai);
+            keyManager.saveSuccessIndex();
+            yield* stream;
+            success = true;
+            break;
+        } catch (error) {
+            lastError = error;
+            console.warn(`API 流式调用失败，密钥 ...${key.slice(-4)}，尝试下一个密钥。错误:`, error);
 
-                    urlString = finalProxyUrl.toString();
-                }
-                return originalFetch(urlString, init);
-            };
-        } catch (e) {
-            console.error("提供的 API Base URL 无效:", trimmedApiEndpoint, e);
+            // 如果是400错误，打印请求体详情
+            if (error instanceof Error && (error.message.includes('400') || (error as any).code === 400)) {
+                log400ErrorDetails(error, `...${key.slice(-4)}`);
+            }
         }
     }
 
-    try {
-        let lastError: any = null;
-        let success = false;
-        for (let i = 0; i < keyManager.getTotalKeys(); i++) {
-            const { key } = keyManager.getNextKey();
-            if (!key) continue;
-
-            try {
-                const ai = new GoogleGenAI({ apiKey: key });
-                const stream = await operation(ai);
-                keyManager.saveSuccessIndex();
-                yield* stream;
-                success = true;
-                break; 
-            } catch (error) {
-                lastError = error;
-                console.warn(`API 流式调用失败，密钥 ...${key.slice(-4)}，尝试下一个密钥。错误:`, error);
-
-                // 如果是400错误，打印请求体详情
-                if (error.message?.includes('400') || error.code === 400) {
-                    console.error('API 400错误详情:', {
-                        errorMessage: error.message,
-                        errorCode: error.code,
-                        errorStack: error.stack,
-                        apiKeySuffix: `...${key.slice(-4)}`
-                    });
-
-                    // 尝试从错误消息中提取请求信息
-                    try {
-                        const errorData = JSON.parse(error.message);
-                        console.error('解析后的错误数据:', errorData);
-
-                        // 尝试分析错误原因
-                        if (errorData.error?.message?.includes('data:')) {
-                            const nestedError = JSON.parse(errorData.error.message.replace('data:', '').trim());
-                            console.error('嵌套错误详情:', nestedError);
-
-                            // 分析可能的400错误原因
-                            if (nestedError.error?.code === 400) {
-                                console.warn('💡 400错误可能原因分析:');
-                                console.warn('1. 请求体过大 - 可能是历史消息或图片太多');
-                                console.warn('2. 代理服务器限制 - geminibin.zeabur.app 可能有更严格的请求大小限制');
-                                console.warn('3. 消息格式问题 - 某些历史消息可能在截断过程中格式错误');
-                                console.warn('4. Token超限 - 虽然有截断机制，但可能不够激进');
-                            }
-                        }
-                    } catch (parseError) {
-                        console.error('无法解析错误消息为JSON格式');
-                    }
-                }
-            }
-        }
-
-        if (!success) {
-            console.error("流式操作所有 API 密钥都失败了。如问题持续，请联系站长。");
-            yield { text: "错误：所有 API 密钥都失败了。请联系站长。" + (lastError?.message || "") } as T;
-        }
-
-    } finally {
-        if (proxyActive) {
-            window.fetch = originalFetch;
-        }
+    if (!success) {
+        console.error("流式操作所有 API 密钥都失败了。如问题持续，请联系站长。");
+        yield { text: "错误：所有 API 密钥都失败了。请联系站长。" + (lastError instanceof Error ? lastError.message : "") } as T;
     }
 }
