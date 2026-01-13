@@ -28,56 +28,76 @@ const defaultSettings: Settings = {
   fontSize: 100,
 };
 
+// 检测环境变量中是否有 API Key 配置
+const hasGeminiEnvKey = !!(process.env.GEMINI_API_KEY?.trim());
+const hasOpenAIEnvKey = !!(process.env.OPENAI_API_KEY?.trim());
+const hasEnvApiKey = hasGeminiEnvKey || hasOpenAIEnvKey;
+
+// 从环境变量获取 API 配置
+const getEnvApiConfig = () => {
+  const useEmergency = USE_EMERGENCY_ROUTE && process.env.FALLBACK_API_BASE_URL;
+
+  if (useEmergency) {
+    return {
+      provider: 'gemini' as const,
+      apiKey: process.env.FALLBACK_API_KEY?.trim() || '',
+      apiBaseUrl: process.env.FALLBACK_API_BASE_URL?.trim() || '',
+    };
+  }
+
+  if (hasGeminiEnvKey && !hasOpenAIEnvKey) {
+    return {
+      provider: 'gemini' as const,
+      apiKey: process.env.GEMINI_API_KEY!.trim(),
+      apiBaseUrl: process.env.API_BASE_URL?.trim() || '',
+    };
+  }
+
+  if (hasOpenAIEnvKey && !hasGeminiEnvKey) {
+    return {
+      provider: 'openai' as const,
+      apiKey: process.env.OPENAI_API_KEY!.trim(),
+      apiBaseUrl: process.env.OPENAI_API_BASE_URL?.trim() || '',
+    };
+  }
+
+  if (hasGeminiEnvKey && hasOpenAIEnvKey) {
+    // 两者都有，默认使用 Gemini，用户可以切换
+    return {
+      provider: 'gemini' as const,
+      apiKey: process.env.GEMINI_API_KEY!.trim(),
+      apiBaseUrl: process.env.API_BASE_URL?.trim() || '',
+    };
+  }
+
+  return null;
+};
+
 export const useSettings = () => {
   const [settings, setSettings] = useState<Settings>(defaultSettings);
   const [availableModels, setAvailableModels] = useState<string[]>([]);
   const [isStorageLoaded, setIsStorageLoaded] = useState(false);
   const { setLanguage } = useLocalization();
 
+  // 环境变量配置（不存到 localStorage）
+  const envConfig = getEnvApiConfig();
+
   useEffect(() => {
     const loadedSettings = loadSettings();
     const initialSettings = { ...defaultSettings, ...loadedSettings };
 
-    // Determine API credentials based on the emergency switch and env vars
-    const useEmergency = USE_EMERGENCY_ROUTE && process.env.FALLBACK_API_BASE_URL;
-    
-    // 获取 Gemini 和 OpenAI 的环境变量
-    const geminiApiKey = useEmergency
-      ? process.env.FALLBACK_API_KEY
-      : process.env.GEMINI_API_KEY;
-    const geminiApiBaseUrl = useEmergency
-      ? process.env.FALLBACK_API_BASE_URL
-      : process.env.API_BASE_URL;
-    
-    const openaiApiKey = process.env.OPENAI_API_KEY;
-    const openaiApiBaseUrl = process.env.OPENAI_API_BASE_URL;
-
-    // 只有当用户没有手动配置 API Key 时，才使用环境变量
-    // 这样用户在设置中手动填写的 key 不会被环境变量覆盖
-    const hasUserApiKey = loadedSettings?.apiKey && Array.isArray(loadedSettings.apiKey) && loadedSettings.apiKey.length > 0 && loadedSettings.apiKey[0].trim() !== '';
-    const hasGeminiEnvKey = geminiApiKey && geminiApiKey.trim() && geminiApiKey.trim().length > 0;
-    const hasOpenAIEnvKey = openaiApiKey && openaiApiKey.trim() && openaiApiKey.trim().length > 0;
-
-    // 只有在用户没有手动配置时，才使用环境变量
-    if (!hasUserApiKey) {
-      if (hasGeminiEnvKey) {
-        // Gemini 有配置，优先使用
-        initialSettings.llmProvider = 'gemini';
-        initialSettings.apiKey = [geminiApiKey!.trim()];
-        initialSettings.apiBaseUrl = geminiApiBaseUrl || '';
-      } else if (hasOpenAIEnvKey) {
-        // Gemini 没配置，但 OpenAI 有配置
-        initialSettings.llmProvider = 'openai';
-        initialSettings.apiKey = [openaiApiKey!.trim()];
-        initialSettings.apiBaseUrl = openaiApiBaseUrl || '';
-      }
+    // 优先使用环境变量配置（每次启动都重新读取）
+    if (envConfig) {
+      initialSettings.llmProvider = envConfig.provider;
+      initialSettings.apiKey = [envConfig.apiKey];
+      initialSettings.apiBaseUrl = envConfig.apiBaseUrl;
     }
-    
-    // 如果用户也没有设置 llmProvider，则默认使用 gemini
+
+    // 如果没有环境变量配置，保持用户之前的手动配置或默认值
     if (!initialSettings.llmProvider) {
       initialSettings.llmProvider = 'gemini';
     }
-    
+
     setSettings(initialSettings);
     setLanguage(initialSettings.language);
     setIsStorageLoaded(true);
@@ -85,11 +105,20 @@ export const useSettings = () => {
 
   useEffect(() => {
     if (!isStorageLoaded) return;
-    saveSettings(settings);
+
+    // 保存设置时，排除 apiKey 和 apiBaseUrl（如果来自环境变量）
+    // 这样环境变量不会被缓存到 localStorage
+    const settingsToSave = { ...settings };
+    if (hasEnvApiKey) {
+      // 环境变量有配置，不保存敏感信息到 localStorage
+      delete (settingsToSave as Record<string, unknown>).apiKey;
+      delete (settingsToSave as Record<string, unknown>).apiBaseUrl;
+    }
+    saveSettings(settingsToSave);
 
     // Clear all previous theme classes
     document.body.classList.remove('theme-apple-light', 'theme-apple-dark');
-    
+
     // Apply theme class
     document.body.classList.add(`theme-${settings.theme}`);
 
@@ -114,8 +143,14 @@ export const useSettings = () => {
           if (!models.includes(current.defaultModel)) {
             newDefaults.defaultModel = models[0] || '';
           }
-          if (!models.includes(current.titleGenerationModel)) {
-            newDefaults.titleGenerationModel = models.find(m => m.includes('flash') || m.includes('lite')) || models[0] || '';
+          // 标题生成模型逻辑：优先使用环境变量，否则取列表最后一位
+          const envTitleModel = process.env.TITLE_MODEL_NAME?.trim();
+          if (envTitleModel) {
+            // 环境变量有配置，使用环境变量
+            newDefaults.titleGenerationModel = envTitleModel;
+          } else if (!models.includes(current.titleGenerationModel)) {
+            // 环境变量没有配置，取列表最后一位
+            newDefaults.titleGenerationModel = models[models.length - 1] || '';
           }
           return Object.keys(newDefaults).length > 0 ? { ...current, ...newDefaults } : current;
         });
@@ -125,3 +160,11 @@ export const useSettings = () => {
 
   return { settings, setSettings, availableModels, isStorageLoaded };
 };
+
+// 导出环境变量配置状态，供设置界面使用
+export const isApiKeySetByEnv = hasEnvApiKey;
+export const isApiBaseUrlSetByEnv = !!(
+  process.env.API_BASE_URL ||
+  process.env.OPENAI_API_BASE_URL ||
+  (USE_EMERGENCY_ROUTE && process.env.FALLBACK_API_BASE_URL)
+);

@@ -5,6 +5,7 @@ import { SettingsItem } from '../SettingsItem';
 import { Switch } from '../Switch';
 import { useLocalization } from '../../contexts/LocalizationContext';
 import { formatModelName } from '../../utils/textUtils';
+import { isApiKeySetByEnv, isApiBaseUrlSetByEnv } from '../../hooks/useSettings';
 
 interface AdvancedSettingsProps {
   settings: Settings;
@@ -12,16 +13,6 @@ interface AdvancedSettingsProps {
   visibleIds: Set<string>;
   availableModels: string[];
 }
-
-// 检测环境变量中是否已设置 API Key 和 Base URL
-const isApiKeySetByEnv = !!(
-  process.env.GEMINI_API_KEY ||
-  process.env.OPENAI_API_KEY
-);
-const isApiBaseUrlSetByEnv = !!(
-  process.env.API_BASE_URL ||
-  process.env.OPENAI_API_BASE_URL
-);
 
 export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({ settings, onSettingsChange, visibleIds, availableModels }) => {
   const { t } = useLocalization();
