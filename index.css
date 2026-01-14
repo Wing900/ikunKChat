@@ -2043,8 +2043,43 @@ body.theme-apple-dark .katex-container .katex {
     /* Force the sidebar into the document flow, overriding any 'fixed' positioning from Tailwind's responsive prefixes. */
     position: relative !important;
     transform: none !important;
-    
+
     /* Ensure consistent transition for width changes */
     transition: width 0.3s ease-in-out;
   }
+}
+
+/* Filter Panel Animation */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    max-height: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    max-height: 300px;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 1;
+    max-height: 300px;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    max-height: 0;
+    transform: translateY(-10px);
+  }
+}
+
+.filter-panel-enter {
+  animation: slideDown 0.3s ease-out forwards;
+}
+
+.filter-panel-exit {
+  animation: slideUp 0.3s ease-out forwards;
 }

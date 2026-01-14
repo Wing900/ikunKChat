@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Persona } from '../types';
 import { Icon } from './Icon';
 import { useLocalization } from '../contexts/LocalizationContext';
@@ -21,9 +21,7 @@ const PersonaCard: React.FC<{ persona: Persona & { isHiding?: boolean }, onStart
         <div className={`persona-card group ${isBeingDeleted ? 'deleting' : ''} ${persona.isHiding ? 'hiding' : ''}`} style={{ animationDelay: `${index * 50}ms` }}>
             <div className="persona-card-actions">
                 <button onClick={onEdit} className="action-btn" data-tooltip={t('editPersona')} data-tooltip-placement="top"><Icon icon="edit" className="w-4 h-4"/></button>
-                {!persona.isDefault && (
-                    <button onClick={handleDeleteClick} className="action-btn danger" data-tooltip={t('deletePersona')} data-tooltip-placement="top"><Icon icon="delete" className="w-4 h-4"/></button>
-                )}
+                <button onClick={handleDeleteClick} className="action-btn danger" data-tooltip={t('deletePersona')} data-tooltip-placement="top"><Icon icon="delete" className="w-4 h-4"/></button>
             </div>
             <div className="flex items-center gap-4 mb-3">
                 <div className="w-16 h-16 flex-shrink-0 rounded-full bg-white/10 dark:bg-black/10 flex items-center justify-center text-white overflow-hidden">
@@ -85,6 +83,22 @@ export const RolesView: React.FC<RolesViewProps> = ({
   const { t } = useLocalization();
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
+
+  const [deletedCount, setDeletedCount] = useState(0);
+
+  // 计算已删除的默认角色数量
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('deleted_default_personas');
+      if (stored) {
+        const deletedIds = JSON.parse(stored);
+        setDeletedCount(deletedIds.length);
+      }
+    } catch {
+      setDeletedCount(0);
+    }
+  }, [personas]);
+
   const [filters, setFilters] = useState({
     isDefault: undefined as boolean | undefined,
   });
@@ -161,8 +175,10 @@ export const RolesView: React.FC<RolesViewProps> = ({
       </ViewHeader>
       
       {/* 过滤器面板 */}
-      {showFilters && (
-        <div className="mb-4 p-4 bg-white/10 dark:bg-black/10 rounded-lg">
+      <div
+        className={`filter-panel-${showFilters ? 'enter' : 'exit'} mb-4`}
+      >
+        <div className="p-4 bg-white/10 dark:bg-black/10 rounded-lg">
           <div className="grid grid-cols-1 gap-4">
             <div>
               <label className="block text-sm font-medium mb-2">角色类型</label>
@@ -200,7 +216,19 @@ export const RolesView: React.FC<RolesViewProps> = ({
               </div>
             </div>
           </div>
-          <div className="mt-4 flex justify-end">
+          <div className="mt-4 flex justify-end gap-2">
+            {deletedCount > 0 && (
+              <button
+                onClick={() => {
+                  localStorage.removeItem('deleted_default_personas');
+                  setDeletedCount(0);
+                  window.location.reload();
+                }}
+                className="px-3 py-1 text-sm bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded hover:bg-blue-200 dark:hover:bg-blue-800"
+              >
+                恢复默认角色
+              </button>
+            )}
             <button
               onClick={() => {
                 setFilters({
@@ -214,7 +242,7 @@ export const RolesView: React.FC<RolesViewProps> = ({
             </button>
           </div>
         </div>
-      )}
+      </div>
       <div className="flex-grow overflow-y-auto -mr-4 md:-mr-6 -ml-2 pr-2 md:pr-4 pl-2">
           <div className="personas-grid p-2">
             {displayedPersonas.map((p, i) => (

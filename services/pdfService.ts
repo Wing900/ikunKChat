@@ -5,8 +5,39 @@
 
 import * as pdfjsLib from 'pdfjs-dist';
 
-// 配置 PDF.js worker - 使用 jsdelivr CDN
-pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.js`;
+// PDF.js worker CDN 源列表 (按优先级排序)
+const WORKER_CDN_URLS = [
+  'https://unpkg.com/pdfjs-dist@VERSION/build/pdf.worker.min.js',
+  'https://cdn.jsdelivr.net/npm/pdfjs-dist@VERSION/build/pdf.worker.min.js',
+  'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/VERSION/pdf.worker.min.js',
+  'https://esm.sh/pdfjs-dist@VERSION/build/pdf.worker.min.js'
+];
+
+// 配置 PDF.js worker - 使用多 CDN 自动回退
+async function setupPdfWorker(): Promise<void> {
+  const version = pdfjsLib.version;
+
+  for (const urlTemplate of WORKER_CDN_URLS) {
+    const url = urlTemplate.replace('VERSION', version);
+    try {
+      const response = await fetch(url, { method: 'HEAD' });
+      if (response.ok) {
+        pdfjsLib.GlobalWorkerOptions.workerSrc = url;
+        console.log('[PDF.js] Worker loaded from:', url);
+        return;
+      }
+    } catch {
+      // 尝试下一个 CDN
+      console.warn(`[PDF.js] CDN failed: ${url}`);
+    }
+  }
+
+  // 所有 CDN 都失败，使用 unpkg 作为默认
+  pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.js`;
+  console.warn('[PDF.js] All CDNs failed, using default worker');
+}
+
+setupPdfWorker();
 
 export interface PDFParseResult {
   id: string;

@@ -13,19 +13,65 @@ interface PersonaFilters {
   isDefault?: boolean;
 }
 
+const DELETED_DEFAULT_PERSONAS_KEY = 'deleted_default_personas';
+
 export const usePersonas = ({ isStorageLoaded }: UsePersonasProps) => {
   const [personas, setPersonas] = useState<Persona[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // 获取已删除的默认角色ID列表
+  const getDeletedDefaultPersonaIds = (): Set<string> => {
+    try {
+      const stored = localStorage.getItem(DELETED_DEFAULT_PERSONAS_KEY);
+      return new Set(stored ? JSON.parse(stored) : []);
+    } catch {
+      return new Set();
+    }
+  };
+
+  // 保存已删除的默认角色ID
+  const saveDeletedDefaultPersonaId = (id: string) => {
+    try {
+      const deletedIds = getDeletedDefaultPersonaIds();
+      deletedIds.add(id);
+      localStorage.setItem(DELETED_DEFAULT_PERSONAS_KEY, JSON.stringify([...deletedIds]));
+    } catch (err) {
+      console.error('Failed to save deleted default persona:', err);
+    }
+  };
+
+  // 恢复已删除的默认角色（可选功能）
+  const restoreDefaultPersona = useCallback((id: string) => {
+    try {
+      const deletedIds = getDeletedDefaultPersonaIds();
+      deletedIds.delete(id);
+      localStorage.setItem(DELETED_DEFAULT_PERSONAS_KEY, JSON.stringify([...deletedIds]));
+      // 重新加载角色列表
+      const customPersonas = loadRoles();
+      const customPersonaIds = new Set(customPersonas.map(p => p.id));
+      const deletedPersonaIds = getDeletedDefaultPersonaIds();
+      const filteredDefaultPersonas = defaultPersonas.filter(
+        p => !customPersonaIds.has(p.id) && !deletedPersonaIds.has(p.id)
+      );
+      const finalPersonas = [...filteredDefaultPersonas, ...customPersonas];
+      setPersonas(finalPersonas);
+    } catch (err) {
+      console.error('Failed to restore default persona:', err);
+    }
+  }, []);
 
   useEffect(() => {
     if (isStorageLoaded) {
       try {
         setLoading(true);
         const customPersonas = loadRoles();
-        // 确保不会重复添加默认角色
         const customPersonaIds = new Set(customPersonas.map(p => p.id));
-        const filteredDefaultPersonas = defaultPersonas.filter(p => !customPersonaIds.has(p.id));
+        const deletedPersonaIds = getDeletedDefaultPersonaIds();
+        // 过滤掉已删除的默认角色
+        const filteredDefaultPersonas = defaultPersonas.filter(
+          p => !customPersonaIds.has(p.id) && !deletedPersonaIds.has(p.id)
+        );
         const finalPersonas = [...filteredDefaultPersonas, ...customPersonas];
         setPersonas(finalPersonas);
         setError(null);
@@ -89,13 +135,13 @@ export const usePersonas = ({ isStorageLoaded }: UsePersonasProps) => {
       let successfullyDeleted = false;
       setPersonas(prev => {
         const personaToDelete = prev.find(p => p && p.id === id);
-        if (personaToDelete && !personaToDelete.isDefault) {
+        if (personaToDelete) {
+          if (personaToDelete.isDefault) {
+            // 默认角色：标记为已删除，下次加载不再出现
+            saveDeletedDefaultPersonaId(id);
+          }
           successfullyDeleted = true;
           return prev.filter(p => !p || p.id !== id);
-        }
-        
-        if (personaToDelete && personaToDelete.isDefault) {
-          setError('默认角色不能删除');
         }
         return prev;
       });
@@ -158,6 +204,7 @@ export const usePersonas = ({ isStorageLoaded }: UsePersonasProps) => {
     setPersonas,
     savePersonas,
     deletePersona,
+    restoreDefaultPersona,
     searchPersonas,
     getPersonaById,
     loading,
