@@ -32,4 +32,4 @@ jobs:
           # 关键：这里同时构建 x86 和 ARM 两个版本
           platforms: linux/amd64,linux/arm64
           # 镜像名字会自动变成：ghcr.io/你的用户名/你的仓库名:latest
-          tags: ghcr.io/${{ github.repository }}:latest
+          tags: ghcr.io/wing900/ikunkchat:latest
