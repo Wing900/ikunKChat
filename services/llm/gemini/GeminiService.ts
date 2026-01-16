@@ -82,10 +82,10 @@ export class GeminiService implements ILLMService {
    * 从旧的 chatService.ts 迁移并适配
    */
   async *generateContentStream(request: ChatRequest): AsyncGenerator<StreamChunk, void, unknown> {
-    const { messages, model, persona, config, apiKey, apiBaseUrl, showThoughts } = request;
+    const { messages, model, persona, config, apiKey, apiBaseUrl, showThoughts, enableSearch } = request;
 
     // 1. 准备 Payload
-    const { formattedHistory, configForApi } = prepareChatPayload(messages, config, persona, showThoughts);
+    const { formattedHistory, configForApi } = prepareChatPayload(messages, config, persona, showThoughts, enableSearch);
     
     // 从最后一条用户消息中提取附件和文本内容
     const lastUserMessage = messages[messages.length - 1];

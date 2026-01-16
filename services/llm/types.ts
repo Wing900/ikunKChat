@@ -28,6 +28,8 @@ export interface ChatRequest {
   retryCount?: number;
   // 用于 prepareChatPayload 的 showThoughts 标志
   showThoughts?: boolean;
+  // 用于启用 Gemini 内置搜索 (Google Search Retrieval)
+  enableSearch?: boolean;
 }
 
 /**

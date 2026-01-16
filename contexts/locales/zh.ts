@@ -91,6 +91,8 @@ export const zh = {
     optimizeFormattingDesc: '添加指令以改善回复的结构和可读性。',
     thinkDeeper: '深度思考',
     thinkDeeperDesc: '添加指令以进行更全面、更深入的推理。',
+    enableSearch: '启用内置搜索',
+    enableSearchDesc: '启用 Gemini 模型的内置 Google 搜索功能（暂时仅支持 Gemini 格式）。',
     data: '数据管理',
     importData: '导入数据',
     importDataDesc: '从 JSON 文件导入对话和设置。',

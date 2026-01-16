@@ -90,6 +90,8 @@ export const en = {
     optimizeFormattingDesc: 'Adds instructions for improved response structure and readability.',
     thinkDeeper: 'Think Deeper',
     thinkDeeperDesc: 'Adds instructions for more comprehensive and in-depth reasoning.',
+    enableSearch: 'Enable Built-in Search',
+    enableSearchDesc: "Enable Gemini's built-in Google Search feature (Gemini format only for now).",
     data: 'Data Management',
     importData: 'Import Data',
     importDataDesc: 'Import chats and settings from a JSON file.',

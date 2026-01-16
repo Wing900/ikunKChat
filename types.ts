@@ -87,6 +87,7 @@ export interface Settings {
   showThoughts: boolean;
   optimizeFormatting: boolean;
   thinkDeeper: boolean;
+  enableSearch: boolean;
   apiBaseUrl?: string;
   temperature?: number;
   maxOutputTokens?: number;

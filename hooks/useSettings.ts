@@ -19,6 +19,7 @@ const defaultSettings: Settings = {
   showThoughts: true,
   optimizeFormatting: false,
   thinkDeeper: false,
+  enableSearch: false,
   apiBaseUrl: '',
   temperature: 0.7,
   maxOutputTokens: 16384,

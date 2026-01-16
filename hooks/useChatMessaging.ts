@@ -80,6 +80,7 @@ export const useChatMessaging = ({ settings, activeChat, personas, setChats, set
         apiKey: apiKeys[0], // 服务内部目前只处理单个key
         apiBaseUrl: settings.apiBaseUrl,
         showThoughts: settings.showThoughts,
+        enableSearch: settings.enableSearch,
       };
 
       const stream = llmService.generateContentStream(chatRequest);

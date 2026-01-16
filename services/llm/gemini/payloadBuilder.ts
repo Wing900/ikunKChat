@@ -24,7 +24,8 @@ export function prepareChatPayload(
   history: Message[],
   config: ModelConfig,
   persona?: Persona | null,
-  showThoughts?: boolean
+  showThoughts?: boolean,
+  enableSearch?: boolean
 ) {
   // 1. Determine the source of settings (persona or global)
   const settingsSource = {
@@ -182,6 +183,13 @@ export function prepareChatPayload(
 
   if (showThoughts) {
     configForApi.thinkingConfig = { includeThoughts: true };
+  }
+
+  // 添加 Google Search 工具（启用内置搜索）
+  if (enableSearch) {
+    configForApi.tools = [{
+      googleSearch: {},
+    }];
   }
 
   return { formattedHistory, configForApi };

@@ -45,6 +45,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = (props) => {
     { id: 'showThoughts', section: 'behavior', texts: [t('showThoughts'), t('showThoughtsDesc'), translations.zh.showThoughts, translations.zh.showThoughtsDesc] },
 
     // Advanced
+    { id: 'enableSearch', section: 'advanced', texts: [t('enableSearch'), t('enableSearchDesc'), translations.zh.enableSearch, translations.zh.enableSearchDesc] },
     { id: 'apiKey', section: 'advanced', texts: [t('apiKey'), t('apiKeyDesc'), translations.zh.apiKey, translations.zh.apiKeyDesc] },
     { id: 'optimizeFormatting', section: 'advanced', texts: [t('optimizeFormatting'), t('optimizeFormattingDesc'), translations.zh.optimizeFormatting, translations.zh.optimizeFormattingDesc] },
     { id: 'thinkDeeper', section: 'advanced', texts: [t('thinkDeeper'), t('thinkDeeperDesc'), translations.zh.thinkDeeper, translations.zh.thinkDeeperDesc] },
@@ -131,10 +132,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = (props) => {
           {visibleSettingIds.has('showThoughts') && <SettingsItem label={t('showThoughts')} description={t('showThoughtsDesc')}>
             <Switch size="sm" checked={settings.showThoughts} onChange={e => onSettingsChange({ showThoughts: e.target.checked })} />
           </SettingsItem>}
-          
+
           {sectionVisibility.advanced && <h3 className="settings-section-title">{t('advanced')}</h3>}
           {visibleSettingIds.has('apiKey') && <SettingsItem label={t('apiKey')} description={t('apiKeyDesc')}>
-             <textarea 
+             <textarea
                 value={(settings.apiKey || []).join('\n')}
                 onChange={handleApiKeyChange}
                 disabled={isApiKeySetByEnv}
@@ -148,6 +149,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = (props) => {
           </SettingsItem>}
           {visibleSettingIds.has('thinkDeeper') && <SettingsItem label={t('thinkDeeper')} description={t('thinkDeeperDesc')}>
             <Switch size="sm" checked={settings.thinkDeeper} onChange={e => onSettingsChange({ thinkDeeper: e.target.checked })} />
+          </SettingsItem>}
+          {visibleSettingIds.has('enableSearch') && <SettingsItem label={t('enableSearch')} description={t('enableSearchDesc')}>
+            <Switch size="sm" checked={settings.enableSearch} onChange={e => onSettingsChange({ enableSearch: e.target.checked })} />
           </SettingsItem>}
 
           {sectionVisibility.data && <h3 className="settings-section-title">{t('data')}</h3>}

@@ -100,6 +100,11 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({ settings, on
           </div>
         </SettingsItem>
       )}
+      {visibleIds.has('enableSearch') && (
+        <SettingsItem label={t('enableSearch')} description={t('enableSearchDesc')}>
+          <Switch size="sm" checked={settings.enableSearch} onChange={e => onSettingsChange({ enableSearch: e.target.checked })} />
+        </SettingsItem>
+      )}
     </>
   );
 };
