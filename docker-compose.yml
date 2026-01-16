@@ -2,6 +2,9 @@ version: '3.8'
 
 services:
   web:
+
+    image: ghcr.io/Wing900/ikunKChat:latest
+
     build: .
     container_name: kchat_web
     ports:
