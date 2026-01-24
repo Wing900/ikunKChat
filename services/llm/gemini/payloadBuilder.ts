@@ -178,7 +178,7 @@ export function prepareChatPayload(
   const configForApi: any = {
     systemInstruction: systemInstruction || undefined,
     temperature: settingsSource.temperature,
-    maxOutputTokens: settingsSource.maxOutputTokens,
+    maxOutputTokens: Math.min(settingsSource.maxOutputTokens, 65536)
   };
 
   if (showThoughts) {
