@@ -31,7 +31,7 @@
 
 ---
 
-<details>
+<details open>
 <summary><b>💭 开发者的话</b></summary>
 
 <br>
@@ -114,48 +114,50 @@
 
 ## 功能特性
 
-<table>
-  <tr>
-    <td width="50%">
-      <h3>💬 智能对话</h3>
-      <ul>
-        <li>支持 Gemini 和 OpenAI 双 API</li>
-        <li>多模型智能切换</li>
-        <li>上下文管理与会话导出</li>
-        <li>Markdown 渲染与代码高亮</li>
-      </ul>
-    </td>
-    <td width="50%">
-      <h3>🎨 个性化体验</h3>
-      <ul>
-        <li>多主题切换（浅色/深色）</li>
-        <li>自定义 AI 角色与头像</li>
-        <li>灵活的界面布局</li>
-        <li>多语言支持</li>
-      </ul>
-    </td>
-  </tr>
-  <tr>
-    <td>
-      <h3>📁 数据管理</h3>
-      <ul>
-        <li>本地 IndexedDB 存储</li>
-        <li>聊天记录分组与归档</li>
-        <li>导入/导出功能</li>
-        <li>隐私保护模式</li>
-      </ul>
-    </td>
-    <td>
-      <h3>🚀 部署友好</h3>
-      <ul>
-        <li>单页应用，无需后端</li>
-        <li>Docker 容器化支持</li>
-        <li>PWA 渐进式应用</li>
-        <li>轻量级资源占用</li>
-      </ul>
-    </td>
-  </tr>
-</table>
+<div align="center">
+  <table>
+    <tr>
+      <td width="50%">
+        <h3>💬 智能对话</h3>
+        <ul>
+          <li>支持 Gemini 和 OpenAI 双 API</li>
+          <li>多模型智能切换</li>
+          <li>上下文管理与会话导出</li>
+          <li>Markdown 渲染与代码高亮</li>
+        </ul>
+      </td>
+      <td width="50%">
+        <h3>🎨 个性化体验</h3>
+        <ul>
+          <li>多主题切换（浅色/深色）</li>
+          <li>自定义 AI 角色与头像</li>
+          <li>灵活的界面布局</li>
+          <li>多语言支持</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <h3>📁 数据管理</h3>
+        <ul>
+          <li>本地 IndexedDB 存储</li>
+          <li>聊天记录分组与归档</li>
+          <li>导入/导出功能</li>
+          <li>隐私保护模式</li>
+        </ul>
+      </td>
+      <td>
+        <h3>🚀 部署友好</h3>
+        <ul>
+          <li>单页应用，无需后端</li>
+          <li>Docker 容器化支持</li>
+          <li>PWA 渐进式应用</li>
+          <li>轻量级资源占用</li>
+        </ul>
+      </td>
+    </tr>
+  </table>
+</div>
 
 ---
 
@@ -369,48 +371,50 @@ VITE_TITLE_MODEL_NAME="THUDM/GLM-4-9B-0414"
 
 ## 技术栈
 
-<table>
-  <tr>
-    <th>分类</th>
-    <th>技术</th>
-    <th>说明</th>
-  </tr>
-  <tr>
-    <td><strong>前端框架</strong></td>
-    <td>
-      <img src="https://img.shields.io/badge/React-18.x-61DAFB?logo=react&logoColor=white" alt="React" />
-      <img src="https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white" alt="TypeScript" />
-    </td>
-    <td>现代化组件开发</td>
-  </tr>
-  <tr>
-    <td><strong>构建工具</strong></td>
-    <td>
-      <img src="https://img.shields.io/badge/Vite-5.x-646CFF?logo=vite&logoColor=white" alt="Vite" />
-    </td>
-    <td>快速构建与热更新</td>
-  </tr>
-  <tr>
-    <td><strong>UI 框架</strong></td>
-    <td>
-      <img src="https://img.shields.io/badge/TailwindCSS-3.x-06B6D4?logo=tailwindcss&logoColor=white" alt="Tailwind CSS" />
-    </td>
-    <td>原子化 CSS 设计</td>
-  </tr>
-  <tr>
-    <td><strong>数据存储</strong></td>
-    <td>IndexedDB</td>
-    <td>浏览器本地数据库</td>
-  </tr>
-  <tr>
-    <td><strong>部署方案</strong></td>
-    <td>
-      <img src="https://img.shields.io/badge/Docker-Container-2496ED?logo=docker&logoColor=white" alt="Docker" />
-      <img src="https://img.shields.io/badge/Vercel-Serverless-000000?logo=vercel&logoColor=white" alt="Vercel" />
-    </td>
-    <td>容器化与无服务器</td>
-  </tr>
-</table>
+<div align="center">
+  <table>
+    <tr>
+      <th>分类</th>
+      <th>技术</th>
+      <th>说明</th>
+    </tr>
+    <tr>
+      <td><strong>前端框架</strong></td>
+      <td>
+        <img src="https://img.shields.io/badge/React-18.x-61DAFB?logo=react&logoColor=white" alt="React" />
+        <img src="https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white" alt="TypeScript" />
+      </td>
+      <td>现代化组件开发</td>
+    </tr>
+    <tr>
+      <td><strong>构建工具</strong></td>
+      <td>
+        <img src="https://img.shields.io/badge/Vite-5.x-646CFF?logo=vite&logoColor=white" alt="Vite" />
+      </td>
+      <td>快速构建与热更新</td>
+    </tr>
+    <tr>
+      <td><strong>UI 框架</strong></td>
+      <td>
+        <img src="https://img.shields.io/badge/TailwindCSS-3.x-06B6D4?logo=tailwindcss&logoColor=white" alt="Tailwind CSS" />
+      </td>
+      <td>原子化 CSS 设计</td>
+    </tr>
+    <tr>
+      <td><strong>数据存储</strong></td>
+      <td>IndexedDB</td>
+      <td>浏览器本地数据库</td>
+    </tr>
+    <tr>
+      <td><strong>部署方案</strong></td>
+      <td>
+        <img src="https://img.shields.io/badge/Docker-Container-2496ED?logo=docker&logoColor=white" alt="Docker" />
+        <img src="https://img.shields.io/badge/Vercel-Serverless-000000?logo=vercel&logoColor=white" alt="Vercel" />
+      </td>
+      <td>容器化与无服务器</td>
+    </tr>
+  </table>
+</div>
 
 ### 核心依赖
 
