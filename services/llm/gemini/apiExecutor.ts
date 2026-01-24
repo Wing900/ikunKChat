@@ -2,30 +2,6 @@ import { GoogleGenAI, GenerateContentResponse } from "@google/genai";
 import { KeyManager } from '../../keyManager';
 
 /**
- * 将请求URL转换为代理URL（如果有配置）
- */
-function getProxiedUrl(urlString: string, apiEndpoint?: string): string {
-    if (!apiEndpoint?.trim()) return urlString;
-
-    try {
-        const proxyUrl = new URL(apiEndpoint);
-        if (urlString.includes('generativelanguage.googleapis.com')) {
-            const originalUrl = new URL(urlString);
-            const finalProxyUrl = new URL(proxyUrl);
-
-            const newPathname = (finalProxyUrl.pathname.replace(/\/$/, '') + originalUrl.pathname).replace(/\/\//g, '/');
-            finalProxyUrl.pathname = newPathname;
-            finalProxyUrl.search = originalUrl.search;
-
-            return finalProxyUrl.toString();
-        }
-    } catch (e) {
-        console.error("提供的 API Base URL 无效:", apiEndpoint, e);
-    }
-    return urlString;
-}
-
-/**
  * 打印400错误的详细分析
  */
 function log400ErrorDetails(error: unknown, apiKeySuffix: string): void {
@@ -81,7 +57,10 @@ export async function executeWithKeyRotation<T>(
         if (!key) continue;
 
         try {
-            const ai = new GoogleGenAI({ apiKey: key });
+            const ai = new GoogleGenAI({
+                apiKey: key,
+                httpOptions: trimmedApiEndpoint ? { baseUrl: trimmedApiEndpoint } : undefined
+            });
             const result = await operation(ai);
             keyManager.saveSuccessIndex();
             return result;
@@ -118,6 +97,8 @@ export async function* executeStreamWithKeyRotation<T extends GenerateContentRes
         return;
     }
 
+    const trimmedApiEndpoint = apiEndpoint?.trim();
+
     let lastError: unknown = null;
     let success = false;
     for (let i = 0; i < keyManager.getTotalKeys(); i++) {
@@ -125,7 +106,10 @@ export async function* executeStreamWithKeyRotation<T extends GenerateContentRes
         if (!key) continue;
 
         try {
-            const ai = new GoogleGenAI({ apiKey: key });
+            const ai = new GoogleGenAI({
+                apiKey: key,
+                httpOptions: trimmedApiEndpoint ? { baseUrl: trimmedApiEndpoint } : undefined
+            });
             const stream = await operation(ai);
             keyManager.saveSuccessIndex();
             yield* stream;
