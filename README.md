@@ -31,23 +31,44 @@
 
 ---
 
-## 📑 目录
+<details>
+<summary><b>💭 开发者的话</b></summary>
 
-- [在线体验](#-在线体验)
-- [功能特性](#-功能特性)
-- [界面展示](#-界面展示)
-- [部署指南](#-部署指南)
+<br>
+
+> 二开这个项目的时候，作者本身不是程序员，也没有 webchat 需求。当时作者我第一次学会反向代理，可以中转谷歌的模型，心里很兴奋。
+
+那个夏天刚好和暗恋对象暧昧，于是想让她用上谷歌的顶尖模型，但是无可奈何当时 iOS 端还没有 AI 代理 chatApp，而网页端 nextchat、owu 这些项目太过于笨重，手机体验不好。
+
+为了让暗恋对象可以美美地使用上谷歌的模型，我找到然后熬了好几天夜改进了原作者的作品，并且学习了大量的前端的 React 技术栈的知识，利用着 AI 和自己拙劣的 debug 技术，开发了第一个可用的版本，让 ta 用上了。后来也根据她的各种反馈不断加功能与设计。
+
+直到现在，这个网页变得完善，可爱。
+
+只是可惜，**萧瑟秋风过，缘如流水去**。ikunKchat仍在，只是人南北。
+
+**关于项目风格：** 如果你不喜欢 ikunKChat 的各种梗，可以考虑 Fork 下来二开，作者也在考虑更换其元素，开发出非 ikun 版本。
+
+</details>
+
+---
+
+## 目录
+
+- [在线体验](#在线体验)
+- [功能特性](#功能特性)
+- [界面展示](#界面展示)
+- [部署指南](#部署指南)
   - [Vercel 一键部署](#1-vercel-一键部署-推荐)
   - [Docker 镜像部署](#2-docker-镜像部署-推荐)
   - [Docker Compose 部署](#3-docker-compose-部署)
   - [本地开发部署](#4-本地开发部署)
-- [环境变量配置](#️-环境变量配置)
-- [技术栈](#-技术栈)
-- [致谢](#-致谢)
+- [环境变量配置](#环境变量配置)
+- [技术栈](#技术栈)
+- [致谢](#致谢)
 
 ---
 
-## ✨ 在线体验
+## 在线体验
 
 <table>
   <tr>
@@ -60,7 +81,7 @@
   </tr>
 </table>
 
-### 🚀 一键部署
+### 一键部署
 
 <div align="center">
   <table>
@@ -91,7 +112,7 @@
 
 ---
 
-## 🎯 功能特性
+## 功能特性
 
 <table>
   <tr>
@@ -138,73 +159,65 @@
 
 ---
 
-## 🖼️ 界面展示
+## 界面展示
 
-### 🎤 唱 - 登录界面
+### 唱 - 登录界面
 
 <div align="center">
   <img src="https://github.com/Wing900/ikunKChat/raw/main/public/show/login.png" alt="登录界面" width="80%" />
-  <p><i>简洁优雅的登录入口，开启你的 AI 对话之旅</i></p>
 </div>
 
-### 🕺 跳 - 聊天体验
+### 跳 - 聊天体验
 
 <div align="center">
   <table>
     <tr>
       <td width="50%">
         <img src="https://github.com/Wing900/ikunKChat/raw/main/public/show/chat1_comp.png" alt="桌面端聊天-1" />
-        <p align="center"><i>桌面端 - 流畅对话</i></p>
       </td>
       <td width="50%">
         <img src="https://github.com/Wing900/ikunKChat/raw/main/public/show/chat2_comp.png" alt="桌面端聊天-2" />
-        <p align="center"><i>桌面端 - 多模型切换</i></p>
       </td>
     </tr>
   </table>
 </div>
 
-### 🎵 RAP - 角色定制
+### RAP - 角色定制
 
 <div align="center">
   <img src="https://github.com/Wing900/ikunKChat/raw/main/public/show/role.png" alt="角色定制" width="80%" />
-  <p><i>个性化 AI 角色，让对话更有温度</i></p>
 </div>
 
-### 🏀 篮球 - 移动端适配
-
-<details>
-<summary>📱 点击展开移动端界面（完美响应式设计）</summary>
+### 篮球 - 移动端适配
 
 <div align="center">
   <table>
     <tr>
-      <td width="33%">
-        <img src="https://github.com/Wing900/ikunKChat/raw/main/public/show/chat1_ph.png" alt="移动端-1" />
+      <td width="25%">
+        <img src="https://github.com/Wing900/ikunKChat/raw/main/public/show/chat1_ph.png" alt="移动端-i" />
       </td>
-      <td width="33%">
-        <img src="https://github.com/Wing900/ikunKChat/raw/main/public/show/chat2_ph.png" alt="移动端-2" />
+      <td width="25%">
+        <img src="https://github.com/Wing900/ikunKChat/raw/main/public/show/chat2_ph.png" alt="移动端-k" />
       </td>
-      <td width="33%">
-        <img src="https://github.com/Wing900/ikunKChat/raw/main/public/show/chat3_ph.png" alt="移动端-3" />
+      <td width="25%">
+        <img src="https://github.com/Wing900/ikunKChat/raw/main/public/show/chat3_ph.png" alt="移动端-u" />
+      </td>
+      <td width="25%">
+        <img src="https://github.com/Wing900/ikunKChat/raw/main/public/show/chat4_ph.png" alt="移动端-n" />
       </td>
     </tr>
     <tr>
-      <td align="center"><i>移动端对话</i></td>
-      <td align="center"><i>功能切换</i></td>
-      <td align="center"><i>侧边栏</i></td>
+      <td align="center"><strong>i</strong></td>
+      <td align="center"><strong>k</strong></td>
+      <td align="center"><strong>u</strong></td>
+      <td align="center"><strong>n</strong></td>
     </tr>
   </table>
-  
-  <img src="https://github.com/Wing900/ikunKChat/raw/main/public/show/chat4_ph.png" alt="移动端-4" width="33%" />
-  <p><i>设置界面</i></p>
 </div>
-
-</details>
 
 ---
 
-## 🚀 部署指南
+## 部署指南
 
 ### 1. Vercel 一键部署 (推荐)
 
@@ -293,7 +306,7 @@ npm run build
 
 ---
 
-## ⚙️ 环境变量配置
+## 环境变量配置
 
 ### 核心配置
 
@@ -354,7 +367,7 @@ VITE_TITLE_MODEL_NAME="THUDM/GLM-4-9B-0414"
 
 ---
 
-## 🛠️ 技术栈
+## 技术栈
 
 <table>
   <tr>
@@ -414,7 +427,7 @@ VITE_TITLE_MODEL_NAME="THUDM/GLM-4-9B-0414"
 
 ---
 
-## 🙏 致谢
+## 致谢
 
 本项目基于以下开源项目和社区：
 
@@ -429,12 +442,12 @@ VITE_TITLE_MODEL_NAME="THUDM/GLM-4-9B-0414"
 
 <div align="center">
   <p>
-    <strong>如果这个项目对你有帮助，请考虑给个 ⭐ Star！</strong>
+    <strong>如果这个项目对你有帮助，欢迎给个 ⭐ Star！</strong>
   </p>
   <p>
     Made with ❤️ by <a href="https://github.com/Wing900">Wing900</a>
   </p>
   <p>
-    <sub>© 2024 ikunKChat. All rights reserved.</sub>
+    <sub>© 2026 ikunKChat. All rights reserved.</sub>
   </p>
 </div>
