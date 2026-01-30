@@ -564,7 +564,7 @@ ZMean2Test|Statistics:( lst of sa da 1, σ1, lst of sa da 2, σ2, ta );( sa me 1
 ZMeanEstimate|Statistics:( lst of sa da, σ, conf le );( sa me, σ, sa si, conf lev )
 ZMeanTest|Statistics:( lst of sa da, σ, hy me, ta );( sa me, σ, sa si, hy me, ta )
 ZProportion2Estimate|Statistics:( sa pro 1 , sa si 1, sa pro 2 , sa si 2, conf le )
-Z`Proportion2Test|Statistics:( sa pro 1, sa si 1, sa pro 2, sa si 2, ta )
+ZProportion2Test|Statistics:( sa pro 1, sa si 1, sa pro 2, sa si 2, ta )
 ZProportionEstimate|Statistics:( sa pro , sa si , conf le )
 ZProportionTest|Statistics:( sa pro, sa si, hy pro, ta )
 ContingencyTable|Text:( lst of te, lst of te );( lst of te, lst of te, opt );( lst of Row valu, lst of col valu, freq tab );( lst of Row valu, lst of col valu freq tab, opt )
