@@ -17,7 +17,7 @@ export const useSettingsSearch = (searchQuery: string) => {
       const allVisible = new Set([
         'language', 'theme', 'defaultPersona', 'fontFamily', 'colorPalette', 'fontSize', 'password',
         'autoTitleGeneration', 'titleGenModel',
-        'showThoughts', 'llmProvider', 'apiKey', 'apiBaseUrl', 'temperature',
+        'showThoughts', 'llmProvider', 'apiKey', 'apiBaseUrl', 'customModels', 'temperature',
         'contextLength', 'maxOutputTokens', 'enableSearch',
         'streamInactivityTimeout', 'data', 'pdf-management'
       ]);
@@ -45,6 +45,7 @@ export const useSettingsSearch = (searchQuery: string) => {
         { id: 'llmProvider', section: 'advanced', texts: [t('llmProvider'), t('llmProviderDesc'), translations.zh.llmProvider, translations.zh.llmProviderDesc] },
         { id: 'apiKey', section: 'advanced', texts: [t('apiKey'), t('apiKeyDesc'), translations.zh.apiKey, translations.zh.apiKeyDesc] },
         { id: 'apiBaseUrl', section: 'advanced', texts: [t('apiBaseUrl'), t('apiBaseUrlDesc'), translations.zh.apiBaseUrl, translations.zh.apiBaseUrlDesc] },
+        { id: 'customModels', section: 'advanced', texts: [t('customModels'), t('customModelsDesc'), translations.zh.customModels, translations.zh.customModelsDesc, '自定义模型', 'custom models', 'model list'] },
         { id: 'temperature', section: 'advanced', texts: [t('temperature'), t('temperatureDesc'), translations.zh.temperature, translations.zh.temperatureDesc] },
         { id: 'contextLength', section: 'advanced', texts: [t('contextLength'), t('contextLengthDesc'), translations.zh.contextLength, translations.zh.contextLengthDesc] },
         { id: 'enableSearch', section: 'advanced', texts: [t('enableSearch'), t('enableSearchDesc'), translations.zh.enableSearch, translations.zh.enableSearchDesc] },
