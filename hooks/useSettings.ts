@@ -140,10 +140,26 @@ export const useSettings = () => {
   }, [settings, isStorageLoaded, setLanguage]);
 
   useEffect(() => {
-    const apiKeys = settings.apiKey || (process.env.API_KEY ? [process.env.API_KEY] : []);
-    if (isStorageLoaded && apiKeys.length > 0) {
+    if (!isStorageLoaded) return;
+
+    // 获取实际使用的 API Key 和 Base URL
+    let actualApiKey = '';
+    let actualApiBaseUrl = '';
+
+    if (settings.useCustomApi) {
+      // 用户启用了自定义配置
+      const apiKeys = settings.apiKey || [];
+      actualApiKey = apiKeys.length > 0 ? apiKeys[0] : '';
+      actualApiBaseUrl = settings.apiBaseUrl || '';
+    } else if (envConfig) {
+      // 用户未启用自定义，使用环境变量
+      actualApiKey = envConfig.apiKey;
+      actualApiBaseUrl = envConfig.apiBaseUrl;
+    }
+
+    if (actualApiKey) {
       const llmService = createLLMService(settings);
-      llmService.getAvailableModels(apiKeys[0], settings.apiBaseUrl).then(models => {
+      llmService.getAvailableModels(actualApiKey, actualApiBaseUrl).then(models => {
         if (!models || models.length === 0) return;
         setAvailableModels(models);
         setSettings(current => {
@@ -164,7 +180,7 @@ export const useSettings = () => {
         });
       });
     }
-  }, [isStorageLoaded, settings.apiKey, settings.apiBaseUrl, settings.llmProvider]);
+  }, [isStorageLoaded, settings.apiKey, settings.apiBaseUrl, settings.llmProvider, settings.useCustomApi]);
 
   return { settings, setSettings, availableModels, isStorageLoaded };
 };
