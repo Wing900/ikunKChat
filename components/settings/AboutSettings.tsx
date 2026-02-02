@@ -96,19 +96,19 @@ export const AboutSettings: React.FC<AboutSettingsProps> = ({ versionInfo }) => 
       <div className="border-t border-[var(--glass-border)] pt-6 space-y-4">
         <h3 className="font-bold text-lg text-[var(--text-color)]">{t('usefulLinks')}</h3>
         <div className="flex flex-wrap gap-4">
-          <a href="https://github.com/Wing900/KChat" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-[var(--accent-color)] hover:underline">
+          <a href="https://github.com/Wing900/KChat" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-[var(--md-sys-color-primary)] hover:underline">
             <Icon icon="github" className="w-4 h-4" />
             <span>{t('sourceCode')}</span>
           </a>
-          <a href="https://github.com/Wing900/KChat/issues" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-[var(--accent-color)] hover:underline">
+          <a href="https://github.com/Wing900/KChat/issues" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-[var(--md-sys-color-primary)] hover:underline">
             <Icon icon="bug" className="w-4 h-4" />
             <span>{t('reportBug')}</span>
           </a>
-          <a href="https://github.com/Wing900/KChat/discussions" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-[var(--accent-color)] hover:underline">
+          <a href="https://github.com/Wing900/KChat/discussions" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-[var(--md-sys-color-primary)] hover:underline">
             <Icon icon="message-square" className="w-4 h-4" />
             <span>{t('discussions')}</span>
           </a>
-          <a href="https://iambin.qzz.io" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-[var(--accent-color)] hover:underline">
+          <a href="https://iambin.qzz.io" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-[var(--md-sys-color-primary)] hover:underline">
             <Icon icon="chicken" className="w-4 h-4" />
             <span>iambin.qzz.io</span>
           </a>

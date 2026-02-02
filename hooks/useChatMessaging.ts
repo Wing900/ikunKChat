@@ -30,10 +30,19 @@ export const useChatMessaging = ({ settings, activeChat, personas, setChats, set
   }, []);
 
   const _initiateStream = useCallback(async (chatId: string, historyForAPI: Message[], personaId: string | null | undefined, titleGenerationMode: 'INITIAL' | 'RECURRING' | null = null) => {
-    const apiKeys = settings.apiKey && settings.apiKey.length > 0
-      ? settings.apiKey
-      : (process.env.API_KEY ? [process.env.API_KEY] : []);
-    
+    // 获取 API Key：如果用户启用了自定义，使用用户的配置；否则使用环境变量
+    let apiKeys: string[] = [];
+    if (settings.useCustomApi) {
+      // 用户启用了自定义配置，使用用户输入的 API Key
+      apiKeys = settings.apiKey && settings.apiKey.length > 0 ? settings.apiKey : [];
+    } else {
+      // 用户未启用自定义，使用环境变量
+      const envKey = settings.llmProvider === 'openai'
+        ? process.env.OPENAI_API_KEY
+        : process.env.GEMINI_API_KEY || process.env.API_KEY;
+      apiKeys = envKey ? [envKey] : [];
+    }
+
     if (apiKeys.length === 0) {
         const providerName = settings.llmProvider === 'openai' ? 'OpenAI' : 'Gemini';
         addToast(`Please set your ${providerName} API key in Settings.`, 'error');
@@ -67,7 +76,19 @@ export const useChatMessaging = ({ settings, activeChat, personas, setChats, set
 
     try {
       const llmService = createLLMService(settings);
-      
+
+      // 获取 API Base URL：如果用户启用了自定义，使用用户的配置；否则使用环境变量
+      let apiBaseUrl = '';
+      if (settings.useCustomApi) {
+        // 用户启用了自定义配置，使用用户输入的 API Base URL
+        apiBaseUrl = settings.apiBaseUrl || '';
+      } else {
+        // 用户未启用自定义，使用环境变量
+        apiBaseUrl = settings.llmProvider === 'openai'
+          ? (process.env.OPENAI_API_BASE_URL || '')
+          : (process.env.API_BASE_URL || '');
+      }
+
       const chatRequest: ChatRequest = {
         messages: historyForAPI,
         model: chatSession.model,
@@ -78,7 +99,7 @@ export const useChatMessaging = ({ settings, activeChat, personas, setChats, set
           contextLength: settings.contextLength,
         },
         apiKey: apiKeys[0], // 服务内部目前只处理单个key
-        apiBaseUrl: settings.apiBaseUrl,
+        apiBaseUrl: apiBaseUrl,
         showThoughts: settings.showThoughts,
         enableSearch: settings.enableSearch,
       };

@@ -87,11 +87,18 @@ export const useSettings = () => {
     const loadedSettings = loadSettings();
     const initialSettings = { ...defaultSettings, ...loadedSettings };
 
-    // 优先使用环境变量配置（每次启动都重新读取）
+    // 如果有环境变量配置
     if (envConfig) {
       initialSettings.llmProvider = envConfig.provider;
-      initialSettings.apiKey = [envConfig.apiKey];
-      initialSettings.apiBaseUrl = envConfig.apiBaseUrl;
+
+      // 关键修改：只有在用户启用了自定义 API 配置时，才保留用户的设置
+      // 否则，清空 apiKey 和 apiBaseUrl，避免暴露环境变量
+      if (!initialSettings.useCustomApi) {
+        // 用户未启用自定义，清空这些字段，实际使用时从环境变量读取
+        initialSettings.apiKey = [];
+        initialSettings.apiBaseUrl = '';
+      }
+      // 如果用户启用了自定义，保留 loadedSettings 中的值
     }
 
     // 如果没有环境变量配置，保持用户之前的手动配置或默认值
@@ -107,11 +114,11 @@ export const useSettings = () => {
   useEffect(() => {
     if (!isStorageLoaded) return;
 
-    // 保存设置时，排除 apiKey 和 apiBaseUrl（如果来自环境变量）
+    // 保存设置时，排除 apiKey 和 apiBaseUrl（如果来自环境变量且用户未启用自定义）
     // 这样环境变量不会被缓存到 localStorage
     const settingsToSave = { ...settings };
-    if (hasEnvApiKey) {
-      // 环境变量有配置，不保存敏感信息到 localStorage
+    if ((hasEnvApiKey || isApiBaseUrlSetByEnv) && !settings.useCustomApi) {
+      // 环境变量有配置且用户未启用自定义，不保存 API 配置到 localStorage
       delete (settingsToSave as Record<string, unknown>).apiKey;
       delete (settingsToSave as Record<string, unknown>).apiBaseUrl;
     }

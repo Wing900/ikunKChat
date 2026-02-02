@@ -79,6 +79,8 @@ export const en = {
     apiKeyEnvVar: 'Key set by environment variable',
     apiBaseUrl: 'API Base URL',
     apiBaseUrlDesc: 'Optional. Use a proxy or a different API endpoint.',
+    useCustomApi: 'Use Custom API Configuration',
+    useCustomApiDesc: 'Override environment variables and use custom API URL and Key.',
     llmProvider: 'Model Service Provider',
     llmProviderDesc: 'Choose the backend large language model service for chat.',
     langDetectModel: 'Language Detection Model',

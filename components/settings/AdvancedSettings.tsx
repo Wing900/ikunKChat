@@ -40,27 +40,28 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({ settings, on
           />
         </SettingsItem>
       )}
-      {visibleIds.has('apiKey') && (
-        <SettingsItem label={t('apiKey')} description={t('apiKeyDesc')}>
-           <textarea
-              value={isApiKeySetByEnv ? '' : (settings.apiKey || []).join('\n')}
-              onChange={handleApiKeyChange}
-              disabled={isApiKeySetByEnv}
-              placeholder={isApiKeySetByEnv ? t('apiKeyEnvVar') : t('apiKeyPlaceholder')}
-              className="input-glass max-w-60 min-h-24"
-              rows={3}
-           />
+
+      {/* 使用自定义 API 配置的开关（同时控制 URL 和 Key） */}
+      {(isApiBaseUrlSetByEnv || isApiKeySetByEnv) && (
+        <SettingsItem label={t('useCustomApi')} description={t('useCustomApiDesc')}>
+          <Switch
+            size="sm"
+            checked={settings.useCustomApi || false}
+            onChange={e => onSettingsChange({ useCustomApi: e.target.checked })}
+          />
         </SettingsItem>
       )}
+
+      {/* API Base URL */}
       {visibleIds.has('apiBaseUrl') && (
         <SettingsItem label={t('apiBaseUrl')} description={t('apiBaseUrlDesc')}>
           <input
             type="text"
-            value={isApiBaseUrlSetByEnv ? '' : (settings.apiBaseUrl || '')}
+            value={(isApiBaseUrlSetByEnv || isApiKeySetByEnv) && !settings.useCustomApi ? '' : (settings.apiBaseUrl || '')}
             onChange={e => onSettingsChange({ apiBaseUrl: e.target.value })}
-            disabled={isApiBaseUrlSetByEnv}
+            disabled={(isApiBaseUrlSetByEnv || isApiKeySetByEnv) && !settings.useCustomApi}
             placeholder={
-              isApiBaseUrlSetByEnv
+              (isApiBaseUrlSetByEnv || isApiKeySetByEnv) && !settings.useCustomApi
                 ? t('apiKeyEnvVar')
                 : settings.llmProvider === 'openai'
                   ? 'https://api.openai.com'
@@ -70,6 +71,21 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({ settings, on
           />
         </SettingsItem>
       )}
+
+      {/* API Key */}
+      {visibleIds.has('apiKey') && (
+        <SettingsItem label={t('apiKey')} description={t('apiKeyDesc')}>
+           <textarea
+              value={(isApiBaseUrlSetByEnv || isApiKeySetByEnv) && !settings.useCustomApi ? '' : (settings.apiKey || []).join('\n')}
+              onChange={handleApiKeyChange}
+              disabled={(isApiBaseUrlSetByEnv || isApiKeySetByEnv) && !settings.useCustomApi}
+              placeholder={(isApiBaseUrlSetByEnv || isApiKeySetByEnv) && !settings.useCustomApi ? t('apiKeyEnvVar') : t('apiKeyPlaceholder')}
+              className="input-glass max-w-60 min-h-24"
+              rows={3}
+           />
+        </SettingsItem>
+      )}
+
       {visibleIds.has('temperature') && (
         <SettingsItem label={t('temperature')} description={t('temperatureDesc')}>
           <div className="flex items-center gap-4 w-60">

@@ -79,6 +79,8 @@ export const zh = {
     apiKeyEnvVar: '密钥已由环境变量设置',
     apiBaseUrl: 'API Base URL',
     apiBaseUrlDesc: '可选。使用代理或不同的 API 端点。',
+    useCustomApi: '使用自定义 API 配置',
+    useCustomApiDesc: '覆盖环境变量，使用自定义的 API 地址和密钥。',
     llmProvider: '模型服务商',
     llmProviderDesc: '选择用于聊天的后端大语言模型服务。',
     langDetectModel: '语言检测模型',
