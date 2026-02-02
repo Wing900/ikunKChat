@@ -79,7 +79,6 @@ export interface Settings {
   customColor?: string; // 自定义颜色 (HEX格式)
   llmProvider?: LLMProvider; // 用户选择的LLM服务商
   apiKey: string[] | null;
-  defaultModel: string;
   lastSelectedModel?: string; // 用户最后选择的模型（模型选择器记忆功能）
   defaultPersona: string;
   autoTitleGeneration: boolean;

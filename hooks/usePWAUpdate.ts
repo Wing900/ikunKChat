@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 
 // This type is provided by vite-plugin-pwa
 declare global {
@@ -23,81 +23,141 @@ export const usePWAUpdate = (): UsePWAUpdateReturn => {
   const [updateStatus, setUpdateStatus] = useState<UpdateStatus>('idle');
   const [updateSW, setUpdateSW] = useState<(() => Promise<void>) | null>(null);
   const [registration, setRegistration] = useState<ServiceWorkerRegistration | null>(null);
+  const registrationRef = useRef<ServiceWorkerRegistration | null>(null);
+  const updateIntervalMs = 10 * 60 * 1000;
 
   useEffect(() => {
+    let intervalId: ReturnType<typeof setInterval> | null = null;
+    let initialTimeoutId: ReturnType<typeof setTimeout> | null = null;
+
+    const triggerUpdate = (reg?: ServiceWorkerRegistration | null) => {
+      const target = reg || registrationRef.current;
+      if (!target) return;
+      target.update().catch(err => {
+        console.warn('[SW] Update check failed:', err);
+      });
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        triggerUpdate();
+      }
+    };
+
+    const handleFocus = () => triggerUpdate();
+    const handleOnline = () => triggerUpdate();
+
     const registerServiceWorker = async () => {
       if (typeof window !== 'undefined' && 'serviceWorker' in navigator && !window.__SW_DISABLED__) {
         try {
           // @ts-ignore
           const { registerSW } = await import('virtual:pwa-register');
-          
+
           const updateSWFunc = registerSW({
             immediate: true,
             onOfflineReady() {
-              console.log('[SW] 离线可用');
+              console.log('[SW] Offline ready');
               setOfflineReady(true);
             },
             onNeedRefresh() {
-              console.log('[SW] 检测到新版本，需要刷新');
+              console.log('[SW] New version available, refresh needed');
               setNeedRefresh(true);
               setUpdateStatus('available');
             },
             onRegisteredSW(swScriptUrl, reg) {
-              console.log('[SW] Service Worker 已注册');
-              setRegistration(reg || null);
-              
-              // 用户进入网站后 10 秒检查一次
-              setTimeout(() => {
-                console.log('[SW] 3秒后检查更新...');
-                reg?.update().catch(err => {
-                  console.warn('[SW] 首次更新检查失败:', err);
-                });
+              console.log('[SW] Service Worker registered');
+              const nextRegistration = reg || null;
+              registrationRef.current = nextRegistration;
+              setRegistration(nextRegistration);
+
+              initialTimeoutId = setTimeout(() => {
+                console.log('[SW] Checking for updates after 3s..');
+                triggerUpdate(nextRegistration);
               }, 3 * 1000);
-              
-              // 之后每小时检查一次
-              setInterval(() => {
-                console.log('[SW] 定时检查更新...');
-                reg?.update().catch(err => {
-                  console.warn('[SW] 定时更新检查失败:', err);
-                });
-              }, 60 * 60 * 1000); // 每小时检查一次
+
+              intervalId = setInterval(() => {
+                console.log('[SW] Scheduled update check..');
+                triggerUpdate(nextRegistration);
+              }, updateIntervalMs);
+
+              window.addEventListener('focus', handleFocus);
+              window.addEventListener('online', handleOnline);
+              document.addEventListener('visibilitychange', handleVisibilityChange);
             },
             onRegisterError(error) {
-              console.error('[SW] Service Worker 注册失败:', error);
+              console.error('[SW] Service Worker registration failed:', error);
               setUpdateStatus('error');
             },
           });
 
           setUpdateSW(() => updateSWFunc);
         } catch (error) {
-          console.error('[SW] Service Worker 初始化失败:', error);
+          console.error('[SW] Service Worker init failed:', error);
           setUpdateStatus('error');
         }
       }
     };
 
     registerServiceWorker();
+
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+      if (initialTimeoutId) clearTimeout(initialTimeoutId);
+      window.removeEventListener('focus', handleFocus);
+      window.removeEventListener('online', handleOnline);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, []);
 
-  // 手动检查更新
+  const waitForSWUpdate = useCallback((reg: ServiceWorkerRegistration, timeoutMs = 8000) => {
+    return new Promise<boolean>(resolve => {
+      if (reg.waiting || reg.installing) {
+        resolve(true);
+        return;
+      }
+
+      let resolved = false;
+      const timeoutId = setTimeout(() => {
+        if (!resolved) resolve(false);
+      }, timeoutMs);
+
+      const clear = () => {
+        resolved = true;
+        clearTimeout(timeoutId);
+      };
+
+      const handleStateChange = (event: Event) => {
+        const worker = event.target as ServiceWorker | null;
+        if (worker?.state === 'installed') {
+          clear();
+          resolve(true);
+        }
+      };
+
+      const handleUpdateFound = () => {
+        if (reg.installing) {
+          reg.installing.addEventListener('statechange', handleStateChange, { once: true });
+        }
+      };
+
+      reg.addEventListener('updatefound', handleUpdateFound, { once: true });
+    });
+  }, []);
+
+  // Manual update check
   const checkForUpdates = useCallback(async () => {
     setUpdateStatus('checking');
 
     try {
       if (!registration) {
-        throw new Error('Service Worker 未注册');
+        throw new Error('Service Worker not registered');
       }
 
-      // 触发 Service Worker 更新检查
+      // Trigger Service Worker update check
       await registration.update();
-      
-      // 等待一小段时间让 SW 完成检查
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // 检查是否有新版本在等待
-      const reg = await navigator.serviceWorker.getRegistration();
-      const hasUpdate = !!(reg?.waiting || reg?.installing);
-      
+
+      const hasUpdate = await waitForSWUpdate(registration);
+
       if (hasUpdate) {
         setNeedRefresh(true);
         setUpdateStatus('available');
@@ -111,29 +171,29 @@ export const usePWAUpdate = (): UsePWAUpdateReturn => {
       setUpdateStatus('error');
       return {
         hasUpdate: false,
-        error: error instanceof Error ? error.message : '检查更新失败'
+        error: error instanceof Error ? error.message : 'Update check failed'
       };
     }
-  }, [registration]);
+  }, [registration, waitForSWUpdate]);
 
-  // 应用更新
+  // Apply update
   const updateServiceWorker = useCallback(async (reloadPage = true) => {
     setNeedRefresh(false);
     setUpdateStatus('downloading');
 
     try {
       if (updateSW) {
-        // 使用 vite-plugin-pwa 提供的更新函数
+        // Use vite-plugin-pwa update function
         await updateSW();
       } else {
-        // 降级方案：直接刷新页面
+        // Fallback: reload page
         if (reloadPage) {
           window.location.reload();
         }
       }
     } catch (error) {
       console.error('Failed to apply update:', error);
-      // 即使出错也尝试刷新页面
+      // Fallback: reload page
       if (reloadPage) {
         window.location.reload();
       }

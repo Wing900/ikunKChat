@@ -110,6 +110,7 @@ export const useAppData = (
     setChats,
     setActiveChatId,
     addToast: toast,
+    availableModels,
   });
 
   // 处理新聊天创建
@@ -124,9 +125,9 @@ export const useAppData = (
       const persona = selectedPersonaId ? personas.find((p) => p && p.id === selectedPersonaId) : null;
 
       if (persona) {
-        // 优先级：用户最后选择的模型 > 角色默认模型 > 系统默认模型
-        const modelToUse = settings.lastSelectedModel ?? persona.model ?? settings.defaultModel;
-        
+        // 优先级：角色默认模型 > 用户最后选择的模型 > 模型列表第一个
+        const modelToUse = persona.model ?? settings.lastSelectedModel ?? availableModels[0] ?? '';
+
         const newChatSession: ChatSession = {
           id: crypto.randomUUID(),
           title: persona.name || 'New Persona Chat',
@@ -149,7 +150,8 @@ export const useAppData = (
     },
     [
       settings.defaultPersona,
-      settings.defaultModel,
+      settings.lastSelectedModel,
+      availableModels,
       personas,
       setChats,
       setActiveChatId,

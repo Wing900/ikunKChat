@@ -122,7 +122,7 @@ export const AppContent: React.FC<AppContentProps> = ({
             onEditMessage,
           }}
           modelConfig={{
-            currentModel: settings.defaultModel,
+            currentModel: settings.lastSelectedModel ?? availableModels[0] ?? '',
             availableModels,
             onSetCurrentModel,
             onSetModelForActiveChat,

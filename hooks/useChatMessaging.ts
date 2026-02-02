@@ -14,12 +14,12 @@ interface UseChatMessagingProps {
   activeChat: ChatSession | null;
   personas: Persona[];
   setChats: React.Dispatch<React.SetStateAction<ChatSession[]>>;
-
   setActiveChatId: React.Dispatch<React.SetStateAction<string | null>>;
   addToast: (message: string, type: 'success' | 'error' | 'info') => void;
+  availableModels: string[];
 }
 
-export const useChatMessaging = ({ settings, activeChat, personas, setChats, setActiveChatId, addToast }: UseChatMessagingProps) => {
+export const useChatMessaging = ({ settings, activeChat, personas, setChats, setActiveChatId, addToast, availableModels }: UseChatMessagingProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const isCancelledRef = useRef(false);
   let inactivityTimer: NodeJS.Timeout; // For stream watchdog
@@ -29,7 +29,7 @@ export const useChatMessaging = ({ settings, activeChat, personas, setChats, set
     setIsLoading(false); 
   }, []);
 
-  const _initiateStream = useCallback(async (chatId: string, historyForAPI: Message[], personaId: string | null | undefined, titleGenerationMode: 'INITIAL' | 'RECURRING' | null = null) => {
+  const _initiateStream = useCallback(async (chatId: string, historyForAPI: Message[], personaId: string | null | undefined, titleGenerationMode: 'INITIAL' | 'RECURRING' | null = null, availableModels: string[] = []) => {
     // 获取 API Key：如果用户启用了自定义，使用用户的配置；否则使用环境变量
     let apiKeys: string[] = [];
     if (settings.useCustomApi) {
@@ -53,9 +53,12 @@ export const useChatMessaging = ({ settings, activeChat, personas, setChats, set
     isCancelledRef.current = false;
     setIsLoading(true);
 
-    const chatSession = activeChat && activeChat.id === chatId 
-        ? activeChat 
-        : { id: chatId, messages: historyForAPI, model: settings.defaultModel, personaId, title: "New Chat", createdAt: Date.now(), folderId: null };
+    // 确定使用的模型：优先使用 lastSelectedModel，否则使用模型列表第一个
+    const defaultModel = settings.lastSelectedModel ?? availableModels[0] ?? '';
+
+    const chatSession = activeChat && activeChat.id === chatId
+        ? activeChat
+        : { id: chatId, messages: historyForAPI, model: defaultModel, personaId, title: "New Chat", createdAt: Date.now(), folderId: null };
 
     const activePersona = chatSession.personaId ? personas.find(p => p && p.id === chatSession.personaId) : null;
 
@@ -348,8 +351,8 @@ export const useChatMessaging = ({ settings, activeChat, personas, setChats, set
     if (!currentChatId) {
       currentPersonaId = settings.defaultPersona;
       const persona = personas.find(p => p.id === currentPersonaId);
-      // 优先级：用户最后选择的模型 > 角色默认模型 > 系统默认模型
-      const modelToUse = settings.lastSelectedModel ?? persona?.model ?? settings.defaultModel;
+      // 优先级：角色默认模型 > 用户最后选择的模型 > 模型列表第一个
+      const modelToUse = persona?.model ?? settings.lastSelectedModel ?? availableModels[0] ?? '';
       const newChat: ChatSession = { id: crypto.randomUUID(), title: persona?.name || content.substring(0, 40) || "New Chat", icon: (persona?.avatar?.type === 'emoji' ? persona.avatar.value : '👤') || "💬", messages: [userMessage], createdAt: Date.now(), model: modelToUse, folderId: null, personaId: currentPersonaId };
       currentChatId = newChat.id;
       history = newChat.messages;
@@ -372,8 +375,8 @@ export const useChatMessaging = ({ settings, activeChat, personas, setChats, set
       historyForAPI = [...history.slice(0, -1), messageWithPDF];
     }
 
-    await _initiateStream(currentChatId, historyForAPI, currentPersonaId, titleGenerationMode);
-  }, [activeChat, settings, setChats, setActiveChatId, _initiateStream, personas]);
+    await _initiateStream(currentChatId, historyForAPI, currentPersonaId, titleGenerationMode, availableModels);
+  }, [activeChat, settings, setChats, setActiveChatId, _initiateStream, personas, availableModels]);
 
   const handleDeleteMessage = useCallback((messageId: string) => {
     if (!activeChat?.id) return;
@@ -421,9 +424,9 @@ export const useChatMessaging = ({ settings, activeChat, personas, setChats, set
 
     if (historyForResubmit.length > 0) {
         setChats(prev => prev.map(c => c.id === chatId ? { ...c, messages: historyForResubmit } : c));
-        _initiateStream(chatId, historyForResubmit, activeChat.personaId);
+        _initiateStream(chatId, historyForResubmit, activeChat.personaId, null, availableModels);
     }
-  }, [activeChat, isLoading, setChats, _initiateStream]);
+  }, [activeChat, isLoading, setChats, _initiateStream, availableModels]);
 
   const handleEditAndResubmit = useCallback((messageId: string, newContent: string) => {
     if (!activeChat?.id || isLoading) return;
@@ -440,9 +443,9 @@ export const useChatMessaging = ({ settings, activeChat, personas, setChats, set
 
     if (historyForResubmit.length > 0) {
         setChats(prev => prev.map(c => c.id === chatId ? { ...c, messages: historyForResubmit } : c));
-        _initiateStream(chatId, historyForResubmit, activeChat.personaId);
+        _initiateStream(chatId, historyForResubmit, activeChat.personaId, null, availableModels);
     }
-  }, [activeChat, isLoading, setChats, _initiateStream]);
+  }, [activeChat, isLoading, setChats, _initiateStream, availableModels]);
 
   return { 
     isLoading, 

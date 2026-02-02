@@ -12,7 +12,7 @@ const defaultSettings: Settings = {
   colorPalette: 'neutral',
   customColor: undefined,
   apiKey: [],
-  defaultModel: '',
+  lastSelectedModel: undefined,
   defaultPersona: 'default-math-assistant',
   autoTitleGeneration: true,
   titleGenerationModel: '',
@@ -173,8 +173,9 @@ export const useSettings = () => {
         setAvailableModels(allModels);
         setSettings(current => {
           const newDefaults: Partial<Settings> = {};
-          if (!allModels.includes(current.defaultModel)) {
-            newDefaults.defaultModel = allModels[0] || '';
+          // 如果 lastSelectedModel 不在模型列表中，清空它（会自动使用第一个模型）
+          if (current.lastSelectedModel && !allModels.includes(current.lastSelectedModel)) {
+            newDefaults.lastSelectedModel = undefined;
           }
           // 标题生成模型逻辑：优先使用环境变量，否则取列表最后一位
           const envTitleModel = process.env.TITLE_MODEL_NAME?.trim();
