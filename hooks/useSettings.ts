@@ -159,28 +159,37 @@ export const useSettings = () => {
 
     if (actualApiKey) {
       const llmService = createLLMService(settings);
-      llmService.getAvailableModels(actualApiKey, actualApiBaseUrl).then(models => {
-        if (!models || models.length === 0) return;
-        setAvailableModels(models);
+      llmService.getAvailableModels(actualApiKey, actualApiBaseUrl).then(fetchedModels => {
+        // 解析用户自定义的模型列表
+        const customModelsList = settings.customModels
+          ? settings.customModels.split(/[\n,]+/).map(m => m.trim()).filter(Boolean)
+          : [];
+
+        // 合并 fetch 到的模型和用户自定义的模型（去重）
+        const allModels = [...new Set([...fetchedModels, ...customModelsList])];
+
+        if (allModels.length === 0) return;
+
+        setAvailableModels(allModels);
         setSettings(current => {
           const newDefaults: Partial<Settings> = {};
-          if (!models.includes(current.defaultModel)) {
-            newDefaults.defaultModel = models[0] || '';
+          if (!allModels.includes(current.defaultModel)) {
+            newDefaults.defaultModel = allModels[0] || '';
           }
           // 标题生成模型逻辑：优先使用环境变量，否则取列表最后一位
           const envTitleModel = process.env.TITLE_MODEL_NAME?.trim();
           if (envTitleModel) {
             // 环境变量有配置，使用环境变量
             newDefaults.titleGenerationModel = envTitleModel;
-          } else if (!models.includes(current.titleGenerationModel)) {
+          } else if (!allModels.includes(current.titleGenerationModel)) {
             // 环境变量没有配置，取列表最后一位
-            newDefaults.titleGenerationModel = models[models.length - 1] || '';
+            newDefaults.titleGenerationModel = allModels[allModels.length - 1] || '';
           }
           return Object.keys(newDefaults).length > 0 ? { ...current, ...newDefaults } : current;
         });
       });
     }
-  }, [isStorageLoaded, settings.apiKey, settings.apiBaseUrl, settings.llmProvider, settings.useCustomApi]);
+  }, [isStorageLoaded, settings.apiKey, settings.apiBaseUrl, settings.llmProvider, settings.useCustomApi, settings.customModels]);
 
   return { settings, setSettings, availableModels, isStorageLoaded };
 };

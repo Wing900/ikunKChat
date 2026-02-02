@@ -90,6 +90,7 @@ export interface Settings {
   enableSearch: boolean;
   apiBaseUrl?: string;
   useCustomApi?: boolean; // 是否使用自定义 API 配置（包括 URL 和 Key，覆盖环境变量）
+  customModels?: string; // 用户自定义的模型列表（逗号或换行分隔）
   temperature?: number;
   maxOutputTokens?: number;
   contextLength?: number;

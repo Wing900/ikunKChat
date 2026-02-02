@@ -23,6 +23,10 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({ settings, on
     onSettingsChange({ apiKey: keys });
   };
 
+  const handleCustomModelsChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    onSettingsChange({ customModels: e.target.value });
+  };
+
   const llmProviderOptions: SelectOption[] = [
     { value: 'gemini', label: 'Google Gemini' },
     { value: 'openai', label: 'OpenAI' },
@@ -80,6 +84,19 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({ settings, on
               onChange={handleApiKeyChange}
               disabled={(isApiBaseUrlSetByEnv || isApiKeySetByEnv) && !settings.useCustomApi}
               placeholder={(isApiBaseUrlSetByEnv || isApiKeySetByEnv) && !settings.useCustomApi ? t('apiKeyEnvVar') : t('apiKeyPlaceholder')}
+              className="input-glass max-w-60 min-h-24"
+              rows={3}
+           />
+        </SettingsItem>
+      )}
+
+      {/* 自定义模型列表 */}
+      {visibleIds.has('customModels') && (
+        <SettingsItem label={t('customModels')} description={t('customModelsDesc')}>
+           <textarea
+              value={settings.customModels || ''}
+              onChange={handleCustomModelsChange}
+              placeholder={t('customModelsPlaceholder')}
               className="input-glass max-w-60 min-h-24"
               rows={3}
            />
