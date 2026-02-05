@@ -26,8 +26,8 @@ export const useAuth = () => {
       return authService.isAuthenticated();
     }
     
-    // 如果没有设置环境变量密码且没有有效的临时令牌，则不允许访问
-    return false;
+    // 如果没有设置环境变量密码且没有有效的临时令牌，则允许访问
+    return true;
   });
 
   // 当认证状态改变时，同步到 authService

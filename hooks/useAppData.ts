@@ -95,6 +95,8 @@ export const useAppData = (
 
   // 聊天消息管理
   const activeChat = chats.find((c) => c.id === activeChatId) || null;
+  const availableModels = settings.availableModels || [];
+
   const {
     isLoading,
     handleSendMessage,

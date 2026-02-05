@@ -14,7 +14,7 @@ interface AppProvidersProps {
 export const AppProviders: React.FC<AppProvidersProps> = ({ children }) => {
   return (
     <ToastProvider>
-      <LocalizationProvider>
+      <LocalizationProvider initialLanguage="en">
         <UIStateProvider>
           {children}
         </UIStateProvider>
