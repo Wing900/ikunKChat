@@ -111,7 +111,7 @@ export const PersonaEditor: React.FC<PersonaEditorProps> = ({ personaToEdit, onS
                           <label className="font-medium">{t('model')}</label>
                           <CustomSelect
                             options={availableModels.map(m => ({ value: m, label: formatModelName(m) }))}
-                            value={persona.model ?? settings.defaultModel}
+                            value={persona.model ?? settings.lastSelectedModel ?? availableModels[0] ?? ''}
                             onChange={value => handleUpdate({ model: value })}
                             className="w-48"
                           />

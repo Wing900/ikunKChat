@@ -62,31 +62,31 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ versionInfo, ...pr
         {!showAllSections && (
           <div className="flex border-b border-[var(--glass-border)] mb-4 -mx-6 px-6">
             <button
-              className={`px-4 py-2 font-medium text-sm ${activeTab === 'general' ? 'text-[var(--accent-color)] border-b-2 border-[var(--accent-color)]' : 'text-[var(--text-color-secondary)] hover:text-[var(--text-color)]'}`}
+              className={`px-4 py-2 font-medium text-sm ${activeTab === 'general' ? 'text-[var(--md-sys-color-primary)] border-b-2 border-[var(--md-sys-color-primary)]' : 'text-[var(--text-color-secondary)] hover:text-[var(--text-color)]'}`}
               onClick={() => setActiveTab('general')}
             >
               {t('general')}
             </button>
             <button
-              className={`px-4 py-2 font-medium text-sm ${activeTab === 'behavior' ? 'text-[var(--accent-color)] border-b-2 border-[var(--accent-color)]' : 'text-[var(--text-color-secondary)] hover:text-[var(--text-color)]'}`}
+              className={`px-4 py-2 font-medium text-sm ${activeTab === 'behavior' ? 'text-[var(--md-sys-color-primary)] border-b-2 border-[var(--md-sys-color-primary)]' : 'text-[var(--text-color-secondary)] hover:text-[var(--text-color)]'}`}
               onClick={() => setActiveTab('behavior')}
             >
               {t('behavior')}
             </button>
             <button
-              className={`px-4 py-2 font-medium text-sm ${activeTab === 'advanced' ? 'text-[var(--accent-color)] border-b-2 border-[var(--accent-color)]' : 'text-[var(--text-color-secondary)] hover:text-[var(--text-color)]'}`}
+              className={`px-4 py-2 font-medium text-sm ${activeTab === 'advanced' ? 'text-[var(--md-sys-color-primary)] border-b-2 border-[var(--md-sys-color-primary)]' : 'text-[var(--text-color-secondary)] hover:text-[var(--text-color)]'}`}
               onClick={() => setActiveTab('advanced')}
             >
               {t('advanced')}
             </button>
             <button
-              className={`px-4 py-2 font-medium text-sm ${activeTab === 'data' ? 'text-[var(--accent-color)] border-b-2 border-[var(--accent-color)]' : 'text-[var(--text-color-secondary)] hover:text-[var(--text-color)]'}`}
+              className={`px-4 py-2 font-medium text-sm ${activeTab === 'data' ? 'text-[var(--md-sys-color-primary)] border-b-2 border-[var(--md-sys-color-primary)]' : 'text-[var(--text-color-secondary)] hover:text-[var(--text-color)]'}`}
               onClick={() => setActiveTab('data')}
             >
               {t('data')}
             </button>
             <button
-              className={`px-4 py-2 font-medium text-sm ${activeTab === 'about' ? 'text-[var(--accent-color)] border-b-2 border-[var(--accent-color)]' : 'text-[var(--text-color-secondary)] hover:text-[var(--text-color)]'}`}
+              className={`px-4 py-2 font-medium text-sm ${activeTab === 'about' ? 'text-[var(--md-sys-color-primary)] border-b-2 border-[var(--md-sys-color-primary)]' : 'text-[var(--text-color-secondary)] hover:text-[var(--text-color)]'}`}
               onClick={() => setActiveTab('about')}
             >
               {t('about')}

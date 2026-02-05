@@ -198,7 +198,7 @@ export const AppContainer: React.FC = () => {
         onRegenerate={handleRegenerate}
         onEditAndResubmit={handleEditAndResubmit}
         onEditMessage={uiState.setEditingMessage}
-        onSetCurrentModel={(model) => handleSettingsChange({ defaultModel: model })}
+        onSetCurrentModel={(model) => handleSettingsChange({ lastSelectedModel: model })}
         onSetModelForActiveChat={chatDataHandlers.handleSetModelForActiveChat}
         isSidebarCollapsed={sidebarState.isCollapsed}
         onToggleSidebar={handleToggleSidebar}

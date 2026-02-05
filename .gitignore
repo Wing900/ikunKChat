@@ -31,6 +31,8 @@ dev-dist/
 .claude/
 .iflow/
 *.iflow
+IFLOW.md
+CLAUDE.md
 
 # 命令行产生的临时文件
 $null
