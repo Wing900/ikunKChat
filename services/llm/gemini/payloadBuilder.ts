@@ -2,7 +2,6 @@ import { Message, Persona } from '../../../types';
 import { ModelConfig } from '../types';
 import { OPTIMIZE_FORMATTING_PROMPT, THINK_DEEPER_PROMPT } from '../../../data/prompts';
 import { getMessageSize, getFormattedMessageSize, analyzeMessageSize } from '../../../utils/messageSize';
-import { testContextTruncation } from '../../../utils/testContextTruncation';
 
 interface Part {
   text?: string;
