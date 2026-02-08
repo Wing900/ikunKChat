@@ -175,10 +175,12 @@ export function prepareChatPayload(
   });
 
   // 3. Add new parameters to the generation config
+  // Gemini 模型的输出 token 限制上限（模仿 OpenAI 的做法，避免第三方 API 因 token 过大而拒绝请求）
+  const GEMINI_MAX_OUTPUT_TOKENS_LIMIT = 8192;
   const configForApi: any = {
     systemInstruction: systemInstruction || undefined,
     temperature: settingsSource.temperature,
-    maxOutputTokens: settingsSource.maxOutputTokens,
+    maxOutputTokens: Math.min(settingsSource.maxOutputTokens, GEMINI_MAX_OUTPUT_TOKENS_LIMIT),
   };
 
   if (showThoughts) {

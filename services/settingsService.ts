@@ -32,10 +32,6 @@ export const loadSettings = (): Partial<Settings> | null => {
             }
         }
 
-        // 强制覆盖 maxOutputTokens 为 999999999（不管用户之前设置过什么）
-        // Force override maxOutputTokens to 999999999 (regardless of user's previous settings)
-        parsed.maxOutputTokens = 999999999;
-
         return parsed;
     } catch (error) {
         console.error("Failed to load settings from localStorage", error);

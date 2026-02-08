@@ -292,8 +292,6 @@ export function loadSettingsV2(): Partial<Settings> | null {
       localStorage.setItem(SETTINGS_KEY, JSON.stringify(parsed));
     }
 
-    parsed.maxOutputTokens = 999999999;
-
     return parsed;
   } catch (error) {
     console.error('[StorageV2] 加载设置失败:', error);
